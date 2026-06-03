@@ -1,0 +1,182 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repryntt"
+version = "0.6.0"
+description = "Autonomous AI framework — hormone-driven self-prompting with three-tier model routing and self-evolution"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "repryntt contributors", email = "hello@ai158z.com"},
+]
+keywords = ["autonomous-ai", "edge-ai", "self-evolution", "hormones", "llm"]
+
+dependencies = [
+    # ── Web framework ──────────────────────────────────────────
+    "flask>=2.3",
+    "flask-cors>=4.0",
+    "flask-socketio>=5.3",
+    "flask-limiter>=3.5",
+    "flask-jwt-extended>=4.6",
+    "werkzeug>=3.0",
+
+    # ── HTTP / async ───────────────────────────────────────────
+    "requests>=2.31",
+    "aiohttp>=3.9",
+    "aiofiles>=23.0",
+    "aiosqlite>=0.19",
+    "websockets>=12.0",  # cloud runner control channel
+
+    # ── Web scraping / search / NLP ────────────────────────────
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "lxml-html-clean>=0.1",
+    "newspaper3k>=0.2",
+    "feedparser>=6.0",
+    "nltk>=3.8",
+    "textblob>=0.17",
+
+    # ── Data / DB ──────────────────────────────────────────────
+    "sqlalchemy>=2.0",
+    "numpy>=1.24",
+    "pydantic>=2.0",
+
+    # ── AI / ML core ──────────────────────────────────────────
+    "transformers>=4.40",
+
+    # ── LLM provider clients ──────────────────────────────────
+    "google-generativeai>=0.5",
+
+    # ── Crypto / security ─────────────────────────────────────
+    "cryptography>=41.0",
+
+    # ── System / utilities ────────────────────────────────────
+    "psutil>=5.9",
+    "pillow>=10.0",
+    "jinja2>=3.1",
+    "markdown>=3.5",
+    "python-dotenv>=1.0",
+    "pytz>=2023.3",
+    "msgpack>=1.0",
+
+    # ── Solana / trading (required at boot — tool registry imports these
+    # at startup, so leaving them as optional broke ~10 tool registrations
+    # on every fresh install. Keep them in base; they're tiny.) ──────
+    "base58>=2.1",
+    "solders>=0.20; platform_machine != 'aarch64' or sys_platform == 'linux'",
+
+    # ── Search backend used by web_search_tools and x_search. The agent
+    # falls back to other search providers if this is missing, but it
+    # logs an ERROR per attempt which looks like a broken install. Tiny
+    # package, keep it in base. ──────
+    "duckduckgo-search>=6.0",
+]
+
+[project.optional-dependencies]
+# Embeddings + vector search (large downloads)
+embeddings = [
+    "sentence-transformers>=2.2",
+    "faiss-cpu>=1.7",
+]
+
+# GPU compute — mining, training, sensors (CPU fallback always works)
+# NOTE: On Jetson (aarch64), torch must be installed from a custom NVIDIA
+# wheel BEFORE installing this extra, otherwise pip pulls the CPU-only
+# aarch64 build from PyPI.  See misc/wheels/ for the Jetson wheel.
+gpu = [
+    "torch>=2.0; platform_machine != 'aarch64'",
+]
+
+# Sensor feeders — vision, audio, graph analysis
+sensors = [
+    "opencv-python>=4.8",
+    "scikit-learn>=1.3",
+    "scikit-image>=0.21",
+    "networkx>=3.1",
+    "matplotlib>=3.7",
+    "librosa>=0.10; platform_machine != 'aarch64'",
+    "scipy>=1.11",
+]
+
+# Self-evolution (QLoRA training pipeline)
+evolution = [
+    "peft>=0.10",
+    "datasets>=2.14",
+    "trl>=0.7",
+    "scipy>=1.11",
+    "bitsandbytes>=0.41; sys_platform != 'darwin'",
+    "pytz>=2023.3",
+]
+
+# Trading (Gemini AI + async file IO)
+trading = [
+    "google-generativeai>=0.5",
+    "aiofiles>=23.0",
+]
+
+# Voice I/O (Piper TTS + faster-whisper STT + cross-platform fallbacks)
+voice = [
+    "faster-whisper>=1.0; sys_platform != 'win32'",
+    "piper-tts>=1.2; sys_platform == 'linux'",
+    "pyttsx3>=2.90",
+    "sounddevice>=0.4",
+]
+
+# Gmail integration
+gmail = [
+    "google-auth>=2.0",
+    "google-auth-oauthlib>=1.0",
+    "google-api-python-client>=2.0",
+]
+
+# P2P networking
+p2p = [
+    "msgpack>=1.0",
+]
+
+# Desktop app (native window + system tray)
+desktop = [
+    "pywebview>=4.0",
+    "pystray>=0.19",
+]
+
+# Jetson Orin Nano — install torch/onnxruntime from local .whl
+jetson = [
+    "onnxruntime-gpu>=1.19",
+    # torch — install from NVIDIA custom wheel for aarch64
+    # torchvision — install from NVIDIA custom wheel for aarch64
+]
+
+# Full install (everything except Jetson-specific wheels)
+full = [
+    "repryntt[gpu,embeddings,sensors,evolution,trading,voice,gmail,p2p,desktop]",
+]
+
+# Development
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+repryntt = "repryntt.cli:main"
+repryntt-node = "repryntt.economy.qnode2:main"
+repryntt-bootstrap = "repryntt.bootstrap.registry:main"
+repryntt-runner = "repryntt.cloud_runner:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["repryntt*"]
+
+[tool.setuptools.package-data]
+"repryntt.bootstrap_templates" = ["*.md"]
+"repryntt.setup" = ["ai_config.example.json", "static/*", "static/**/*"]
+"repryntt.seed_brain" = ["*.json", "*.md"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120

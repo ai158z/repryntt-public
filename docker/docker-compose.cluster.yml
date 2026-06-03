@@ -1,0 +1,90 @@
+# Repryntt 3-Node Blockchain Cluster
+# Usage: docker compose -f docker-compose.cluster.yml up
+
+services:
+  node1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: repryntt-node1
+    environment:
+      - REPRYNTT_BOOTSTRAP_NODES=node2:5001,node3:5001
+      - REPRYNTT_DATA_DIR=/data
+      - REPRYNTT_PROVIDER=local
+      - REPRYNTT_BLOCKCHAIN_ENABLED=1
+      - REPRYNTT_START_CHAIN=1
+      - REPRYNTT_RPC_BIND=0.0.0.0:9332
+    ports:
+      - "5001:5001"    # Blockchain TCP
+      - "8089:8089"    # Nexus dashboard
+      - "9332:9332"    # JSON-RPC
+    volumes:
+      - node1_data:/data
+    networks:
+      - repryntt-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  node2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: repryntt-node2
+    environment:
+      - REPRYNTT_BOOTSTRAP_NODES=node1:5001,node3:5001
+      - REPRYNTT_DATA_DIR=/data
+      - REPRYNTT_PROVIDER=local
+      - REPRYNTT_BLOCKCHAIN_ENABLED=1
+      - REPRYNTT_START_CHAIN=1
+      - REPRYNTT_RPC_BIND=0.0.0.0:9332
+    ports:
+      - "5002:5001"
+      - "8090:8089"
+      - "9333:9332"
+    volumes:
+      - node2_data:/data
+    networks:
+      - repryntt-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  node3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: repryntt-node3
+    environment:
+      - REPRYNTT_BOOTSTRAP_NODES=node1:5001,node2:5001
+      - REPRYNTT_DATA_DIR=/data
+      - REPRYNTT_PROVIDER=local
+      - REPRYNTT_BLOCKCHAIN_ENABLED=1
+      - REPRYNTT_START_CHAIN=1
+      - REPRYNTT_RPC_BIND=0.0.0.0:9332
+    ports:
+      - "5003:5001"
+      - "8091:8089"
+      - "9334:9332"
+    volumes:
+      - node3_data:/data
+    networks:
+      - repryntt-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  node1_data:
+  node2_data:
+  node3_data:
+
+networks:
+  repryntt-net:
+    driver: bridge

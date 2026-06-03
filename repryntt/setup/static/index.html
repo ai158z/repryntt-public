@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repryntt — Setup</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           RESET + BASE
+           ═══════════════════════════════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;600;800&display=swap');
+
+        :root {
+            --white: #ffffff;
+            --black: #0a0a0a;
+            --gray-100: #f5f5f5;
+            --gray-400: #9ca3af;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --green: #22c55e;
+            --green-dim: #16a34a;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --mono: 'JetBrains Mono', 'Courier New', monospace;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--sans);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCENE CONTAINER (full viewport)
+           ═══════════════════════════════════════════════════════════════ */
+        #scene {
+            position: fixed; inset: 0;
+            background: var(--white);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0s;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE 1: White screen + black button
+           ═══════════════════════════════════════════════════════════════ */
+        #phase-start {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 24px;
+            z-index: 10;
+        }
+
+        #phase-start .logo {
+            font-family: var(--mono);
+            font-size: 18px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            font-weight: 300;
+        }
+
+        #btn-start {
+            width: 220px; height: 60px;
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+        }
+
+        #btn-start:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 32px rgba(0,0,0,0.25);
+        }
+
+        #btn-start:active {
+            transform: scale(0.97);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           MELT OVERLAY (SVG filter drip + CSS transition)
+           ═══════════════════════════════════════════════════════════════ */
+        #melt-overlay {
+            position: fixed; inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #melt-canvas {
+            width: 100%; height: 100%;
+            display: block;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE 2: Terminal install screen (black bg)
+           ═══════════════════════════════════════════════════════════════ */
+        #phase-install {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%; height: 100%;
+            padding: 40px;
+            z-index: 10;
+        }
+
+        #phase-install .header {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--green);
+            letter-spacing: 3px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        #terminal {
+            width: 100%;
+            max-width: 800px;
+            flex: 1;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--gray-400);
+        }
+
+        #terminal .line { margin-bottom: 2px; }
+        #terminal .line.step { color: var(--green); font-weight: 600; margin-top: 12px; }
+        #terminal .line.error { color: var(--red); }
+        #terminal .line.status { color: var(--white); font-weight: 600; }
+
+        #progress-bar-wrap {
+            width: 100%; max-width: 800px;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--green);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE 3: Multi-step config (black bg)
+           ═══════════════════════════════════════════════════════════════ */
+        #phase-config {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            z-index: 10;
+            width: 100%;
+            max-width: 620px;
+            padding: 40px;
+        }
+
+        #phase-config .prompt-label {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--green);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            align-self: flex-start;
+        }
+
+        .config-step {
+            width: 100%;
+            animation: stepFadeIn 0.3s ease;
+        }
+
+        @keyframes stepFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-label {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--gray-400);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        #phase-config input {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-family: var(--mono);
+            font-size: 15px;
+            color: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #phase-config input:focus {
+            border-color: var(--green);
+        }
+
+        #phase-config input::placeholder {
+            color: var(--gray-600);
+        }
+
+        #phase-config select {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-family: var(--mono);
+            font-size: 15px;
+            color: var(--white);
+            outline: none;
+            appearance: none;
+        }
+
+        #phase-config select option {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        /* Option cards (agent choice, provider, heartbeat) */
+        .option-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .option-cards.small {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+
+        .option-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+            user-select: none;
+        }
+
+        .option-card:hover {
+            background: rgba(255,255,255,0.07);
+            transform: translateY(-1px);
+        }
+
+        .option-card.selected {
+            border-color: var(--green);
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .option-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .option-title {
+            font-family: var(--sans);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .option-desc {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        /* Config nav (BACK / NEXT buttons) */
+        #config-nav {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        #config-nav button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+        }
+
+        #btn-next {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        #btn-prev {
+            background: rgba(255,255,255,0.08);
+            color: var(--gray-400);
+        }
+
+        #config-nav button:hover { transform: scale(1.02); }
+        #config-nav button:active { transform: scale(0.98); }
+        #config-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #config-error {
+            font-size: 13px;
+            color: var(--red);
+            font-family: var(--mono);
+            min-height: 20px;
+            align-self: flex-start;
+        }
+
+        /* Responsive: stack cards on narrow screens */
+        @media (max-width: 500px) {
+            .option-cards { grid-template-columns: 1fr; }
+            .option-cards.small { grid-template-columns: 1fr 1fr; }
+            #phase-config { padding: 20px; max-width: 100%; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE 4: Artemis greeting (white bg)
+           ═══════════════════════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE 3.5: AI-driven install chat
+           ═══════════════════════════════════════════════════════════════ */
+        #phase-chat {
+            display: none;
+            flex-direction: column;
+            width: min(720px, 92vw);
+            max-height: 88vh;
+            padding: 32px;
+            background: var(--white);
+            border: 1px solid var(--gray-100);
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            z-index: 10;
+        }
+        #phase-chat .chat-header {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        #phase-chat .chat-log {
+            flex: 1;
+            min-height: 320px;
+            max-height: 56vh;
+            overflow-y: auto;
+            padding: 6px 4px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #phase-chat .bubble {
+            max-width: 78%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #phase-chat .bubble.assistant {
+            align-self: flex-start;
+            background: var(--gray-100);
+            color: var(--black);
+            border-bottom-left-radius: 4px;
+        }
+        #phase-chat .bubble.user {
+            align-self: flex-end;
+            background: var(--black);
+            color: var(--white);
+            border-bottom-right-radius: 4px;
+        }
+        #phase-chat .bubble.system {
+            align-self: center;
+            background: transparent;
+            color: var(--gray-400);
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        #phase-chat .typing {
+            align-self: flex-start;
+            color: var(--gray-400);
+            font-style: italic;
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+        #phase-chat .chat-input-row {
+            display: flex;
+            gap: 8px;
+            padding-top: 14px;
+            border-top: 1px solid var(--gray-100);
+        }
+        #phase-chat #chat-input {
+            flex: 1;
+            font-family: var(--sans);
+            font-size: 15px;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-100);
+            border-radius: 10px;
+            background: var(--white);
+            color: var(--black);
+        }
+        #phase-chat #chat-input:focus { outline: none; border-color: var(--black); }
+        #phase-chat #chat-send {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0 22px;
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #phase-chat #chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+        #phase-chat #chat-finish-btn {
+            display: none;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 12px 32px;
+            margin-top: 18px;
+            background: var(--green);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            align-self: center;
+        }
+
+        #phase-greeting {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+            z-index: 10;
+        }
+
+        /* Artemis face — CSS-only geometric avatar */
+        #artemis-face {
+            width: 160px; height: 160px;
+            position: relative;
+            opacity: 0;
+            transform: scale(0.7);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        #artemis-face.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #artemis-face .head {
+            width: 160px; height: 160px;
+            background: var(--black);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #artemis-face .eye {
+            position: absolute;
+            width: 20px; height: 20px;
+            background: var(--green);
+            border-radius: 50%;
+            top: 62px;
+            animation: eyePulse 3s ease-in-out infinite;
+        }
+
+        #artemis-face .eye.left { left: 42px; }
+        #artemis-face .eye.right { right: 42px; }
+
+        @keyframes eyePulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(34, 197, 94, 0.5); }
+            50% { box-shadow: 0 0 24px rgba(34, 197, 94, 0.9); }
+        }
+
+        #artemis-face .mouth {
+            position: absolute;
+            bottom: 44px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 36px; height: 4px;
+            background: var(--green);
+            border-radius: 2px;
+            transition: height 0.3s, border-radius 0.3s;
+        }
+
+        #artemis-face.speaking .mouth {
+            height: 18px;
+            border-radius: 50%;
+            animation: speak 0.3s ease-in-out infinite alternate;
+        }
+
+        @keyframes speak {
+            0% { height: 10px; width: 30px; }
+            100% { height: 20px; width: 38px; }
+        }
+
+        #greeting-text {
+            font-family: var(--sans);
+            font-size: 20px;
+            font-weight: 300;
+            color: var(--black);
+            opacity: 0;
+            transition: opacity 0.6s ease 0.5s;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #greeting-text.visible { opacity: 1; }
+
+        #greeting-subtext {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--gray-400);
+            opacity: 0;
+            transition: opacity 0.6s ease 1s;
+            text-align: center;
+        }
+
+        #greeting-subtext.visible { opacity: 1; }
+
+        #btn-open-nexus {
+            padding: 14px 40px;
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.6s ease 1.5s, transform 0.15s;
+        }
+
+        #btn-open-nexus.visible { opacity: 1; }
+        #btn-open-nexus:hover { transform: scale(1.03); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           HW INFO BADGE (bottom corner during install)
+           ═══════════════════════════════════════════════════════════════ */
+        #hw-badge {
+            position: fixed;
+            bottom: 20px; left: 20px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--gray-600);
+            z-index: 50;
+            display: none;
+        }
+
+        #hw-badge .item { margin-bottom: 3px; }
+        #hw-badge .val { color: var(--gray-400); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           UTILITY
+           ═══════════════════════════════════════════════════════════════ */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- Melt overlay canvas -->
+    <div id="melt-overlay">
+        <canvas id="melt-canvas"></canvas>
+    </div>
+
+    <div id="scene">
+        <!-- Phase 1: Start -->
+        <div id="phase-start">
+            <div class="logo">repryntt</div>
+            <button id="btn-start">INITIALIZE</button>
+        </div>
+
+        <!-- Phase 2: Terminal install -->
+        <div id="phase-install">
+            <div class="header">installing dependencies</div>
+            <div id="terminal"></div>
+            <div id="progress-bar-wrap">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Phase 3: Config -->
+        <div id="phase-config">
+            <div class="prompt-label">configure your system</div>
+
+            <!-- Step 3a: Operator name -->
+            <div id="config-step-name" class="config-step">
+                <div class="step-label">what's your name?</div>
+                <input type="text" id="input-name" placeholder="Your name" autocomplete="off" />
+            </div>
+
+            <!-- Step 3b: Agent choice -->
+            <div id="config-step-agent" class="config-step" style="display:none">
+                <div class="step-label">choose your agent</div>
+                <div class="option-cards">
+                    <div class="option-card selected" data-value="andrew" onclick="selectAgent(this)">
+                        <div class="option-icon">🤖</div>
+                        <div class="option-title">Andrew</div>
+                        <div class="option-desc">Ready-to-run companion AI agent. Curious, warm, autonomous. Works out of the box.</div>
+                    </div>
+                    <div class="option-card" data-value="genesis" onclick="selectAgent(this)">
+                        <div class="option-icon">✦</div>
+                        <div class="option-title">Create New Agent</div>
+                        <div class="option-desc">Run genesis bootstrap to create a custom agent with its own identity and personality.</div>
+                    </div>
+                </div>
+                <div id="agent-name-row" style="display:none;margin-top:16px;">
+                    <input type="text" id="input-agent-name" placeholder="Agent name (or leave blank to let it choose)" autocomplete="off" />
+                </div>
+            </div>
+
+            <!-- Step 3c: AI Provider -->
+            <div id="config-step-provider" class="config-step" style="display:none">
+                <div class="step-label">ai provider</div>
+                <div class="option-cards small">
+                    <div class="option-card selected" data-value="local" onclick="selectProvider(this)">
+                        <div class="option-title">Local LLM</div>
+                        <div class="option-desc">llama.cpp on this machine — no API key needed</div>
+                    </div>
+                    <div class="option-card" data-value="nvidia" onclick="selectProvider(this)">
+                        <div class="option-title">NVIDIA</div>
+                        <div class="option-desc">Free tier — Mistral, Llama, DeepSeek</div>
+                    </div>
+                    <div class="option-card" data-value="gemini" onclick="selectProvider(this)">
+                        <div class="option-title">Gemini</div>
+                        <div class="option-desc">Google — Flash, Pro, Ultra</div>
+                    </div>
+                    <div class="option-card" data-value="openai" onclick="selectProvider(this)">
+                        <div class="option-title">OpenAI</div>
+                        <div class="option-desc">GPT-4o, GPT-4.1, o3</div>
+                    </div>
+                    <div class="option-card" data-value="groq" onclick="selectProvider(this)">
+                        <div class="option-title">Groq</div>
+                        <div class="option-desc">Llama 3.3, Mixtral — fast inference</div>
+                    </div>
+                    <div class="option-card" data-value="anthropic" onclick="selectProvider(this)">
+                        <div class="option-title">Anthropic</div>
+                        <div class="option-desc">Claude Sonnet, Opus</div>
+                    </div>
+                    <div class="option-card" data-value="deepseek" onclick="selectProvider(this)">
+                        <div class="option-title">DeepSeek</div>
+                        <div class="option-desc">DeepSeek V3, R1 — low cost</div>
+                    </div>
+                    <div class="option-card" data-value="openrouter" onclick="selectProvider(this)">
+                        <div class="option-title">OpenRouter</div>
+                        <div class="option-desc">Multi-provider gateway — any model</div>
+                    </div>
+                </div>
+                <div id="api-key-row" style="margin-top:16px;">
+                    <input type="password" id="input-key" placeholder="Paste your API key" autocomplete="off" />
+                </div>
+                <div id="model-select-row" style="margin-top:12px;display:none;">
+                    <select id="select-model">
+                        <option value="">Select model...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 3d: Heartbeat interval -->
+            <div id="config-step-heartbeat" class="config-step" style="display:none">
+                <div class="step-label">how often should your agent think?</div>
+                <div class="option-cards small">
+                    <div class="option-card" data-value="30" onclick="selectHeartbeat(this)">
+                        <div class="option-title">30s</div>
+                        <div class="option-desc">Very active — high API usage</div>
+                    </div>
+                    <div class="option-card selected" data-value="69" onclick="selectHeartbeat(this)">
+                        <div class="option-title">69s</div>
+                        <div class="option-desc">Default — balanced pace</div>
+                    </div>
+                    <div class="option-card" data-value="120" onclick="selectHeartbeat(this)">
+                        <div class="option-title">2 min</div>
+                        <div class="option-desc">Relaxed — lower API cost</div>
+                    </div>
+                    <div class="option-card" data-value="300" onclick="selectHeartbeat(this)">
+                        <div class="option-title">5 min</div>
+                        <div class="option-desc">Minimal — checks in periodically</div>
+                    </div>
+                    <div class="option-card" data-value="0" onclick="selectHeartbeat(this)">
+                        <div class="option-title">Manual</div>
+                        <div class="option-desc">No heartbeat — chat only mode</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3e: Network / Seed Peers -->
+            <div id="config-step-network" class="config-step" style="display:none">
+                <div class="step-label">network peers</div>
+                <div style="color:#888;font-size:13px;margin-bottom:12px;">
+                    Connect to an existing repryntt network by entering seed node addresses.<br>
+                    Leave blank to run solo (you can add peers later in <code>~/.repryntt/rust_chain/node.conf</code>).
+                </div>
+                <input type="text" id="input-seeds" placeholder="e.g. 10.0.0.19:5001, 192.168.1.5:5001" autocomplete="off" />
+                <div style="color:#555;font-size:11px;margin-top:6px;">Comma-separated host:port pairs. Port defaults to 5001 if omitted.</div>
+            </div>
+
+            <div id="config-error"></div>
+            <div id="config-nav">
+                <button id="btn-prev" style="display:none" onclick="configPrev()">BACK</button>
+                <button id="btn-next" onclick="configNext()">NEXT</button>
+            </div>
+        </div>
+
+        <!-- Phase 3.5: AI-driven install chat -->
+        <div id="phase-chat">
+            <div class="chat-header">finishing setup · talk with your agent</div>
+            <div id="chat-log" class="chat-log"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Type your answer…" autocomplete="off" />
+                <button id="chat-send" onclick="chatSend()">SEND</button>
+            </div>
+            <button id="chat-finish-btn" onclick="chatFinish()">START DAEMON →</button>
+        </div>
+
+        <!-- Phase 4: Greeting -->
+        <div id="phase-greeting">
+            <div id="artemis-face">
+                <div class="head">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+            <div id="greeting-text"></div>
+            <div id="greeting-subtext">system operator • ready to work</div>
+            <button id="btn-open-nexus">OPEN COMMAND CENTER</button>
+        </div>
+    </div>
+
+    <!-- HW badge -->
+    <div id="hw-badge"></div>
+
+    <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       REPRYNTT SETUP — Main Controller
+       ═══════════════════════════════════════════════════════════════════ */
+
+    const $ = sel => document.querySelector(sel);
+    const scene = $('#scene');
+    let hardwareInfo = null;
+    let operatorName = '';
+
+    /* ────────────────────────────────────────────────────────────────
+       MELT ANIMATION (canvas-based column drip w/ easing)
+       ──────────────────────────────────────────────────────────────── */
+
+    function melt(fromColor, toColor, duration = 1400) {
+        return new Promise(resolve => {
+            const overlay = $('#melt-overlay');
+            const canvas = $('#melt-canvas');
+            const ctx = canvas.getContext('2d');
+            let resolved = false;
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const COL_W = 24;                               // wider = fewer = faster
+            const cols = Math.ceil(canvas.width / COL_W) + 1;
+            const colWidth = canvas.width / cols;
+
+            const columns = [];
+            for (let i = 0; i < cols; i++) {
+                const distFromCenter = Math.abs(i - cols / 2) / (cols / 2);
+                columns.push({
+                    delay: distFromCenter * 0.25 + Math.random() * 0.10,
+                    speed: 1.0 + Math.random() * 0.6,
+                });
+            }
+
+            overlay.style.opacity = '1';
+            overlay.style.pointerEvents = 'auto';
+
+            const startTime = performance.now();
+
+            // Safety: always resolve even if animation somehow stalls
+            const safetyTimer = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    scene.style.background = toColor;
+                    overlay.style.opacity = '0';
+                    overlay.style.pointerEvents = 'none';
+                    resolve();
+                }
+            }, duration + 2000);
+
+            function finish() {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(safetyTimer);
+                scene.style.background = toColor;
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    overlay.style.pointerEvents = 'none';
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    resolve();
+                }, 80);
+            }
+
+            function frame(now) {
+                if (resolved) return;
+
+                try {
+                    const elapsed = (now - startTime) / duration;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = toColor;
+
+                    let allDone = true;
+
+                    for (let i = 0; i < cols; i++) {
+                        const col = columns[i];
+                        const t = Math.max(0, (elapsed - col.delay) * col.speed);
+                        const eased = t >= 1 ? 1 : t * t * (3 - 2 * t);
+
+                        const h = eased * (canvas.height + 60);
+                        ctx.fillRect(i * colWidth - 1, 0, colWidth + 2, h);
+
+                        // Drip tips (simple circles — max compatibility)
+                        if (eased > 0.05 && eased < 0.92) {
+                            const r = colWidth * 0.45 + Math.sin(i * 2.3) * 3;
+                            ctx.beginPath();
+                            ctx.arc(i * colWidth + colWidth / 2, h + r * 0.8, r, 0, Math.PI * 2);
+                            ctx.fill();
+                            // Second smaller drip
+                            if (i % 3 === 0) {
+                                const r2 = r * 0.5;
+                                ctx.beginPath();
+                                ctx.arc(i * colWidth + colWidth * 0.3, h + r + r2 * 2, r2, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                        }
+
+                        if (eased < 1) allDone = false;
+                    }
+
+                    if (allDone) {
+                        finish();
+                        return;
+                    }
+                } catch (err) {
+                    console.error('melt frame error:', err);
+                    finish();
+                    return;
+                }
+
+                requestAnimationFrame(frame);
+            }
+
+            requestAnimationFrame(frame);
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       PHASE 1 → 2: Button press → melt to black → show terminal
+       ──────────────────────────────────────────────────────────────── */
+
+    $('#btn-start').addEventListener('click', async () => {
+        $('#btn-start').disabled = true;
+        $('#btn-start').textContent = '...';
+
+        // Start detecting hardware in parallel
+        fetchHardware();
+
+        await melt('#ffffff', '#0a0a0a', 1200);
+
+        $('#phase-start').style.display = 'none';
+        $('#phase-install').style.display = 'flex';
+        showHwBadge();
+
+        // Stream install
+        await runInstall();
+
+        // Transition to config
+        setTimeout(() => {
+            $('#phase-install').style.display = 'none';
+            $('#phase-config').style.display = 'flex';
+            $('#input-name').focus();
+        }, 800);
+    });
+
+    /* ────────────────────────────────────────────────────────────────
+       HARDWARE DETECTION
+       ──────────────────────────────────────────────────────────────── */
+
+    async function fetchHardware() {
+        try {
+            const r = await fetch('/api/detect');
+            hardwareInfo = await r.json();
+        } catch (e) {
+            hardwareInfo = { error: e.message };
+        }
+    }
+
+    function showHwBadge() {
+        if (!hardwareInfo || hardwareInfo.error) return;
+        const badge = $('#hw-badge');
+        badge.style.display = 'block';
+        badge.innerHTML = `
+            <div class="item">GPU: <span class="val">${hardwareInfo.gpu_name || 'CPU only'}</span></div>
+            <div class="item">RAM: <span class="val">${Math.round(hardwareInfo.ram_mb / 1024)}GB</span></div>
+            <div class="item">Platform: <span class="val">${hardwareInfo.platform} ${hardwareInfo.arch}</span></div>
+        `;
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       PHASE 2: SSE-streamed install
+       ──────────────────────────────────────────────────────────────── */
+
+    function runInstall() {
+        return new Promise((resolve, reject) => {
+            const terminal = $('#terminal');
+            const progress = $('#progress-bar');
+            const source = new EventSource('/api/install');
+
+            function addLine(text, cls = '') {
+                const div = document.createElement('div');
+                div.className = 'line' + (cls ? ' ' + cls : '');
+                div.textContent = text;
+                terminal.appendChild(div);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            addLine('$ repryntt setup --install', 'status');
+
+            source.addEventListener('status', e => addLine(e.data, 'status'));
+            source.addEventListener('step', e => addLine('\n▸ ' + e.data, 'step'));
+            source.addEventListener('log', e => addLine('  ' + e.data));
+            source.addEventListener('error', e => addLine('✖ ' + e.data, 'error'));
+            source.addEventListener('progress', e => {
+                progress.style.width = e.data + '%';
+            });
+            source.addEventListener('done', () => {
+                source.close();
+                addLine('\n✔ All dependencies ready.', 'status');
+                resolve();
+            });
+
+            source.onerror = () => {
+                source.close();
+                addLine('Connection lost — install may still be running.', 'error');
+                // Resolve anyway so user can proceed to config
+                setTimeout(resolve, 1500);
+            };
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       PHASE 3: Multi-step config controller
+       ──────────────────────────────────────────────────────────────── */
+
+    const CONFIG_STEPS = ['name', 'agent', 'provider', 'heartbeat', 'network'];
+    let configStep = 0;
+    let configData = {
+        operatorName: '',
+        agentType: 'andrew',
+        agentName: '',
+        provider: 'local',
+        apiKey: '',
+        heartbeat: 69,
+        seedPeers: '',
+    };
+
+    function selectAgent(card) {
+        card.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        configData.agentType = card.dataset.value;
+        const nameRow = document.getElementById('agent-name-row');
+        nameRow.style.display = configData.agentType === 'genesis' ? 'block' : 'none';
+    }
+
+    function selectProvider(card) {
+        card.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        configData.provider = card.dataset.value;
+        const keyRow = document.getElementById('api-key-row');
+        keyRow.style.display = configData.provider === 'local' ? 'none' : 'block';
+    }
+
+    function selectHeartbeat(card) {
+        card.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        configData.heartbeat = parseInt(card.dataset.value);
+    }
+
+    function showConfigStep(idx) {
+        CONFIG_STEPS.forEach((name, i) => {
+            document.getElementById('config-step-' + name).style.display = i === idx ? 'block' : 'none';
+        });
+        document.getElementById('btn-prev').style.display = idx > 0 ? 'inline-block' : 'none';
+        const isLast = idx === CONFIG_STEPS.length - 1;
+        const btn = document.getElementById('btn-next');
+        btn.textContent = isLast ? 'ACTIVATE' : 'NEXT';
+        document.getElementById('config-error').textContent = '';
+    }
+
+    function configNext() {
+        const errEl = document.getElementById('config-error');
+        errEl.textContent = '';
+
+        // Validate current step
+        if (configStep === 0) {
+            const name = document.getElementById('input-name').value.trim();
+            if (!name) { errEl.textContent = 'Please enter your name.'; return; }
+            configData.operatorName = name;
+        } else if (configStep === 1) {
+            if (configData.agentType === 'genesis') {
+                configData.agentName = document.getElementById('input-agent-name').value.trim();
+            } else {
+                configData.agentName = 'Andrew';
+            }
+        } else if (configStep === 2) {
+            if (configData.provider !== 'local') {
+                const key = document.getElementById('input-key').value.trim();
+                if (!key) { errEl.textContent = 'Please paste your API key.'; return; }
+                if (key.length < 10) { errEl.textContent = 'That API key looks too short.'; return; }
+                configData.apiKey = key;
+            }
+        } else if (configStep === 4) {
+            configData.seedPeers = document.getElementById('input-seeds').value.trim();
+        }
+
+        if (configStep < CONFIG_STEPS.length - 1) {
+            configStep++;
+            showConfigStep(configStep);
+            // Auto-focus inputs on step transitions
+            if (configStep === 2 && configData.provider !== 'local') {
+                setTimeout(() => document.getElementById('input-key').focus(), 100);
+            }
+            if (configStep === 4) {
+                setTimeout(() => document.getElementById('input-seeds').focus(), 100);
+            }
+        } else {
+            // Final step — submit
+            submitConfig();
+        }
+    }
+
+    function configPrev() {
+        if (configStep > 0) {
+            configStep--;
+            showConfigStep(configStep);
+        }
+    }
+
+    async function submitConfig() {
+        const btn = document.getElementById('btn-next');
+        btn.disabled = true;
+        btn.textContent = 'Configuring...';
+
+        try {
+            const r = await fetch('/api/configure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    api_key: configData.apiKey || '',
+                    provider: configData.provider,
+                    operator_name: configData.operatorName,
+                    agent_type: configData.agentType,
+                    agent_name: configData.agentName,
+                    heartbeat_interval: configData.heartbeat,
+                    seed_peers: configData.seedPeers,
+                }),
+            });
+            const result = await r.json();
+
+            if (!result.success) {
+                document.getElementById('config-error').textContent = result.error || 'Configuration failed.';
+                btn.disabled = false;
+                btn.textContent = 'ACTIVATE';
+                return;
+            }
+
+            operatorName = configData.operatorName;
+            const agentName = result.agent_name || configData.agentName || 'Andrew';
+
+            // Melt back to white
+            document.getElementById('phase-config').style.display = 'none';
+            document.getElementById('hw-badge').style.display = 'none';
+            await melt('#0a0a0a', '#ffffff', 1200);
+
+            // Hand off to AI-driven install chat. The chat collects the
+            // remaining fields (email, timezone, agent email) and fills
+            // in every bootstrap placeholder before booting the daemon.
+            startInstallChat(operatorName, agentName);
+
+        } catch (e) {
+            document.getElementById('config-error').textContent = 'Network error: ' + e.message;
+            btn.disabled = false;
+            btn.textContent = 'ACTIVATE';
+        }
+    }
+
+    // Enter key — advance config step
+    document.getElementById('input-name').addEventListener('keydown', e => {
+        if (e.key === 'Enter') configNext();
+    });
+    document.getElementById('input-key').addEventListener('keydown', e => {
+        if (e.key === 'Enter') configNext();
+    });
+
+    // Hide API key row initially (local LLM is pre-selected)
+    document.getElementById('api-key-row').style.display = 'none';
+
+    /* ────────────────────────────────────────────────────────────────
+       PHASE 3.5: AI-driven install chat
+       Python owns the question sequence; the LLM phrases each question
+       conversationally. The chat collects the remaining bootstrap
+       placeholders (email, timezone, agent email) and writes them to
+       ~/.repryntt/brain/bootstrap/ before the daemon starts.
+       ──────────────────────────────────────────────────────────────── */
+
+    let chatState = {
+        collected: {},
+        nextField: null,
+        history: [],
+        agentName: 'Andrew',
+        operatorName: '',
+    };
+
+    async function startInstallChat(operatorName, agentName) {
+        chatState = {
+            collected: {
+                operator_name: operatorName || '',
+                agent_name: agentName || 'Andrew',
+            },
+            nextField: null,
+            history: [],
+            agentName: agentName || 'Andrew',
+            operatorName: operatorName || '',
+        };
+        $('#phase-chat').style.display = 'flex';
+        $('#chat-log').innerHTML = '';
+        $('#chat-finish-btn').style.display = 'none';
+        $('#chat-input').disabled = false;
+        $('#chat-send').disabled = false;
+        addChatBubble('system', `connecting with ${chatState.agentName}…`);
+        await askNextQuestion();
+        $('#chat-input').focus();
+    }
+
+    function addChatBubble(role, text) {
+        const log = $('#chat-log');
+        const div = document.createElement('div');
+        div.className = 'bubble ' + role;
+        div.textContent = text;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+        return div;
+    }
+
+    function showTyping() {
+        const log = $('#chat-log');
+        const div = document.createElement('div');
+        div.className = 'typing';
+        div.id = 'chat-typing';
+        div.textContent = `${chatState.agentName} is thinking…`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function clearTyping() {
+        const t = $('#chat-typing');
+        if (t) t.remove();
+    }
+
+    async function askNextQuestion() {
+        showTyping();
+        try {
+            const r = await fetch('/api/install-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    history: chatState.history,
+                    collected: chatState.collected,
+                }),
+            });
+            const result = await r.json();
+            clearTyping();
+            const reply = (result.reply || '').trim();
+            if (reply) {
+                addChatBubble('assistant', reply);
+                chatState.history.push({ role: 'assistant', content: reply });
+            }
+            chatState.nextField = result.next_field;
+            chatState.collected = result.collected || chatState.collected;
+            if (result.done) {
+                $('#chat-input').disabled = true;
+                $('#chat-send').disabled = true;
+                $('#chat-finish-btn').style.display = 'inline-block';
+            }
+        } catch (e) {
+            clearTyping();
+            addChatBubble('system', 'network error — falling back to defaults');
+            // graceful: skip to greeting
+            chatFinish();
+        }
+    }
+
+    async function chatSend() {
+        const input = $('#chat-input');
+        const text = (input.value || '').trim();
+        if (!text || !chatState.nextField) return;
+        $('#chat-send').disabled = true;
+        addChatBubble('user', text);
+        chatState.history.push({ role: 'user', content: text });
+        input.value = '';
+
+        // Submit the answer for validation + storage
+        try {
+            const r = await fetch('/api/install-chat/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    field: chatState.nextField,
+                    answer: text,
+                    collected: chatState.collected,
+                }),
+            });
+            const result = await r.json();
+            if (!result.accepted) {
+                addChatBubble('assistant', result.error || 'That didn\'t look right — try again?');
+                $('#chat-send').disabled = false;
+                input.focus();
+                return;
+            }
+            chatState.collected = result.collected || chatState.collected;
+        } catch (e) {
+            addChatBubble('system', 'network error saving answer');
+            $('#chat-send').disabled = false;
+            input.focus();
+            return;
+        }
+
+        $('#chat-send').disabled = false;
+        await askNextQuestion();
+        input.focus();
+    }
+
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') chatSend();
+    });
+
+    async function chatFinish() {
+        $('#phase-chat').style.display = 'none';
+        showGreeting(chatState.operatorName, chatState.agentName);
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       PHASE 4: Agent greeting (dynamic name)
+       ──────────────────────────────────────────────────────────────── */
+
+    async function showGreeting(name, agentName) {
+        $('#phase-greeting').style.display = 'flex';
+
+        const face = $('#artemis-face');
+        const text = $('#greeting-text');
+        const sub = $('#greeting-subtext');
+        const btn = $('#btn-open-nexus');
+
+        // Face appears
+        setTimeout(() => face.classList.add('visible'), 200);
+
+        // Greeting text — use real agent name
+        const greetText = `Hello, ${name}. I'm ${agentName}.`;
+        text.textContent = greetText;
+        setTimeout(() => text.classList.add('visible'), 600);
+
+        // Start speaking animation
+        setTimeout(() => face.classList.add('speaking'), 800);
+
+        // Try TTS via backend (Piper) or fallback to browser
+        try {
+            const r = await fetch('/api/greet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, agent_name: agentName }),
+            });
+            const result = await r.json();
+
+            if (result.use_browser_tts && window.speechSynthesis) {
+                const utter = new SpeechSynthesisUtterance(result.text);
+                utter.rate = 0.95;
+                utter.pitch = 1.1;
+                utter.onend = () => face.classList.remove('speaking');
+                speechSynthesis.speak(utter);
+            } else {
+                setTimeout(() => face.classList.remove('speaking'), 4000);
+            }
+        } catch (e) {
+            if (window.speechSynthesis) {
+                const utter = new SpeechSynthesisUtterance(
+                    `Hello ${name}! I'm ${agentName}, your autonomous AI companion.`
+                );
+                utter.rate = 0.95;
+                utter.onend = () => face.classList.remove('speaking');
+                speechSynthesis.speak(utter);
+            }
+            setTimeout(() => face.classList.remove('speaking'), 4000);
+        }
+
+        // Show subtext and button
+        setTimeout(() => sub.classList.add('visible'), 1500);
+        setTimeout(() => btn.classList.add('visible'), 2500);
+
+        // Start the daemon, then poll until Nexus is actually serving
+        // on :8089 before letting the user click through. Surfaces real
+        // errors instead of swallowing them.
+        startDaemonAndWaitForNexus(sub, btn);
+    }
+
+    async function startDaemonAndWaitForNexus(sub, btn) {
+        btn.disabled = true;
+        const setStatus = (text) => { sub.textContent = text; };
+
+        // Step 1: kick off the daemon
+        try {
+            const r = await fetch('/api/start', { method: 'POST' });
+            const result = await r.json();
+            if (!result.started) {
+                setStatus('Daemon failed to start: ' + (result.error || 'unknown'));
+                btn.textContent = 'OPEN COMMAND CENTER (waiting…)';
+                // continue to poll anyway in case it eventually comes up
+            } else {
+                setStatus('Daemon starting — waiting for the dashboard…');
+            }
+        } catch (e) {
+            setStatus('Daemon-start request failed: ' + e.message);
+        }
+
+        // Step 2: poll the server-side nexus-ready probe so cross-origin
+        // doesn't block us. ~30 attempts at 1s = 30s window before we
+        // give up and just enable the button.
+        const maxAttempts = 30;
+        for (let i = 0; i < maxAttempts; i++) {
+            try {
+                const r = await fetch('/api/nexus-ready');
+                const result = await r.json();
+                if (result.ready) {
+                    setStatus('Dashboard is ready. Tap below to open it.');
+                    btn.disabled = false;
+                    btn.textContent = 'OPEN COMMAND CENTER →';
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        // Step 3: still not up — let them click anyway, just warn.
+        setStatus('Dashboard didn\'t come up automatically. Click anyway to try directly.');
+        btn.disabled = false;
+        btn.textContent = 'OPEN COMMAND CENTER';
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       OPEN NEXUS BUTTON
+       Opens in a new tab so the wizard stays around as context if
+       something goes wrong (browser refused to open the new tab, the
+       port isn't actually serving, etc).
+       ──────────────────────────────────────────────────────────────── */
+
+    $('#btn-open-nexus').addEventListener('click', () => {
+        const url = 'http://localhost:8089';
+        const w = window.open(url, '_blank');
+        // If popup was blocked, fall back to top-level navigation
+        if (!w || w.closed || typeof w.closed === 'undefined') {
+            window.location.href = url;
+        }
+    });
+
+    /* ────────────────────────────────────────────────────────────────
+       RESIZE HANDLER
+       ──────────────────────────────────────────────────────────────── */
+    window.addEventListener('resize', () => {
+        const canvas = $('#melt-canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    </script>
+</body>
+</html>

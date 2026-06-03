@@ -1,0 +1,27 @@
+[Unit]
+Description=Andrew Nav Stack (ROS2 Nav2 + slam_toolbox + twist_mux)
+After=network.target repryntt-chain.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=repryntt
+Group=repryntt
+
+Environment=HOME=/home/repryntt
+Environment=REPRYNTT_HOME=/opt/repryntt
+Environment=REPRYNTT_DATA_DIR=/var/lib/repryntt
+Environment=ROS_DOMAIN_ID=0
+
+ExecStartPre=/bin/bash -c 'source /opt/ros/humble/setup.bash && source ${REPRYNTT_HOME}/ros2/install/setup.bash'
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && source ${REPRYNTT_HOME}/ros2/install/setup.bash && ros2 launch andrew_bringup andrew_nav.launch.py'
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+StandardOutput=append:/var/log/repryntt/andrew-nav.log
+StandardError=append:/var/log/repryntt/andrew-nav.log
+
+[Install]
+WantedBy=multi-user.target

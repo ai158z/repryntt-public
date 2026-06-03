@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/commerce/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── CSS vars for JS innerHTML compat ── */
+:root {
+  --red: #cc2200; --green: #00883a; --cyan: #000000; --purple: #6600aa;
+  --yellow: #856404; --orange: #cc6600; --text: #000; --text-dim: #999999;
+  --font-mono: monospace;
+}
+
+/* ── STATS GRID ── */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px; margin:8px; }
+.stat-card { background:#fafafa; border:1px solid #e0e0e0; padding:10px; text-align:center; }
+.stat-card .label { font-size:10px; color:#999999; font-weight:bold; text-transform:uppercase; margin-bottom:4px; }
+.stat-card .value { font-size:24px; font-weight:bold; font-family:monospace; color:#cc2200; }
+.stat-card .sub { font-size:10px; color:#999999; margin-top:2px; }
+
+/* ── PANELS ── */
+.panels { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px; }
+@media (max-width:900px) { .panels { grid-template-columns:1fr; } }
+.panel { background:#fafafa; border:1px solid #e0e0e0; padding:0; }
+.panel-full { grid-column:1/-1; }
+.panel h2 { background:#98e; color:#fff; font-size:12px; font-weight:bold; padding:4px 8px; margin:0; }
+.panel-body { padding:8px; }
+
+/* ── PLATFORM CARDS ── */
+.platform-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; }
+.plat-card { background:#ffffff; border:1px solid #e0e0e0; padding:8px; display:flex; align-items:center; gap:10px; }
+.plat-icon { font-size:22px; width:36px; text-align:center; }
+.plat-info { flex:1; }
+.plat-name { font-weight:bold; font-size:13px; color:#000000; }
+.plat-connected .plat-name { color:#00883a; }
+.plat-disconnected .plat-name { color:#999999; }
+.plat-status { font-size:11px; margin-top:2px; }
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { background:#98e; color:#fff; padding:4px 8px; text-align:left; font-size:11px; font-weight:bold; }
+td { padding:4px 8px; border-bottom:1px solid #fafafa; }
+tr:nth-child(even) { background:#ffffff; }
+tr:hover { background:#dde5ff; }
+
+/* ── BADGES ── */
+.badge { display:inline-block; padding:1px 6px; font-size:10px; font-weight:bold; border-radius:2px; }
+.badge-active { background:#d4edda; color:#155724; }
+.badge-draft { background:#fff3cd; color:#856404; }
+.badge-pending { background:#fff3cd; color:#856404; }
+
+/* ── LOADING / EMPTY ── */
+.loading { text-align:center; padding:16px; color:#999999; font-size:12px; }
+.spin { display:inline-block; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot"></span>
+  </div>
+</nav>
+
+<!-- BOARD HEADER -->
+<div class="board-header">
+  <div class="board-title">/commerce/ — Commerce Hub</div>
+  <div class="board-subtitle">Platform connections, digital products, listings &amp; orders</div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card">
+    <div class="label">Platforms Connected</div>
+    <div class="value" id="statPlatforms">—</div>
+    <div class="sub">of 4 supported</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Digital Products</div>
+    <div class="value" id="statProducts">—</div>
+    <div class="sub">saved locally</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Active Listings</div>
+    <div class="value" id="statListings">—</div>
+    <div class="sub">across platforms</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Recent Orders</div>
+    <div class="value" id="statOrders">—</div>
+    <div class="sub">pending / fulfilled</div>
+  </div>
+</div>
+
+<!-- PLATFORMS -->
+<div style="margin:0 8px">
+  <div class="panel panel-full">
+    <h2>Platform Connections</h2>
+    <div class="panel-body">
+      <div class="platform-grid" id="platformGrid">
+        <div class="loading"><span class="spin">&#9696;</span> Checking platforms...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PANELS -->
+<div class="panels" style="margin-top:8px">
+  <div class="panel">
+    <h2>Digital Products (Local)</h2>
+    <div class="panel-body" id="savedProducts">
+      <div class="loading"><span class="spin">&#9696;</span> Loading...</div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Live Listings</h2>
+    <div class="panel-body" id="liveListings">
+      <div class="loading"><span class="spin">&#9696;</span> Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div style="margin:8px">
+  <div class="panel panel-full">
+    <h2>Recent Orders</h2>
+    <div class="panel-body" id="ordersPanel">
+      <div class="loading"><span class="spin">&#9696;</span> Loading...</div>
+    </div>
+  </div>
+</div>
+
+<div class="board-footer">REPRYNTT COMMERCE HUB</div>
+
+<script>
+const PLATFORMS_META = {
+  shopify:      { icon: '&#128722;', label: 'Shopify',       desc: 'Full storefront — digital + physical' },
+  ebay:         { icon: '&#128176;', label: 'eBay',          desc: 'Marketplace — physical + digital' },
+  etsy:         { icon: '&#127912;', label: 'Etsy',          desc: 'Handmade & unique items' },
+  lemonsqueezy: { icon: '&#127819;', label: 'LemonSqueezy',  desc: 'Digital products — modern alternative' },
+};
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function timeAgo(ts) {
+  if (!ts) return '\u2014';
+  const s = Math.floor(Date.now()/1000 - ts);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function fileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/commerce/status');
+    const d = await r.json();
+    const connected = d.configured_platforms || [];
+    document.getElementById('statPlatforms').textContent = connected.length;
+
+    const grid = document.getElementById('platformGrid');
+    let html = '';
+    for (const [key, meta] of Object.entries(PLATFORMS_META)) {
+      const isOn = connected.includes(key);
+      const pInfo = (d.platforms || []).find(p => p.platform === key);
+      let detail = isOn ? 'Connected' : 'Not configured';
+      if (pInfo && pInfo.store_url) detail = pInfo.store_url;
+      if (pInfo && pInfo.environment) detail = pInfo.environment;
+      if (pInfo && pInfo.shop_id) detail = 'Shop: ' + pInfo.shop_id;
+
+      html += `
+        <div class="plat-card ${isOn ? 'plat-connected' : 'plat-disconnected'}">
+          <div class="plat-icon">${meta.icon}</div>
+          <div class="plat-info">
+            <div class="plat-name">${meta.label}</div>
+            <div class="plat-status" style="color:${isOn ? '#00883a' : '#999999'}">
+              ${isOn ? '&#9679; ' : '&#9675; '}${esc(detail)}
+            </div>
+            <div style="font-size:10px;color:#999999;margin-top:2px">${meta.desc}</div>
+          </div>
+        </div>`;
+    }
+
+    if (!connected.length) {
+      html += `
+        <div class="empty-state" style="grid-column:1/-1;padding:20px">
+          <p>No platforms connected yet.<br/>
+          Add API keys to <code>~/.repryntt/commerce/&lt;platform&gt;.json</code> to activate.</p>
+        </div>`;
+    }
+    grid.innerHTML = html;
+    return connected;
+  } catch(e) {
+    document.getElementById('platformGrid').innerHTML =
+      '<div class="empty-state"><p>Error loading status: ' + esc(e.message) + '</p></div>';
+    return [];
+  }
+}
+
+async function loadSaved() {
+  try {
+    const r = await fetch('/api/commerce/saved-products');
+    const d = await r.json();
+    const el = document.getElementById('savedProducts');
+    const count = d.count || 0;
+    document.getElementById('statProducts').textContent = count;
+
+    if (!count) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <p>No digital products yet.<br/>
+          Artemis can create products using<br/>
+          <code>commerce_save_digital_product</code></p>
+        </div>`;
+      return;
+    }
+
+    let html = '<table><thead><tr><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>';
+    for (const p of d.products) {
+      html += `<tr>
+        <td style="color:#6600aa;font-weight:bold">${esc(p.filename)}</td>
+        <td style="font-family:monospace">${fileSize(p.size)}</td>
+        <td style="color:#999999">${timeAgo(p.modified)}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  } catch(e) {
+    document.getElementById('savedProducts').innerHTML =
+      '<div class="empty-state"><p>Error: ' + esc(e.message) + '</p></div>';
+  }
+}
+
+async function loadListings(platforms) {
+  const el = document.getElementById('liveListings');
+  if (!platforms || !platforms.length) {
+    document.getElementById('statListings').textContent = '0';
+    el.innerHTML = '<div class="empty-state"><p>Connect a platform to see live listings</p></div>';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/commerce/products');
+    const d = await r.json();
+    let totalListings = 0;
+    let html = '';
+
+    for (const [platform, result] of Object.entries(d)) {
+      if (result.error) {
+        html += `<p style="color:#d00;font-size:12px">${esc(platform)}: ${esc(result.error)}</p>`;
+        continue;
+      }
+
+      const products = result.data?.products || result.data?.success?.products || [];
+      totalListings += products.length;
+
+      if (products.length) {
+        html += `<div style="margin-bottom:6px;font-size:11px;color:#999999;text-transform:uppercase;font-weight:bold">${esc(platform)}</div>`;
+        html += '<table><thead><tr><th>Title</th><th>Price</th><th>Status</th></tr></thead><tbody>';
+        for (const p of products.slice(0, 10)) {
+          const title = p.title || p.name || 'Untitled';
+          const price = p.variants?.[0]?.price || p.price || '\u2014';
+          const status = p.status || 'active';
+          const badgeClass = status === 'active' ? 'badge-active' : 'badge-draft';
+          html += `<tr>
+            <td>${esc(title)}</td>
+            <td style="font-family:monospace">$${esc(String(price))}</td>
+            <td><span class="badge ${badgeClass}">${esc(status)}</span></td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      }
+    }
+
+    document.getElementById('statListings').textContent = totalListings;
+    el.innerHTML = html || '<div class="empty-state"><p>No listings found on connected platforms</p></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p>Error: ' + esc(e.message) + '</p></div>';
+  }
+}
+
+async function loadOrders(platforms) {
+  const el = document.getElementById('ordersPanel');
+  if (!platforms || !platforms.length) {
+    document.getElementById('statOrders').textContent = '0';
+    el.innerHTML = '<div class="empty-state"><p>Connect a platform to see orders</p></div>';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/commerce/orders');
+    const d = await r.json();
+    let totalOrders = 0;
+    let html = '';
+
+    for (const [platform, result] of Object.entries(d)) {
+      if (result.error) continue;
+      const orders = result.data?.orders || result.data?.sales || [];
+      totalOrders += orders.length;
+
+      if (orders.length) {
+        html += `<div style="margin:8px 0 6px;font-size:11px;color:#999999;text-transform:uppercase;font-weight:bold">${esc(platform)}</div>`;
+        html += '<table><thead><tr><th>Order</th><th>Status</th><th>Total</th><th>Date</th></tr></thead><tbody>';
+        for (const o of orders.slice(0, 15)) {
+          const id = o.order_id || o.id || '\u2014';
+          const status = o.status || o.fulfillment_status || 'pending';
+          const total = o.total_price || o.price || '\u2014';
+          const created = o.created_at || o.created || '';
+          const needsFulfill = status === 'unfulfilled' || status === 'pending';
+          html += `<tr>
+            <td style="font-family:monospace">${esc(String(id).slice(0,12))}</td>
+            <td><span class="badge ${needsFulfill ? 'badge-pending' : 'badge-active'}">${esc(status)}</span></td>
+            <td style="font-family:monospace">$${esc(String(total))}</td>
+            <td style="color:#999999">${esc(created.slice(0,10))}</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      }
+    }
+
+    document.getElementById('statOrders').textContent = totalOrders;
+    el.innerHTML = html || '<div class="empty-state"><p>No orders yet</p></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p>Error: ' + esc(e.message) + '</p></div>';
+  }
+}
+
+async function loadAll() {
+  const platforms = await loadStatus();
+  await Promise.all([
+    loadSaved(),
+    loadListings(platforms),
+    loadOrders(platforms),
+  ]);
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

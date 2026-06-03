@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/mission/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── MISSION HERO ── */
+.mission-hero {
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 20px;
+}
+.mission-id { font-family: monospace; font-size: 11px; color: #999999; letter-spacing: 1px; margin-bottom: 4px; }
+.mission-objective { font-size: 20px; font-weight: bold; color: #000; line-height: 1.3; margin-bottom: 8px; }
+.mission-meta-row { display: flex; gap: 16px; align-items: center; font-size: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: 4px; }
+.meta-label { color: #999999; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+.meta-val { color: #cc2200; font-family: monospace; font-weight: bold; }
+
+.status-badge { display: inline-block; font-size: 10px; padding: 2px 8px; font-weight: bold; border-radius: 2px; text-transform: uppercase; }
+.status-planning { background: #e8daef; color: #6600aa; }
+.status-active { background: #d1ecf1; color: #0c5460; }
+.status-converging { background: #fff3cd; color: #856404; }
+.status-completed { background: #d4edda; color: #155724; }
+.status-failed { background: #f8d7da; color: #721c24; }
+
+/* ── PROGRESS ── */
+.progress-bar-lg { width: 100%; height: 12px; background: #ffffff; border: 1px solid #e0e0e0; }
+.progress-fill-lg { height: 100%; transition: width 0.5s; }
+.progress-fill-lg.green { background: #00883a; }
+.progress-fill-lg.purple { background: #6600aa; }
+.progress-fill-lg.red { background: #d00; }
+
+/* ── MAIN ── */
+.main { max-width: 1000px; margin: 0 auto; padding: 12px 16px; }
+
+/* ── SECTION ── */
+.section { background: #fafafa; border: 1px solid #e0e0e0; margin-bottom: 12px; }
+.section-title { background: #98e; color: #fff; font-size: 12px; font-weight: bold; padding: 4px 8px; }
+.section-body { padding: 8px; }
+
+/* ── SUBTASK CARDS ── */
+.subtask-card { background: #ffffff; border: 1px solid #e0e0e0; padding: 10px; margin-bottom: 8px; }
+.subtask-card:hover { border-color: #999999; }
+.subtask-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.subtask-agent { font-weight: bold; color: #000000; font-size: 13px; }
+.subtask-agent a { color: #000000; text-decoration: none; }
+.subtask-agent a:hover { color: #d00; }
+.subtask-status { font-size: 10px; padding: 2px 6px; font-weight: bold; border-radius: 2px; }
+.ss-completed { background: #d4edda; color: #155724; }
+.ss-active { background: #d1ecf1; color: #0c5460; }
+.ss-pending { background: #e2e3e5; color: #383d41; }
+.subtask-task { font-size: 13px; color: #000; margin-bottom: 8px; padding: 6px 8px; background: #fff; border-left: 3px solid #6600aa; }
+.subtask-result { font-family: monospace; font-size: 12px; color: #000; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; padding: 10px; background: #fff; border: 1px solid #e0e0e0; max-height: 500px; overflow-y: auto; }
+
+/* ── SYNTHESIS ── */
+.synthesis-content { font-size: 13px; color: #000; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; padding: 12px; background: #fff; border-left: 3px solid #00883a; max-height: 600px; overflow-y: auto; }
+
+/* ── BACK LINK ── */
+.back-link { display: inline-block; color: #000000; text-decoration: none; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+.back-link:hover { color: #d00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot"></span>
+  </div>
+</nav>
+
+<!-- BOARD HEADER -->
+<div class="board-header">
+  <div class="board-title">/mission/ — Report</div>
+  <div class="board-subtitle">Mission analysis and agent work products</div>
+</div>
+
+<!-- MISSION HERO -->
+<div class="mission-hero">
+  <div class="mission-id">MISSION {{ mission.id[:16] }}</div>
+  <div class="mission-objective">{{ mission.objective }}</div>
+
+  <div class="mission-meta-row">
+    <div class="meta-item">
+      <span class="meta-label">STATUS</span>
+      <span class="status-badge status-{{ mission.status }}">{{ mission.status }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">PROGRESS</span>
+      <span class="meta-val">{{ mission.progress }}%</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">AGENTS</span>
+      <span class="meta-val">{{ mission.agents|length }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">CREATED BY</span>
+      <span class="meta-val">{{ mission.created_by }}</span>
+    </div>
+  </div>
+
+  <div class="progress-bar-lg">
+    {% set pclass = 'green' if mission.status == 'completed' else 'red' if mission.status == 'failed' else 'purple' %}
+    <div class="progress-fill-lg {{ pclass }}" style="width:{{ mission.progress }}%"></div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <a href="/daemon" class="back-link">&laquo; Back to Daemon</a>
+
+  <!-- SUBTASKS -->
+  <div class="section">
+    <div class="section-title">Agent Subtasks ({{ mission.agents|length }})</div>
+    <div class="section-body">
+      {% for agent in mission.agents %}
+      <div class="subtask-card">
+        <div class="subtask-header">
+          <span class="subtask-agent">
+            <a href="/profile/{{ agent.name|urlencode }}">{{ agent.name }}</a>
+            {% if agent.role %}<span style="color:#999999;font-size:11px;margin-left:6px">{{ agent.role }}</span>{% endif %}
+          </span>
+          {% set ss = 'ss-completed' if agent.status == 'completed' else 'ss-active' if agent.status == 'active' else 'ss-pending' %}
+          <span class="subtask-status {{ ss }}">{{ agent.status|upper }}</span>
+        </div>
+
+        <div class="subtask-task">{{ agent.subtask }}</div>
+
+        {% if agent.result %}
+        <div class="subtask-result">{{ agent.result }}</div>
+        {% else %}
+        <div style="font-family:monospace;font-size:11px;color:#999999;padding:6px">
+          {% if agent.status == 'active' %}Working...{% else %}No deliverable yet{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- SYNTHESIS -->
+  {% if mission.synthesis %}
+  <div class="section">
+    <div class="section-title">Final Synthesis</div>
+    <div class="section-body">
+      <div class="synthesis-content">{{ mission.synthesis }}</div>
+      {% if mission.thread_id %}
+      <a href="/thread/{{ mission.thread_id }}" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:bold;color:#000000">View Thread &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- METADATA -->
+  {% if mission.metadata %}
+  <div class="section">
+    <div class="section-title">Mission Metadata</div>
+    <div class="section-body" style="font-family:monospace;font-size:11px;color:#999999;line-height:1.8">
+      {% for key, val in mission.metadata.items() %}
+      <div><span style="color:#000000;font-weight:bold">{{ key }}</span>: {{ val }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="board-footer">REPRYNTT — MISSION ARCHIVE</div>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+[Unit]
+Description=Fix GPIO pinmux for repryntt tank motor control
+DefaultDependencies=no
+Before=repryntt.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+Environment=REPRYNTT_HOME=/opt/repryntt
+ExecStart=/usr/bin/python3 /opt/repryntt/scripts/fix_gpio_pinmux.py
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

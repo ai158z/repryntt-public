@@ -1,0 +1,23 @@
+{
+  "total_supply_credits": 950.95,
+  "total_wallets": 4,
+  "last_updated": "2026-04-17T15:34:20.962239",
+  "wallets": {
+    "DAO": {
+      "balance_credits": 0.0,
+      "balance_plancks": 0
+    },
+    "SYSTEM": {
+      "balance_credits": 0.0,
+      "balance_plancks": 0
+    },
+    "STAKE_POOL": {
+      "balance_credits": 0.0,
+      "balance_plancks": 0
+    },
+    "a1a4090aced69d411b6e62bf49944f295c85ed88": {
+      "balance_credits": 950.95,
+      "balance_plancks": 95095000000
+    }
+  }
+}

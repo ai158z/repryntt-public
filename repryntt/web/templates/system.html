@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/system/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── SYSTEM DASHBOARD ── */
+.sys-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px; }
+@media (max-width:900px) { .sys-grid { grid-template-columns:1fr; } }
+.sys-full { grid-column:1/-1; }
+
+.panel { background:#fafafa; border:1px solid #e0e0e0; }
+.panel h2 { background:#98e; color:#fff; font-size:12px; font-weight:bold; padding:4px 8px; margin:0; display:flex; justify-content:space-between; align-items:center; }
+.panel-body { padding:8px; }
+
+/* Stats cards */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:6px; }
+.stat { background:#ffffff; border:1px solid #e0e0e0; padding:8px; text-align:center; }
+.stat .label { font-size:10px; color:#999999; font-weight:bold; text-transform:uppercase; }
+.stat .value { font-size:20px; font-weight:bold; font-family:monospace; color:#cc2200; margin-top:2px; }
+.stat .sub { font-size:10px; color:#999999; }
+
+/* Daemon control */
+.daemon-ctrl { display:flex; gap:6px; align-items:center; margin-top:8px; }
+.daemon-btn { padding:4px 12px; font-size:12px; font-weight:bold; border:1px solid #e0e0e0; cursor:pointer; font-family:arial,sans-serif; }
+.daemon-btn.start { background:#d4edda; color:#155724; }
+.daemon-btn.start:hover { background:#c3e6cb; }
+.daemon-btn.stop { background:#f8d7da; color:#721c24; }
+.daemon-btn.stop:hover { background:#f5c6cb; }
+.daemon-status { font-weight:bold; font-size:12px; }
+.daemon-status.on { color:#00883a; }
+.daemon-status.off { color:#d00; }
+
+/* Log viewer */
+#log-output {
+  background:#111; color:#9d9; font-family:monospace; font-size:11px;
+  height:300px; overflow-y:auto; padding:8px; border:1px solid #333;
+  line-height:1.5; white-space:pre-wrap; word-break:break-all;
+}
+#log-output .error { color:#f66; }
+#log-output .warn { color:#fc6; }
+
+/* File browser */
+.file-tabs { display:flex; gap:0; border-bottom:1px solid #e0e0e0; }
+.file-tab { padding:4px 12px; font-size:11px; font-weight:bold; cursor:pointer; background:#ffffff; border:1px solid #e0e0e0; border-bottom:none; color:#000000; }
+.file-tab.active { background:#fafafa; color:#cc2200; }
+.file-list { max-height:200px; overflow-y:auto; }
+.file-item { padding:3px 8px; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; border-bottom:1px solid #ffffff; }
+.file-item:hover { background:#ffffff; }
+.file-item .fname { font-family:monospace; color:#000000; }
+.file-item .fsize { font-size:10px; color:#999999; font-family:monospace; }
+.file-item .fdir { color:#6600aa; font-weight:bold; }
+
+/* File content viewer */
+#file-content {
+  background:#fff; font-family:monospace; font-size:11px;
+  max-height:250px; overflow-y:auto; padding:8px; border:1px solid #e0e0e0;
+  white-space:pre-wrap; word-break:break-all; display:none;
+}
+#file-content-header { font-size:11px; font-weight:bold; color:#000000; padding:4px 8px; display:none; background:#ffffff; border:1px solid #e0e0e0; border-bottom:none; }
+
+/* Dashboard links */
+.dash-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:6px; }
+.dash-link { display:block; background:#ffffff; border:1px solid #e0e0e0; padding:10px; text-align:center; text-decoration:none; color:#000000; font-weight:bold; font-size:13px; transition:background 0.2s; }
+.dash-link:hover { background:#dde5ff; color:#d00; }
+.dash-link .icon { font-size:20px; display:block; margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot"></span>
+  </div>
+</nav>
+
+<div style="text-align:center;padding:8px 0 4px;background:#fafafa;border-bottom:1px solid #e0e0e0;">
+  <div style="font-size:24px;font-weight:bold;color:#cc2200;letter-spacing:-1px;">System Dashboard</div>
+  <div style="font-size:11px;color:#999999;">repryntt command center</div>
+</div>
+
+<div class="sys-grid">
+
+  <!-- System Stats -->
+  <div class="panel">
+    <h2>System Stats <span id="stats-refresh" style="cursor:pointer;font-weight:normal;font-size:10px;" onclick="loadStats()">↻ refresh</span></h2>
+    <div class="panel-body">
+      <div class="stat-grid" id="stats-grid">
+        <div class="stat"><div class="label">Loading...</div><div class="value">—</div></div>
+      </div>
+      <div class="daemon-ctrl">
+        <span class="daemon-status" id="daemon-status">—</span>
+        <button class="daemon-btn start" onclick="startDaemon()">▶ START</button>
+        <button class="daemon-btn stop" onclick="stopDaemon()">■ STOP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboards -->
+  <div class="panel">
+    <h2>Dashboards</h2>
+    <div class="panel-body">
+      <div class="dash-grid">
+        <a href="/hub/" class="dash-link"><span class="icon">🏠</span>Hub</a>
+        <a href="/daemon/" class="dash-link"><span class="icon">🤖</span>Daemon</a>
+        <a href="/command/" class="dash-link"><span class="icon">⌨️</span>Command</a>
+        <a href="/ops/" class="dash-link"><span class="icon">📊</span>Ops</a>
+        <a href="/social/" class="dash-link"><span class="icon">💬</span>Social</a>
+        <a href="/commerce/" class="dash-link"><span class="icon">💰</span>Commerce</a>
+        <a href="/trading/" class="dash-link"><span class="icon">📈</span>Trading</a>
+        <a href="/chain/" class="dash-link"><span class="icon">⛓️</span>Explorer</a>
+        <a href="/exchange/" class="dash-link"><span class="icon">🔄</span>Exchange</a>
+        <a href="/chat/" class="dash-link"><span class="icon">🗨️</span>Chat</a>
+        <a href="/forge/" class="dash-link"><span class="icon">🔨</span>Forge</a>
+        <a href="/marketplace/" class="dash-link"><span class="icon">🏪</span>Market</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Browser -->
+  <div class="panel">
+    <h2>System Files</h2>
+    <div class="panel-body">
+      <div class="file-tabs">
+        <div class="file-tab active" onclick="loadFiles('bootstrap',this)">bootstrap/</div>
+        <div class="file-tab" onclick="loadFiles('brain',this)">brain/</div>
+        <div class="file-tab" onclick="loadFiles('config',this)">config/</div>
+        <div class="file-tab" onclick="loadFiles('logs',this)">logs/</div>
+      </div>
+      <div class="file-list" id="file-list"></div>
+      <div id="file-content-header"></div>
+      <div id="file-content"></div>
+    </div>
+  </div>
+
+  <!-- Live Logs -->
+  <div class="panel">
+    <h2>Live Logs <span id="log-status" style="font-weight:normal;font-size:10px;color:#ddd;">connecting...</span></h2>
+    <div class="panel-body" style="padding:0;">
+      <div id="log-output"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Stats ── */
+async function loadStats() {
+  try {
+    const r = await fetch('/api/system/stats');
+    const s = await r.json();
+    const grid = document.getElementById('stats-grid');
+    grid.innerHTML = `
+      <div class="stat"><div class="label">CPU</div><div class="value">${s.cpu_percent||0}%</div></div>
+      <div class="stat"><div class="label">RAM</div><div class="value">${s.ram_percent||0}%</div><div class="sub">${s.ram_used_gb||0}/${s.ram_total_gb||0} GB</div></div>
+      <div class="stat"><div class="label">Disk</div><div class="value">${s.disk_percent||0}%</div><div class="sub">${s.disk_free_gb||0} GB free</div></div>
+      <div class="stat"><div class="label">GPU</div><div class="value">${s.gpu_vram_mb ? Math.round(s.gpu_vram_mb/1024)+'G' : '—'}</div><div class="sub">${s.gpu_name||'None'}</div></div>
+      <div class="stat"><div class="label">Agent</div><div class="value" style="font-size:14px">${s.agent_name||'—'}</div><div class="sub">${s.provider||'—'}</div></div>
+      <div class="stat"><div class="label">Heartbeat</div><div class="value">${s.heartbeat||0}s</div></div>
+    `;
+    const ds = document.getElementById('daemon-status');
+    if (s.daemon_running) {
+      ds.textContent = '● RUNNING'; ds.className = 'daemon-status on';
+    } else {
+      ds.textContent = '○ STOPPED'; ds.className = 'daemon-status off';
+    }
+    document.getElementById('topbar-status').innerHTML =
+      s.daemon_running ? '<b style="color:#00883a">● ONLINE</b>' : '<b style="color:#d00">○ OFFLINE</b>';
+  } catch(e) {
+    console.error('Stats error:', e);
+  }
+}
+
+async function startDaemon() {
+  const r = await fetch('/api/system/start', {method:'POST'});
+  const d = await r.json();
+  if (d.started) { loadStats(); } else { alert('Start failed: ' + (d.error||'unknown')); }
+}
+
+async function stopDaemon() {
+  const r = await fetch('/api/system/stop', {method:'POST'});
+  const d = await r.json();
+  setTimeout(loadStats, 1500);
+}
+
+/* ── File Browser ── */
+let currentDir = 'bootstrap';
+
+async function loadFiles(dir, tabEl) {
+  currentDir = dir;
+  document.querySelectorAll('.file-tab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+  document.getElementById('file-content').style.display = 'none';
+  document.getElementById('file-content-header').style.display = 'none';
+
+  const r = await fetch('/api/system/files?path=' + encodeURIComponent(dir));
+  const d = await r.json();
+  const list = document.getElementById('file-list');
+
+  if (!d.files || d.files.length === 0) {
+    list.innerHTML = '<div style="padding:8px;color:#999999;font-size:12px;">(empty)</div>';
+    return;
+  }
+
+  list.innerHTML = d.files.map(f => {
+    const size = f.is_dir ? '' : formatSize(f.size);
+    const cls = f.is_dir ? 'fdir' : 'fname';
+    const icon = f.is_dir ? '📁 ' : '📄 ';
+    return `<div class="file-item" onclick="viewFile('${dir}','${f.name}',${f.is_dir})">
+      <span class="${cls}">${icon}${f.name}</span>
+      <span class="fsize">${size}</span>
+    </div>`;
+  }).join('');
+}
+
+async function viewFile(dir, name, isDir) {
+  if (isDir) return;
+  const r = await fetch('/api/system/file?path=' + encodeURIComponent(dir) + '&name=' + encodeURIComponent(name));
+  const d = await r.json();
+  const header = document.getElementById('file-content-header');
+  const content = document.getElementById('file-content');
+  if (d.error) {
+    header.textContent = name + ' — ' + d.error;
+    header.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  header.textContent = dir + '/' + name + ' (' + formatSize(d.size) + ')';
+  header.style.display = 'block';
+  content.textContent = d.content;
+  content.style.display = 'block';
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + 'KB';
+  return (bytes/1048576).toFixed(1) + 'MB';
+}
+
+/* ── Live Logs ── */
+function connectLogs() {
+  const output = document.getElementById('log-output');
+  const status = document.getElementById('log-status');
+  const source = new EventSource('/api/system/logs');
+
+  source.onopen = () => { status.textContent = 'streaming'; status.style.color = '#8f8'; };
+
+  source.onmessage = e => {
+    const line = document.createElement('div');
+    line.textContent = e.data;
+    if (/error|exception|traceback/i.test(e.data)) line.className = 'error';
+    else if (/warn/i.test(e.data)) line.className = 'warn';
+    output.appendChild(line);
+    // Keep max 500 lines
+    while (output.children.length > 500) output.removeChild(output.firstChild);
+    output.scrollTop = output.scrollHeight;
+  };
+
+  source.onerror = () => {
+    status.textContent = 'disconnected'; status.style.color = '#f88';
+    source.close();
+    setTimeout(connectLogs, 5000);
+  };
+}
+
+/* ── Init ── */
+loadStats();
+loadFiles('bootstrap');
+connectLogs();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>

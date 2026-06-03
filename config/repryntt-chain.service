@@ -1,0 +1,44 @@
+[Unit]
+Description=repryntt Blockchain Node (Rust)
+Documentation=https://github.com/ai158z/repryntt
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_WITH_LOCAL_USER
+Group=REPLACE_WITH_LOCAL_GROUP
+
+# Per-machine identity and runtime config.
+# This checked-in file is documentation/template only. `repryntt chain install`
+# generates the real unit with the current checkout path, user/group, data
+# directory, log file, and this device's wallet identity.
+EnvironmentFile=REPLACE_WITH_REPRYNTT_DATA_DIR/repryntt-chain.env
+
+# Peer discovery.
+# Preferred production path: HTTP(S) bootstrap registry. The registry is only
+# a phonebook; it does not run consensus, hold wallets, or store chain state.
+#Environment=REPRYNTT_BOOTSTRAP_URL=https://bootstrap.example.org
+# Optional when this node is publicly reachable behind NAT/DNS:
+#Environment=REPRYNTT_PUBLIC_P2P_ADDR=tcp://203.0.113.10:5001
+
+ExecStart=REPLACE_WITH_PROJECT_ROOT/repryntt-core/target/release/repryntt_core
+
+# Always restart — the chain never stops
+Restart=always
+RestartSec=5
+
+# Logging — journal + file
+StandardOutput=append:REPLACE_WITH_LOG_DIR/rust-chain.log
+StandardError=append:REPLACE_WITH_LOG_DIR/rust-chain.log
+SyslogIdentifier=repryntt-chain
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=REPLACE_WITH_REPRYNTT_DATA_DIR
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

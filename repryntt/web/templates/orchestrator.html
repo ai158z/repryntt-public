@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Orchestrator — Andrew's Director</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+.orch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px;
+}
+@media (max-width: 1100px) { .orch-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .orch-grid { grid-template-columns: 1fr; } }
+
+.panel { background: #fafafa; border: 1px solid #e0e0e0; }
+.panel h2 {
+  background: #98e; color: #fff; font-size: 12px; font-weight: bold;
+  padding: 4px 8px; margin: 0;
+}
+.panel-body { padding: 10px; font-family: monospace; font-size: 12px; }
+
+.metric { font-size: 28px; font-weight: bold; color: #000000; margin: 4px 0; }
+.metric-sub { color: #666; font-size: 11px; }
+
+.verdict-card { padding: 14px; text-align: center; }
+.verdict-green  { background: #d4edd0; border-color: #5a4; }
+.verdict-yellow { background: #faf3c0; border-color: #b95; }
+.verdict-red    { background: #f0c8c8; border-color: #b33; }
+.verdict-label { font-size: 26px; font-weight: bold; }
+.verdict-green .verdict-label  { color: #2a5; }
+.verdict-yellow .verdict-label { color: #a72; }
+.verdict-red .verdict-label    { color: #b33; }
+
+.full { grid-column: 1 / -1; }
+
+.controls { display: flex; gap: 8px; margin: 8px; flex-wrap: wrap; }
+.btn {
+  background: #000000; color: #fff; border: none; padding: 6px 14px;
+  font-size: 12px; cursor: pointer; font-family: monospace;
+}
+.btn:hover { background: #4a4a72; }
+.btn-secondary { background: #888; }
+.btn-danger { background: #b33; }
+
+.list-tight { margin: 4px 0; padding-left: 18px; }
+.list-tight li { margin: 1px 0; }
+
+#brief-preview {
+  background: #fff; border: 1px solid #aab; padding: 10px;
+  font-size: 12px; line-height: 1.4; white-space: pre-wrap;
+  max-height: 380px; overflow-y: auto;
+}
+.muted { color: #888; font-style: italic; }
+
+.tools-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tools-table td { padding: 2px 6px; border-bottom: 1px dotted #e0e0e0; }
+.tools-table td:last-child { text-align: right; color: #555; }
+</style>
+</head>
+<body>
+
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot"></span>
+  </div>
+</nav>
+
+<div class="board-header">
+  <div class="board-title">Orchestrator — Andrew's Director</div>
+  <div class="board-subtitle">Read-only supervisor. Posts advisory Director Briefs to /social.</div>
+</div>
+<hr class="board-sep">
+
+<div class="controls">
+  <button class="btn" onclick="refreshSnapshot()">Refresh snapshot</button>
+  <button class="btn" onclick="writeBrief()">Write Director Brief</button>
+  <button class="btn btn-secondary" id="council-toggle-btn" onclick="toggleCouncil()">Council: ?</button>
+  <span style="font-size: 11px; color: #666; align-self: center;" id="last-update">—</span>
+</div>
+
+<div class="orch-grid">
+  <div class="panel verdict-card" id="verdict-panel">
+    <div class="metric-sub">Verdict</div>
+    <div class="verdict-label" id="verdict-label">—</div>
+    <div class="metric-sub" id="verdict-window">—</div>
+  </div>
+
+  <div class="panel">
+    <h2>Heartbeat</h2>
+    <div class="panel-body">
+      <div class="metric" id="score-avg">—</div>
+      <div class="metric-sub">avg score / 5</div>
+      <div style="margin-top:6px;">
+        <span class="metric-sub">Trend:</span>
+        <strong id="score-trend">—</strong>
+      </div>
+      <div><span class="metric-sub">Heartbeats:</span> <strong id="heartbeats-seen">—</strong></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>CodeForge</h2>
+    <div class="panel-body">
+      <div class="metric" id="bypass-pct">—</div>
+      <div class="metric-sub">raw-write bypass %</div>
+      <div style="margin-top:6px;">
+        <span class="metric-sub">forge_project calls:</span> <strong id="forge-calls">—</strong>
+      </div>
+      <div>
+        <span class="metric-sub">raw code writes:</span> <strong id="raw-writes">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Council</h2>
+    <div class="panel-body">
+      <div class="metric" id="council-threads">—</div>
+      <div class="metric-sub">threads today</div>
+      <div style="margin-top:6px;">
+        <span class="metric-sub">Engine:</span>
+        <strong id="council-status">—</strong>
+      </div>
+      <div>
+        <span class="metric-sub">Idle loop detected:</span>
+        <strong id="idle-loop">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Top Tools (window)</h2>
+    <div class="panel-body">
+      <table class="tools-table" id="top-tools-table"><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Today's Code Files</h2>
+    <div class="panel-body">
+      <ul class="list-tight" id="today-code-files"><li class="muted">—</li></ul>
+    </div>
+  </div>
+
+  <div class="panel" style="grid-column: span 2;">
+    <h2>Today's Artifacts</h2>
+    <div class="panel-body">
+      <ul class="list-tight" id="today-artifacts"><li class="muted">—</li></ul>
+    </div>
+  </div>
+
+  <div class="panel full">
+    <h2>Latest Director Brief</h2>
+    <div class="panel-body">
+      <div id="brief-preview" class="muted">No brief in the last 24 hours.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function fetchJSON(url, opts) {
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+function renderSnapshot(s) {
+  const verdictPanel = document.getElementById('verdict-panel');
+  verdictPanel.classList.remove('verdict-green', 'verdict-yellow', 'verdict-red');
+  verdictPanel.classList.add('verdict-' + s.verdict);
+  document.getElementById('verdict-label').textContent = s.verdict.toUpperCase();
+  document.getElementById('verdict-window').textContent =
+    `last ${s.window_hours}h · ${s.heartbeats_seen} heartbeats`;
+
+  document.getElementById('score-avg').textContent = s.score_avg.toFixed(2);
+  document.getElementById('score-trend').textContent = s.score_trend;
+  document.getElementById('heartbeats-seen').textContent = s.heartbeats_seen;
+
+  const bp = Math.round((s.codeforge_bypass_pct || 0) * 100);
+  document.getElementById('bypass-pct').textContent = bp + '%';
+  document.getElementById('forge-calls').textContent = s.codeforge_calls;
+  document.getElementById('raw-writes').textContent = s.raw_write_code_files;
+
+  document.getElementById('council-threads').textContent = s.council_threads_today;
+  document.getElementById('council-status').textContent = s.council_active ? 'active' : 'idle';
+  document.getElementById('idle-loop').textContent = s.idle_loop_detected ? 'YES' : 'no';
+
+  const ttBody = document.querySelector('#top-tools-table tbody');
+  ttBody.innerHTML = '';
+  (s.top_tools || []).forEach(([name, count]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${name}</td><td>${count}</td>`;
+    ttBody.appendChild(tr);
+  });
+  if (!ttBody.children.length) {
+    ttBody.innerHTML = '<tr><td colspan="2" class="muted">No tool calls in window.</td></tr>';
+  }
+
+  const codeUL = document.getElementById('today-code-files');
+  codeUL.innerHTML = (s.today_code_files || []).map(f => `<li><code>${f}</code></li>`).join('')
+    || '<li class="muted">No code files written today.</li>';
+
+  const artUL = document.getElementById('today-artifacts');
+  artUL.innerHTML = (s.today_artifacts || []).map(f => `<li>${f}</li>`).join('')
+    || '<li class="muted">No artifacts produced today.</li>';
+
+  document.getElementById('last-update').textContent = 'Snapshot: ' + s.as_of;
+}
+
+async function refreshSnapshot() {
+  try {
+    const s = await fetchJSON('/orchestrator/api/snapshot?hours=6');
+    renderSnapshot(s);
+  } catch (e) {
+    document.getElementById('last-update').textContent = 'Snapshot failed: ' + e;
+  }
+}
+
+async function loadLatestBrief() {
+  try {
+    const b = await fetchJSON('/orchestrator/api/latest_brief');
+    const el = document.getElementById('brief-preview');
+    if (b && b.summary) {
+      el.classList.remove('muted');
+      el.textContent = b.summary + `\n\n— ${b.age_minutes} min old`;
+    }
+  } catch (e) { /* silent */ }
+}
+
+async function writeBrief() {
+  const r = await fetchJSON('/orchestrator/api/brief', { method: 'POST' });
+  if (r.success) {
+    await loadLatestBrief();
+    alert('Director Brief posted (verdict: ' + (r.verdict || '?') + ')');
+  } else {
+    alert('Brief not posted: ' + (r.error || 'unknown'));
+  }
+}
+
+async function updateCouncilButton() {
+  try {
+    const s = await fetchJSON('/orchestrator/api/council/status');
+    const btn = document.getElementById('council-toggle-btn');
+    btn.textContent = 'Council: ' + (s.enabled ? 'ON' : 'OFF');
+    btn.classList.toggle('btn-danger', !!s.enabled);
+    btn.classList.toggle('btn-secondary', !s.enabled);
+  } catch (e) { /* silent */ }
+}
+
+async function toggleCouncil() {
+  const cur = await fetchJSON('/orchestrator/api/council/status');
+  const want = !cur.enabled;
+  await fetchJSON('/orchestrator/api/council/toggle', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled: want }),
+  });
+  await updateCouncilButton();
+}
+
+refreshSnapshot();
+loadLatestBrief();
+updateCouncilButton();
+setInterval(refreshSnapshot, 30000);
+</script>
+
+</body>
+</html>

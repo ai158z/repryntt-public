@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/forge/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+:root {
+  --red:#cc2200; --green:#00883a; --cyan:#0044bb; --purple:#6600aa;
+  --yellow:#886600; --orange:#cc6600;
+  --text:#000; --text-dim:#999; --dim:#ccc; --bg:#fff;
+  --card:#fafafa; --surface:#f5f5f5; --border:#e0e0e0;
+  --mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:system-ui,-apple-system,Arial,sans-serif;
+}
+body { font-family:var(--sans); margin:0; background:#fff; color:#000; }
+
+.nav {
+  background:#000; color:#fff; padding:6px 16px; font-size:11px; font-weight:bold;
+  display:flex; gap:14px; align-items:center; letter-spacing:0.12em;
+  text-transform:uppercase; font-family:var(--mono);
+}
+.nav a { color:#999; text-decoration:none; padding:2px 6px; }
+.nav a:hover { color:#fff; }
+.nav a.active { color:#fff; background:#222; }
+.nav .logo { color:#fff; padding:0; margin-right:8px; }
+
+.stats-row {
+  background:#fafafa; border-bottom:1px solid var(--border); padding:6px 12px;
+  display:flex; gap:24px; justify-content:flex-start; flex-wrap:wrap;
+}
+.stat-box { text-align:left; min-width:80px; }
+.stat-box .label { font-size:9px; color:var(--text-dim); font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.1em; }
+.stat-box .value { font-size:14px; font-weight:bold; color:#000;
+  font-family:var(--mono); }
+
+.container { padding:12px; max-width:1600px; margin:0 auto; }
+.panel { background:#fff; border:1px solid var(--border); margin-bottom:14px; }
+.panel-header {
+  background:#000; color:#fff; padding:6px 12px; font-size:11px;
+  font-weight:bold; letter-spacing:0.16em; text-transform:uppercase;
+  font-family:var(--mono); display:flex; justify-content:space-between; align-items:center;
+}
+.panel-header .count { color:#888; font-size:10px; font-weight:normal; }
+.panel-body { padding:0; }
+
+table.projects, table.proposals { width:100%; border-collapse:collapse;
+  font-family:var(--mono); font-size:11px; }
+.projects th, .projects td, .proposals th, .proposals td {
+  text-align:left; padding:5px 10px; border-bottom:1px solid var(--border); }
+.projects th, .proposals th {
+  background:#f5f5f5; font-size:10px; text-transform:uppercase; letter-spacing:0.1em;
+  color:#666; font-weight:bold; }
+.projects tr:hover, .proposals tr:hover { background:#fafafa; cursor:pointer; }
+.projects tr.selected { background:#fffbe6; }
+
+.status-pill {
+  display:inline-block; padding:1px 7px; font-size:10px; font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.06em; border-radius:2px;
+}
+.status-queued { background:#eee; color:#666; }
+.status-specifying, .status-architecting, .status-generating,
+.status-testing, .status-fix_iterating, .status-validating, .status-packaging {
+  background:#fff7e6; color:var(--orange); }
+.status-complete, .status-completed { background:#e7f6ec; color:var(--green); }
+.status-failed, .status-error, .status-cancelled { background:#fdecea; color:var(--red); }
+.status-deliberating { background:#e7f1ff; color:var(--cyan); }
+.status-approved { background:#e7f6ec; color:var(--green); }
+.status-building { background:#fff7e6; color:var(--orange); }
+.status-rejected { background:#fdecea; color:var(--red); }
+
+.btn {
+  display:inline-block; padding:3px 10px; font-size:11px; font-weight:bold;
+  background:#fff; border:1px solid var(--border); color:#000; cursor:pointer;
+  font-family:var(--sans);
+}
+.btn:hover { background:#f5f5f5; border-color:#666; }
+.btn.approve { color:var(--green); }
+.btn.approve:hover { background:#dfd; border-color:var(--green); }
+.btn.reject { color:var(--red); }
+.btn.reject:hover { background:#fdd; border-color:var(--red); }
+.btn.cancel { color:var(--red); }
+
+.detail-grid { display:grid; grid-template-columns: 1fr 1.2fr; gap:14px; }
+@media (max-width: 1000px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.detail-section { padding:10px 14px; }
+.detail-section h4 {
+  margin:0 0 6px 0; font-size:10px; font-weight:bold; text-transform:uppercase;
+  letter-spacing:0.14em; color:#666; font-family:var(--mono); }
+.detail-section .kv { font-family:var(--mono); font-size:11px; line-height:1.6; }
+.detail-section .kv span.k { color:#888; display:inline-block; min-width:120px; }
+.detail-section .kv span.v { color:#000; }
+
+.module-list { font-family:var(--mono); font-size:11px; margin:0;
+  padding:0; list-style:none; }
+.module-list li {
+  padding:3px 8px; border-bottom:1px solid var(--border); display:flex;
+  justify-content:space-between; align-items:center; }
+.module-list li .mod-status {
+  font-size:9px; text-transform:uppercase; letter-spacing:0.08em;
+  padding:0 5px; border-radius:2px; }
+.mod-pending { background:#eee; color:#888; }
+.mod-generating, .mod-testing { background:#fff7e6; color:var(--orange); }
+.mod-complete { background:#e7f6ec; color:var(--green); }
+.mod-failed { background:#fdecea; color:var(--red); }
+
+.stream-panel {
+  background:#0e0e0e; color:#0f0; font-family:var(--mono); font-size:10px;
+  padding:8px 12px; max-height:220px; overflow-y:auto; line-height:1.5; }
+.stream-line { white-space:pre-wrap; }
+.stream-line.api-call { color:#9cdcfe; }
+.stream-line.stage    { color:#dcdcaa; }
+.stream-line.error    { color:#f48771; }
+.stream-line.module   { color:#ce9178; }
+
+.deliberation-box {
+  border:1px solid var(--border); margin:6px 14px; padding:8px;
+  background:#fafafa; font-family:var(--mono); font-size:10px;
+}
+.deliberation-box .model {
+  font-size:10px; font-weight:bold; text-transform:uppercase; letter-spacing:0.1em;
+  color:#666; margin-bottom:3px; }
+
+.empty {
+  padding:14px; text-align:center; color:#999; font-family:var(--mono);
+  font-size:11px; font-style:italic; }
+
+.refresh-indicator {
+  display:inline-block; font-size:9px; color:var(--text-dim); margin-left:8px;
+  font-family:var(--mono); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="/">REPRYNTT</a>
+  <a href="/">hub</a>
+  <a href="/social">social</a>
+  <a href="/daemon">daemon</a>
+  <a href="/ops">ops</a>
+  <a href="/command/">command</a>
+  <a href="/chat/">chat</a>
+  <a href="/forge" class="active">forge</a>
+  <a href="/settings">settings</a>
+</nav>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="label">active builds</div><div class="value" id="stat-active">0</div></div>
+  <div class="stat-box"><div class="label">deliberating</div><div class="value" id="stat-deliberating">0</div></div>
+  <div class="stat-box"><div class="label">awaiting approval</div><div class="value" id="stat-pending">0</div></div>
+  <div class="stat-box"><div class="label">complete today</div><div class="value" id="stat-complete">0</div></div>
+  <div class="stat-box"><div class="label">remaining today</div><div class="value" id="stat-remaining">?</div></div>
+  <div class="stat-box"><div class="label">primary model</div><div class="value" id="stat-model" style="font-size:11px;">—</div></div>
+</div>
+
+<div class="container">
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>Active &amp; recent builds <span class="count" id="proj-count"></span></span>
+      <span>
+        <button class="btn cancel" onclick="reapStale()" title="Cancel any project still in an active status with no live pipeline thread (left over from a previous daemon restart)">reap stale builds</button>
+        <span class="refresh-indicator" id="refresh-time"></span>
+      </span>
+    </div>
+    <div class="panel-body">
+      <table class="projects">
+        <thead>
+          <tr>
+            <th style="width:24%">name</th>
+            <th style="width:11%">status</th>
+            <th style="width:12%">model</th>
+            <th style="width:8%">modules</th>
+            <th style="width:8%">api calls</th>
+            <th style="width:8%">elapsed</th>
+            <th style="width:8%">quality</th>
+            <th style="width:21%">started</th>
+          </tr>
+        </thead>
+        <tbody id="projects-tbody">
+          <tr><td colspan="8" class="empty">no builds yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="detail-panel" style="display:none">
+    <div class="panel-header">
+      <span id="detail-title">Build detail</span>
+      <span>
+        <button class="btn cancel" id="detail-cancel-btn" style="display:none">cancel build</button>
+        <button class="btn" onclick="closeDetail()">close ✕</button>
+      </span>
+    </div>
+    <div class="panel-body">
+      <div class="detail-grid">
+        <div class="detail-section">
+          <h4>summary</h4>
+          <div class="kv" id="detail-kv"></div>
+          <h4 style="margin-top:14px">description</h4>
+          <div id="detail-desc" style="font-family:var(--mono);font-size:11px;line-height:1.5;color:#000;white-space:pre-wrap"></div>
+          <h4 style="margin-top:14px">errors</h4>
+          <div id="detail-errors" style="font-family:var(--mono);font-size:10px;color:var(--red);white-space:pre-wrap;line-height:1.5"></div>
+        </div>
+        <div class="detail-section">
+          <h4>modules</h4>
+          <ul class="module-list" id="detail-modules"><li class="empty">—</li></ul>
+          <h4 style="margin-top:14px">live model calls <span class="refresh-indicator" id="stream-status">connecting...</span></h4>
+          <div class="stream-panel" id="stream-panel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>Proposals <span class="count" id="prop-count"></span></span>
+      <span class="refresh-indicator">approve/reject below — approved proposals start the build automatically</span>
+    </div>
+    <div class="panel-body">
+      <table class="proposals">
+        <thead>
+          <tr>
+            <th style="width:14%">id / status</th>
+            <th style="width:9%">proposer</th>
+            <th style="width:42%">description</th>
+            <th style="width:13%">created</th>
+            <th style="width:22%">actions</th>
+          </tr>
+        </thead>
+        <tbody id="proposals-tbody">
+          <tr><td colspan="5" class="empty">no proposals</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let SELECTED_PROJECT_ID = null;
+let STREAM_EVT_SOURCE = null;
+
+const STATE = {
+  projects: [],
+  proposals: [],
+  settings: null,
+};
+
+async function fetchJSON(url, opts) {
+  try {
+    const r = await fetch(url, opts);
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json();
+  } catch (e) {
+    console.warn('fetch failed', url, e);
+    return null;
+  }
+}
+
+function pill(s) {
+  return '<span class="status-pill status-'+(s||'').toLowerCase()+'">'+(s||'?')+'</span>';
+}
+
+function fmtElapsed(secs) {
+  if (!secs || secs < 0) return '—';
+  if (secs < 60) return Math.round(secs)+'s';
+  if (secs < 3600) return Math.floor(secs/60)+'m '+Math.round(secs%60)+'s';
+  return Math.floor(secs/3600)+'h '+Math.floor((secs%3600)/60)+'m';
+}
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts*1000);
+  return d.toLocaleString();
+}
+
+function shortDesc(s, n=80) {
+  if (!s) return '';
+  s = s.replace(/\s+/g, ' ').trim();
+  return s.length > n ? s.slice(0,n)+'…' : s;
+}
+
+function shortModel(m) {
+  if (!m) return '—';
+  // strip 'nvidia/' or 'mistralai/' prefix; show last 36 chars
+  const slash = m.indexOf('/');
+  const tail = slash >= 0 ? m.slice(slash+1) : m;
+  return tail.length > 30 ? tail.slice(0,29)+'…' : tail;
+}
+
+function renderProjects() {
+  const tbody = document.getElementById('projects-tbody');
+  const projects = STATE.projects || [];
+  if (!projects.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">no builds yet</td></tr>';
+    document.getElementById('proj-count').textContent = '';
+    return;
+  }
+  // active first, then recent. Cap to 50 visible rows so the page stays usable.
+  const TERMINAL = ['complete','completed','failed','cancelled','error'];
+  const sorted = projects.slice().sort((a,b) => {
+    const aActive = !TERMINAL.includes(a.status);
+    const bActive = !TERMINAL.includes(b.status);
+    if (aActive !== bActive) return aActive ? -1 : 1;
+    return (b.created_at||0) - (a.created_at||0);
+  }).slice(0, 50);
+  try {
+    tbody.innerHTML = sorted.map(p => {
+      const elapsed = (p.completed_at && p.created_at)
+        ? p.completed_at - p.created_at
+        : (p.created_at ? (Date.now()/1000 - p.created_at) : 0);
+      const isSelected = p.project_id === SELECTED_PROJECT_ID;
+      // /api/forge/projects returns modules as a count (number). Detail endpoint
+      // returns full module list. Handle both shapes defensively.
+      let modTotal = 0, modDone = 0;
+      if (Array.isArray(p.modules)) {
+        modTotal = p.modules.length;
+        modDone = p.modules.filter(m => m && (m.status==='complete' || m.status==='completed')).length;
+      } else if (typeof p.modules === 'number') {
+        modTotal = p.modules;
+        if (typeof p.progress === 'number' && modTotal > 0) {
+          modDone = Math.round(modTotal * p.progress / 100);
+        }
+      }
+      // quality_score is flat in /api/forge/projects; quality.overall_score in detail
+      let qualityNum = null;
+      if (p.quality_score != null) qualityNum = p.quality_score;
+      else if (p.quality && p.quality.overall_score != null) qualityNum = p.quality.overall_score;
+      const quality = qualityNum != null ? Number(qualityNum).toFixed(1) : '—';
+      // model isn't on the list endpoint; falls back to provider or '—'
+      const modelLabel = p.model || p.provider || '—';
+      const escId = String(p.project_id || '').replace(/'/g, "\\'");
+      return '<tr class="'+(isSelected?'selected':'')+'" onclick="selectProject(\''+escId+'\')">'
+        + '<td title="'+(p.name||'').replace(/"/g,'&quot;')+'">'+shortDesc(p.name||p.description||p.project_id, 50)+'</td>'
+        + '<td>'+pill(p.status)+'</td>'
+        + '<td title="'+modelLabel+'">'+shortModel(modelLabel)+'</td>'
+        + '<td>'+modDone+' / '+modTotal+'</td>'
+        + '<td>'+(p.api_calls||'—')+'</td>'
+        + '<td>'+fmtElapsed(elapsed)+'</td>'
+        + '<td>'+quality+'</td>'
+        + '<td>'+fmtTime(p.created_at)+'</td>'
+        + '</tr>';
+    }).join('');
+  } catch (e) {
+    console.error('renderProjects failed', e);
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">render error: '+e.message+'</td></tr>';
+  }
+  document.getElementById('proj-count').textContent = '('+projects.length+' total, showing '+sorted.length+')';
+}
+
+function renderProposals() {
+  const tbody = document.getElementById('proposals-tbody');
+  const proposals = STATE.proposals || [];
+  if (!proposals.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">no proposals</td></tr>';
+    document.getElementById('prop-count').textContent = '';
+    return;
+  }
+  // Sort: actionable first (deliberating/proposed/approved), then by recency.
+  // Cap to 50 so the page stays usable.
+  const ACTIONABLE = ['deliberating', 'proposed', 'approved'];
+  const sorted = proposals.slice().sort((a,b) => {
+    const aAct = ACTIONABLE.includes((a.status||'').toLowerCase());
+    const bAct = ACTIONABLE.includes((b.status||'').toLowerCase());
+    if (aAct !== bAct) return aAct ? -1 : 1;
+    return (b.created_at||0) - (a.created_at||0);
+  }).slice(0, 50);
+  try {
+    tbody.innerHTML = sorted.map(p => {
+      const status = (p.status||'').toLowerCase();
+      const escId = String(p.id || '').replace(/'/g, "\\'");
+      let actions = '';
+      if (status === 'deliberating' || status === 'proposed') {
+        actions = '<button class="btn approve" onclick="event.stopPropagation();approveProposal(\''+escId+'\')">approve →</button> '
+                + '<button class="btn reject" onclick="event.stopPropagation();rejectProposal(\''+escId+'\')">reject ✕</button>';
+      } else if (status === 'approved') {
+        actions = '<button class="btn" onclick="event.stopPropagation();buildProposal(\''+escId+'\')">build now ▶</button>';
+      } else {
+        actions = '<span style="color:#999;font-family:var(--mono);font-size:10px">—</span>';
+      }
+      const delibCount = (p.deliberation || []).length;
+      return '<tr onclick="showProposalDetail(\''+escId+'\')">'
+        + '<td><div style="font-family:var(--mono);font-size:10px;color:#666">'+(p.id||'').slice(0,18)+'…</div>'+pill(p.status)+(delibCount ? ' <span style="font-size:10px;color:#888">·'+delibCount+' opinion'+(delibCount!==1?'s':'')+'</span>' : '')+'</td>'
+        + '<td>'+(p.proposer||'?')+'</td>'
+        + '<td title="'+(p.description||'').replace(/"/g,'&quot;')+'">'+shortDesc(p.description, 180)+'</td>'
+        + '<td>'+fmtTime(p.created_at)+'</td>'
+        + '<td>'+actions+'</td>'
+        + '</tr>';
+    }).join('');
+  } catch (e) {
+    console.error('renderProposals failed', e);
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">render error: '+e.message+'</td></tr>';
+  }
+  document.getElementById('prop-count').textContent = '('+proposals.length+' total, showing '+sorted.length+')';
+}
+
+function renderStats() {
+  const projects = STATE.projects;
+  const proposals = STATE.proposals;
+  const active = projects.filter(p => ['specifying','architecting','generating','testing','fix_iterating','validating','packaging','queued','building'].includes((p.status||'').toLowerCase())).length;
+  const delib = proposals.filter(p => ['deliberating','proposed'].includes((p.status||'').toLowerCase())).length;
+  const pending = proposals.filter(p => (p.status||'').toLowerCase() === 'approved').length;
+  const today = new Date().toISOString().slice(0,10);
+  const complete = projects.filter(p => {
+    if (!['complete','completed'].includes((p.status||'').toLowerCase())) return false;
+    const d = new Date((p.created_at||0)*1000).toISOString().slice(0,10);
+    return d === today;
+  }).length;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-deliberating').textContent = delib;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-complete').textContent = complete;
+  if (STATE.settings) {
+    document.getElementById('stat-remaining').textContent = STATE.settings.daily_remaining ?? '?';
+    document.getElementById('stat-model').textContent = STATE.settings.primary_model || '—';
+  }
+}
+
+async function pollAll() {
+  const [pj, pp, ps] = await Promise.all([
+    fetchJSON('/api/forge/projects'),
+    fetchJSON('/api/forge/proposals'),
+    fetchJSON('/api/forge/settings'),
+  ]);
+  if (pj && pj.success) STATE.projects = pj.projects || [];
+  if (pp && pp.success) {
+    STATE.proposals = pp.proposals || [];
+    STATE.settings = Object.assign(STATE.settings || {}, {
+      daily_remaining: pp.daily_remaining,
+      daily_cap: pp.daily_cap,
+    });
+  }
+  if (ps && ps.success && ps.settings) {
+    STATE.settings = Object.assign(STATE.settings || {}, {
+      primary_model: ps.settings.primary_model || ps.settings.coding_model,
+      deliberation_model: ps.settings.deliberation_model,
+    });
+  }
+  // Each render is independent — wrap in try so one failure doesn't cascade
+  try { renderStats(); }     catch (e) { console.error('stats render error', e); }
+  try { renderProjects(); }  catch (e) { console.error('projects render error', e); }
+  try { renderProposals(); } catch (e) { console.error('proposals render error', e); }
+  if (SELECTED_PROJECT_ID) {
+    try { refreshDetail(); } catch (e) { console.error('detail refresh error', e); }
+  }
+  document.getElementById('refresh-time').textContent = 'updated ' + new Date().toLocaleTimeString();
+}
+
+function selectProject(pid) {
+  SELECTED_PROJECT_ID = pid;
+  document.getElementById('detail-panel').style.display = 'block';
+  refreshDetail();
+  // connect stream
+  connectStream(pid);
+  renderProjects();
+  document.getElementById('detail-panel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function closeDetail() {
+  SELECTED_PROJECT_ID = null;
+  document.getElementById('detail-panel').style.display = 'none';
+  disconnectStream();
+  renderProjects();
+}
+
+async function refreshDetail() {
+  if (!SELECTED_PROJECT_ID) return;
+  const r = await fetchJSON('/api/forge/project/' + SELECTED_PROJECT_ID);
+  if (!r || !r.success) {
+    document.getElementById('detail-title').textContent = 'Build detail — error';
+    return;
+  }
+  const p = r.project || {};
+  document.getElementById('detail-title').textContent = (p.name || p.project_id || 'project') + '  ' + (p.status||'');
+  const elapsed = (p.completed_at && p.created_at)
+    ? p.completed_at - p.created_at
+    : (p.created_at ? Date.now()/1000 - p.created_at : 0);
+  // Module shape may be array (detail) or number (list). Handle both.
+  let moduleCount = 0, mods = [];
+  if (Array.isArray(p.modules)) { mods = p.modules; moduleCount = mods.length; }
+  else if (typeof p.modules === 'number') { moduleCount = p.modules; }
+  // Quality may be flat (quality_score) or nested (quality.overall_score)
+  let qualityNum = null;
+  if (p.quality_score != null) qualityNum = p.quality_score;
+  else if (p.quality && p.quality.overall_score != null) qualityNum = p.quality.overall_score;
+  const modelLabel = p.model || p.provider || '—';
+  const kv = [
+    ['project_id', p.project_id || '—'],
+    ['status', pill(p.status)],
+    ['provider / model', (p.provider||'—') + ' / ' + shortModel(p.model)],
+    ['language', p.language || '—'],
+    ['modules', moduleCount],
+    ['api calls', p.api_calls != null ? p.api_calls : '—'],
+    ['elapsed', fmtElapsed(elapsed)],
+    ['quality score', qualityNum != null ? Number(qualityNum).toFixed(1) : '—'],
+    ['package path', p.package_path || p.output_path || '—'],
+    ['created', fmtTime(p.created_at)],
+    ['completed', fmtTime(p.completed_at)],
+  ].map(([k,v]) => '<div><span class="k">'+k+'</span><span class="v">'+v+'</span></div>').join('');
+  document.getElementById('detail-kv').innerHTML = kv;
+  document.getElementById('detail-desc').textContent = p.description || '(no description)';
+  const errs = p.error_log || p.errors || [];
+  document.getElementById('detail-errors').textContent = errs.length
+    ? errs.slice(-6).map(e => typeof e === 'string' ? e : JSON.stringify(e)).join('\n')
+    : '(no errors)';
+  if (mods.length) {
+    document.getElementById('detail-modules').innerHTML = mods.map(m => {
+      const ms = (m.status||'pending').toLowerCase();
+      const label = m.filename || m.name || m.id || '?';
+      return '<li><span>'+label+'</span><span class="mod-status mod-'+ms+'">'+ms+'</span></li>';
+    }).join('');
+  } else if (moduleCount > 0) {
+    document.getElementById('detail-modules').innerHTML =
+      '<li class="empty" style="padding:8px">'+moduleCount+' modules — open detail endpoint for the full list</li>';
+  } else {
+    document.getElementById('detail-modules').innerHTML =
+      '<li class="empty" style="padding:8px">(no modules yet — still in spec / architect phase)</li>';
+  }
+  const active = !['complete','completed','failed','cancelled','error'].includes((p.status||'').toLowerCase());
+  document.getElementById('detail-cancel-btn').style.display = active ? 'inline-block' : 'none';
+  document.getElementById('detail-cancel-btn').onclick = (e) => {
+    e.stopPropagation();
+    if (confirm('Cancel this build?')) {
+      fetch('/api/forge/cancel/' + SELECTED_PROJECT_ID, {method:'POST'}).then(pollAll);
+    }
+  };
+}
+
+function connectStream(pid) {
+  disconnectStream();
+  const panel = document.getElementById('stream-panel');
+  panel.innerHTML = '';
+  const status = document.getElementById('stream-status');
+  status.textContent = 'connecting...';
+  try {
+    STREAM_EVT_SOURCE = new EventSource('/api/forge/stream?project_id=' + encodeURIComponent(pid));
+    STREAM_EVT_SOURCE.onopen = () => { status.textContent = 'live'; };
+    STREAM_EVT_SOURCE.onerror = () => { status.textContent = '(stream offline — endpoint not yet wired)'; };
+    STREAM_EVT_SOURCE.onmessage = (e) => {
+      let data;
+      try { data = JSON.parse(e.data); } catch { data = {raw: e.data}; }
+      appendStream(data);
+    };
+  } catch (e) {
+    status.textContent = '(stream unavailable)';
+  }
+}
+
+function disconnectStream() {
+  if (STREAM_EVT_SOURCE) {
+    STREAM_EVT_SOURCE.close();
+    STREAM_EVT_SOURCE = null;
+  }
+}
+
+function appendStream(data) {
+  const panel = document.getElementById('stream-panel');
+  const ts = data.ts ? new Date(data.ts*1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+  const kind = (data.kind || data.event || 'log').toLowerCase();
+  const line = document.createElement('div');
+  line.className = 'stream-line ' + (kind === 'api_call' ? 'api-call' : kind === 'stage' ? 'stage' : kind === 'error' ? 'error' : kind === 'module' ? 'module' : '');
+  const text = data.message || data.text || JSON.stringify(data);
+  line.textContent = '[' + ts + '] ' + text;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+  // keep ~200 lines
+  while (panel.children.length > 200) panel.removeChild(panel.firstChild);
+}
+
+async function reapStale() {
+  if (!confirm('Cancel every project stuck in an active status with no live thread? (left over from daemon restarts — safe; existing completed/failed builds untouched)')) return;
+  const r = await fetchJSON('/api/forge/reap_stale', {method: 'POST'});
+  if (r && r.success) {
+    alert('Reaped ' + r.reaped + ' stale project(s). The table will refresh.');
+    pollAll();
+  } else {
+    alert('Reap failed: ' + (r && r.error || 'unknown'));
+  }
+}
+
+async function approveProposal(id) {
+  if (!confirm('Approve proposal? Build will start automatically.')) return;
+  await fetchJSON('/api/forge/proposals/' + id + '/approve', {method:'POST'});
+  pollAll();
+}
+
+async function rejectProposal(id) {
+  const reason = prompt('Reason for rejection (optional):') || '';
+  await fetch('/api/forge/proposals/' + id + '/reject', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reason}),
+  });
+  pollAll();
+}
+
+async function buildProposal(id) {
+  await fetch('/api/forge/proposals/' + id + '/build', {method:'POST'});
+  pollAll();
+}
+
+function showProposalDetail(pid) {
+  const p = STATE.proposals.find(x => x.id === pid);
+  if (!p) return;
+  const delib = (p.deliberation || []).map(d =>
+    '<div class="deliberation-box"><div class="model">'+ (d.model||'?') +' · ' + (d.timestamp ? new Date(d.timestamp*1000).toLocaleString() : '') + '</div><div style="white-space:pre-wrap">'+ (d.opinion||'') +'</div></div>'
+  ).join('');
+  const reason = p.rejection_reason ? '<div style="margin:6px 14px;color:var(--red);font-family:var(--mono);font-size:11px"><b>rejection_reason:</b> ' + p.rejection_reason + '</div>' : '';
+  const html = '<div style="margin:6px 14px;font-family:var(--mono);font-size:11px;white-space:pre-wrap">'
+    + '<b>id:</b> ' + p.id + '<br>'
+    + '<b>proposer:</b> ' + (p.proposer||'?') + '<br>'
+    + '<b>status:</b> ' + (p.status||'?') + '<br>'
+    + '<b>created:</b> ' + fmtTime(p.created_at) + '<br>'
+    + '<b>description:</b><br>' + (p.description||'') + '</div>'
+    + (delib ? '<div style="padding:0 0 6px"><div style="font-family:var(--mono);font-size:10px;font-weight:bold;color:#666;padding:6px 14px 0;text-transform:uppercase;letter-spacing:0.14em">Deliberation</div>'+delib+'</div>' : '')
+    + reason;
+  // Reuse detail panel
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-title').textContent = 'Proposal — ' + (p.id||'').slice(0,24);
+  document.querySelector('#detail-panel .panel-body').innerHTML = html;
+  disconnectStream();
+  document.getElementById('detail-panel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+pollAll();
+setInterval(pollAll, 5000);
+</script>
+</body>
+</html>

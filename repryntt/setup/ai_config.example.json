@@ -1,0 +1,179 @@
+{
+  "agent_spawning": false,
+  "_agent_spawning_comment": "Default false. For tests, enable only tiny batches of 5-10 agents, never the full employee roster. Keep worker calls under the configured safe RPM cap.",
+  "allow_autonomous_root_code_writes": false,
+  "_allow_autonomous_root_code_writes_comment": "Dangerous self-improvement toggle. When false, the agent cannot directly write into the checked-out project source tree; code must go through code_sandbox + propose_code_change. Set true only if you intentionally want autonomous root-code edits.",
+  "ai_provider": {
+    "_comment": "AI provider configuration. Fill in keys for the providers you want to use; leave the others as YOUR_X_API_KEY_HERE.",
+    "_recommendation": "For self-prompting agents, frontier models with prompt caching (anthropic claude-opus-4-6, openai gpt-4o, google gemini-2.5-flash) are dramatically cheaper than tiered cheap-worker + orchestrator setups, because the orchestrator's variable prompt can never cache. See README ░░ BRING YOUR OWN LLM ░░ for the math.",
+    "fallback_order": [
+      "anthropic",
+      "nvidia",
+      "xai",
+      "google_gemini",
+      "openrouter",
+      "openai",
+      "local"
+    ],
+    "provider": "anthropic",
+    "andrew_provider": "anthropic",
+    "artemis_provider": "anthropic",
+    "_provider_note": "`provider` is the default worker. `andrew_provider` and `artemis_provider` override for specific agents. Set them all to the same value for a single-brain setup (recommended for prompt caching).",
+    "orchestration_provider": "",
+    "worker_provider": "",
+    "_orchestration_note": "Leave orchestration_provider and worker_provider empty for a single-brain setup. Setting them to different providers enables tiered orchestration (worker + planner) but breaks prompt caching — only do this if you have a specific reason.",
+    "local": {
+      "_comment": "Local llama.cpp / ollama / vllm server",
+      "endpoint": "http://localhost:8080/v1/chat/completions",
+      "model": "default",
+      "api_key": null,
+      "max_tokens": 800,
+      "context_window": 4096
+    },
+    "openai": {
+      "_comment": "OpenAI API (GPT-4o, GPT-4.1, o3, o4-mini). Get key at platform.openai.com",
+      "endpoint": "https://api.openai.com/v1/chat/completions",
+      "model": "gpt-4o",
+      "api_key": "YOUR_OPENAI_API_KEY_HERE",
+      "max_tokens": 2048,
+      "context_window": 128000
+    },
+    "anthropic": {
+      "_comment": "Anthropic Claude API. Get key at console.anthropic.com",
+      "_pricing_note": "Opus 4.6: $5/M input, $25/M output. Cache writes $6.25/M (5min) or $10/M (1h). Cache hits $0.50/M — huge savings when system prompt is reused across heartbeats.",
+      "_caching_note": "Self-prompting agents reuse the same ~30K-token identity every cycle. With Anthropic prompt caching, this is billed once then read at ~10% of normal price. May 25 burn test: 95% cache hit rate, $10.60/hr for a fully autonomous agent running 307 tools.",
+      "endpoint": "https://api.anthropic.com/v1/messages",
+      "model": "claude-opus-4-6",
+      "api_key": "YOUR_ANTHROPIC_API_KEY_HERE",
+      "max_tokens": 4096,
+      "context_window": 200000
+    },
+    "google_gemini": {
+      "_comment": "Google Gemini API. OpenAI-compatible endpoint. Get key at aistudio.google.com/apikey",
+      "_pricing_note": "gemini-2.5-flash paid tier: $0.30/M input (text/image/video), $1.00/M (audio), $2.50/M output (incl. thinking). Context cache $0.03/M. Free tier has RPD limits.",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "model": "gemini-2.5-flash",
+      "api_key": "YOUR_GOOGLE_API_KEY_HERE",
+      "max_tokens": 8192,
+      "context_window": 1048576,
+      "temperature": 0.8,
+      "top_p": 0.95
+    },
+    "nvidia": {
+      "_comment": "NVIDIA API Catalog — free tier, ~40 RPM. Models at build.nvidia.com",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "api_key": "YOUR_NVIDIA_API_KEY_HERE",
+      "model": "mistralai/mistral-small-4-119b-2603",
+      "max_tokens": 4096,
+      "context_window": 131072,
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "rate_limit_rpm": 20,
+      "coding_model": "qwen/qwen3-coder-480b-a35b-instruct",
+      "uncap_tokens": false,
+      "_uncap_comment": "When true, max_tokens is not sent to the API — model uses full capacity including internal reasoning.",
+      "fallback_models": [
+        "meta/llama-3.1-70b-instruct",
+        "mistralai/mixtral-8x22b-instruct-v0.1",
+        "qwen/qwen3-coder-480b-a35b-instruct"
+      ],
+      "_fallback_models_comment": "In-provider fallbacks to try when the primary 404s. Only the top-level fallback_order list triggers cross-provider escalation."
+    },
+    "xai": {
+      "_comment": "xAI Grok API — chat + media. Get key at console.x.ai",
+      "endpoint": "https://api.x.ai/v1/chat/completions",
+      "api_key": "YOUR_XAI_API_KEY_HERE",
+      "model": "grok-4.3",
+      "coding_model": "grok-4.3",
+      "max_tokens": 8192,
+      "context_window": 1000000,
+      "temperature": 0.7,
+      "video_endpoint": "https://api.x.ai/v1/videos/generations",
+      "video_model": "grok-imagine-video",
+      "image_endpoint": "https://api.x.ai/v1/images/generations",
+      "image_model": "grok-imagine-image",
+      "cost_per_sec": 0.05,
+      "rate_limit_rpm": 1800
+    },
+    "openrouter": {
+      "_comment": "OpenRouter — gateway to ~hundreds of models through one API. Cheapest option for remote.",
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "api_key": "YOUR_OPENROUTER_API_KEY_HERE",
+      "max_tokens": 2048,
+      "context_window": 200000
+    },
+    "custom": {
+      "_comment": "Any OpenAI-compatible endpoint (vllm, text-generation-inference, etc.)",
+      "endpoint": "http://YOUR_SERVER:8080/v1/chat/completions",
+      "model": "default",
+      "api_key": null,
+      "max_tokens": 2048,
+      "context_window": 4096
+    },
+    "vision": {
+      "_comment": "Routes nav perception through NVIDIA NIM hosted VLM (free tier, ~40 RPM). Hard-disable local SmolVLM via local_vlm.enabled=false to free GPU memory. max_images=1 because Llama-3.2-vision rejects multi-image requests with 400.",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "api_key": "YOUR_NVIDIA_API_KEY_HERE",
+      "model": "meta/llama-3.2-11b-vision-instruct",
+      "provider_type": "openai",
+      "max_images": 1
+    },
+    "video_production": {
+      "_comment": "Dynamic video provider selection. Options: 'veo' (Google Veo 3.1) or 'xai' (xAI Grok Imagine Video).",
+      "provider": "xai",
+      "veo_model": "veo-3.1-generate-preview",
+      "veo_fast_model": "veo-3.1-fast-generate-preview",
+      "veo_use_fast": true,
+      "veo_cost_per_clip_720p": 0.15,
+      "veo_cost_per_clip_4k": 0.35,
+      "veo_max_clip_sec": 8,
+      "xai_cost_per_sec_480p": 0.05,
+      "xai_cost_per_sec_720p": 0.07,
+      "xai_max_clip_sec": 15
+    }
+  },
+  "local_vlm": {
+    "_comment": "On-device vision model (SmolVLM on Jetson GPU). Set enabled=false in dev mode so every frame routes to ai_provider.vision (NVIDIA NIM) and the GPU stays free.",
+    "model_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+    "enabled": false,
+    "deep_analysis_interval": 5,
+    "max_image_dim": 384
+  },
+  "external_apis": {
+    "_comment": "External (non-LLM) service credentials. All optional; leave empty if not used.",
+    "x_twitter": {
+      "_comment": "X/Twitter Social API v2 for tweet search. NOT the same as the xAI/Grok API. Dashboard: developer.x.com",
+      "bearer_token": "YOUR_X_TWITTER_BEARER_TOKEN_HERE",
+      "consumer_key": "YOUR_X_TWITTER_CONSUMER_KEY_HERE",
+      "consumer_secret": "YOUR_X_TWITTER_CONSUMER_SECRET_HERE",
+      "base_url": "https://api.x.com/2"
+    }
+  },
+  "heartbeat_interval_seconds": 60,
+  "_heartbeat_comment": "Seconds between AI heartbeats. Higher = fewer API calls = lower cost. Min 15, max 3600. Recommended: 60 (frontier cached), 300 (paid API, cost-conscious), 900 (minimal usage).",
+  "hardware": {
+    "_comment": "Toggle hardware features. Set to false on machines without the hardware. 'auto' = detect at startup.",
+    "camera": "auto",
+    "microphone": "auto",
+    "speaker": "auto"
+  },
+  "operator_name": "(set during setup)",
+  "camera_broker": {
+    "_comment": "Single-producer broker for CSI cameras. The broker is the only legitimate opener of /dev/video0 and /dev/video1 — see repryntt/hardware/camera_broker.py.",
+    "enabled": true,
+    "sensors": [
+      {"id": 0, "width": 1280, "height": 720, "fps": 30},
+      {"id": 1, "width": 1280, "height": 720, "fps": 30}
+    ],
+    "idle_timeout_s": 30.0,
+    "stereo_pair": [0, 1],
+    "mjpeg_port": null
+  },
+  "cost_control": {
+    "_comment": "Daily spending limits per provider",
+    "daily_budget_usd": 5.0,
+    "warn_at_percent": 80,
+    "hard_stop_at_percent": 100
+  }
+}

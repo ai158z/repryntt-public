@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Agent Brain Builder — repryntt</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── AGENT BRAIN BUILDER ── */
+body { margin: 0; font-family: monospace; background: #1a1a2e; color: #c8d0e0; }
+
+.abb-wrap {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
+  gap: 0;
+}
+@media (max-width: 900px) {
+  .abb-wrap { grid-template-columns: 1fr; grid-template-rows: 48px auto 1fr; }
+  .abb-preview { display: none; }
+}
+
+/* Header */
+.abb-header {
+  grid-column: 1 / -1;
+  background: #12122a;
+  border-bottom: 1px solid #3a3a6a;
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+}
+.abb-header h1 { font-size: 14px; font-weight: bold; color: #a8b4ff; margin: 0; }
+.abb-header .sub { font-size: 11px; color: #667; }
+
+/* Wizard panel */
+.abb-wizard {
+  background: #1e1e3a;
+  border-right: 1px solid #3a3a6a;
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+
+.step-nav {
+  display: flex; gap: 0;
+  border-bottom: 1px solid #3a3a6a;
+  overflow-x: auto;
+}
+.step-btn {
+  flex: 1; padding: 10px 4px; font-size: 10px; font-family: monospace;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: #667; cursor: pointer; text-align: center; min-width: 56px;
+  transition: all 0.15s;
+}
+.step-btn:hover { color: #a8b4ff; background: #252545; }
+.step-btn.active { color: #a8b4ff; border-bottom-color: #a8b4ff; background: #252545; }
+.step-btn.done { color: #4c8; }
+
+/* Form area */
+.step-panel { display: none; padding: 16px; flex: 1; }
+.step-panel.active { display: flex; flex-direction: column; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; color: #a8b4ff; font-weight: bold; text-transform: uppercase; }
+.field .hint { font-size: 10px; color: #556; margin-top: 2px; }
+.field input, .field textarea, .field select {
+  background: #12122a; border: 1px solid #3a3a6a; color: #c8d0e0;
+  padding: 6px 8px; font-family: monospace; font-size: 12px; border-radius: 2px;
+  outline: none;
+}
+.field input:focus, .field textarea:focus { border-color: #a8b4ff; }
+.field textarea { resize: vertical; min-height: 70px; }
+
+.range-row { display: flex; gap: 8px; align-items: center; }
+.range-row input[type=range] { flex: 1; }
+.range-val { font-size: 12px; font-weight: bold; color: #a8b4ff; min-width: 28px; text-align: right; }
+
+.tag-input-wrap {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  background: #12122a; border: 1px solid #3a3a6a; padding: 4px 6px; border-radius: 2px;
+  min-height: 36px; cursor: text;
+}
+.tag-input-wrap:focus-within { border-color: #a8b4ff; }
+.tag { background: #2a2a5a; color: #a8b4ff; padding: 2px 6px; border-radius: 2px; font-size: 11px;
+  display: flex; align-items: center; gap: 4px; }
+.tag .rm { cursor: pointer; color: #667; font-size: 10px; }
+.tag .rm:hover { color: #f66; }
+.tag-input { background: transparent; border: none; outline: none; color: #c8d0e0;
+  font-family: monospace; font-size: 12px; flex: 1; min-width: 120px; padding: 2px 4px; }
+
+/* Nav buttons */
+.step-actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #3a3a6a; }
+.btn { padding: 7px 14px; font-family: monospace; font-size: 12px; cursor: pointer;
+  border: 1px solid; border-radius: 2px; font-weight: bold; transition: all 0.15s; }
+.btn-ghost { background: transparent; border-color: #3a3a6a; color: #667; }
+.btn-ghost:hover { border-color: #a8b4ff; color: #a8b4ff; }
+.btn-primary { background: #3a3a8a; border-color: #a8b4ff; color: #a8b4ff; }
+.btn-primary:hover { background: #5a5abf; }
+.btn-generate { background: #1a4a2a; border-color: #4c8; color: #4c8; }
+.btn-generate:hover:not(:disabled) { background: #2a6a3a; }
+.btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-deploy { background: #4a1a2a; border-color: #f66; color: #f66; margin-left: auto; }
+.btn-deploy:hover:not(:disabled) { background: #6a2a3a; }
+.btn-deploy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Preview panel */
+.abb-preview {
+  background: #12122a;
+  display: flex; flex-direction: column;
+}
+.preview-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #3a3a6a;
+  overflow-x: auto; flex-shrink: 0;
+}
+.preview-tab {
+  padding: 8px 12px; font-size: 10px; font-family: monospace; font-weight: bold;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: #556; cursor: pointer; white-space: nowrap;
+}
+.preview-tab:hover { color: #a8b4ff; }
+.preview-tab.active { color: #4c8; border-bottom-color: #4c8; }
+.preview-content {
+  flex: 1; overflow-y: auto; padding: 16px;
+  font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  font-family: monospace;
+}
+.preview-content .placeholder { color: #334; text-align: center; margin-top: 80px; font-size: 13px; }
+.preview-content .placeholder span { display: block; font-size: 10px; color: #223; margin-top: 8px; }
+
+/* Status bar */
+.abb-status {
+  grid-column: 1 / -1;
+  background: #0a0a1a;
+  border-top: 1px solid #2a2a4a;
+  padding: 4px 16px;
+  font-size: 10px;
+  color: #445;
+  display: flex; align-items: center; gap: 12px;
+}
+.abb-status .ok { color: #4c8; }
+.abb-status .err { color: #f66; }
+.abb-status .loading { color: #a8b4ff; }
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid #a8b4ff;
+  border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+</style>
+</head>
+<body>
+
+<div class="abb-wrap">
+
+  <!-- HEADER -->
+  <header class="abb-header">
+    <h1>⚗️ Agent Brain Builder</h1>
+    <span class="sub">repryntt · openclaw bootstrap generator</span>
+  </header>
+
+  <!-- WIZARD -->
+  <div class="abb-wizard">
+
+    <!-- Step navigation -->
+    <div class="step-nav">
+      <button class="step-btn active" data-step="1" onclick="goStep(1)">1·Identity</button>
+      <button class="step-btn" data-step="2" onclick="goStep(2)">2·Domain</button>
+      <button class="step-btn" data-step="3" onclick="goStep(3)">3·Personality</button>
+      <button class="step-btn" data-step="4" onclick="goStep(4)">4·Mission</button>
+      <button class="step-btn" data-step="5" onclick="goStep(5)">5·Generate</button>
+    </div>
+
+    <!-- Step 1: Identity -->
+    <div class="step-panel active" id="step-1">
+      <div class="field">
+        <label>Agent Name *</label>
+        <input id="f-name" type="text" placeholder="e.g. Nova, Cipher, Atlas" oninput="syncPreview()"/>
+      </div>
+      <div class="field">
+        <label>Role / Title *</label>
+        <input id="f-role" type="text" placeholder="e.g. Lead cybersecurity researcher"/>
+      </div>
+      <div class="field">
+        <label>Department</label>
+        <input id="f-department" type="text" placeholder="e.g. Security, Research, Finance"/>
+      </div>
+      <div class="field">
+        <label>Emoji</label>
+        <input id="f-emoji" type="text" placeholder="⚛️" maxlength="4" style="width:60px"/>
+      </div>
+      <div class="field">
+        <label>Operator Name</label>
+        <input id="f-operator" type="text" placeholder="Nate" value="Nate"/>
+      </div>
+    </div>
+
+    <!-- Step 2: Domain -->
+    <div class="step-panel" id="step-2">
+      <div class="field">
+        <label>Domain Expertise</label>
+        <div class="hint">What this agent knows deeply. Be specific — include real facts, equations, numbers. Press Enter or comma to add each item.</div>
+        <div class="tag-input-wrap" id="domain-wrap">
+          <input class="tag-input" id="domain-input" placeholder="e.g. quantum error correction → Enter"
+            onkeydown="tagKey(event,'domain')" onblur="tagBlur('domain')"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Curiosity Anchors</label>
+        <div class="hint">Thought seeds — specific phrases the agent will use as creative sparks. Press Enter or comma to add.</div>
+        <div class="tag-input-wrap" id="anchors-wrap">
+          <input class="tag-input" id="anchors-input" placeholder="e.g. quantum starforge → Enter"
+            onkeydown="tagKey(event,'anchors')" onblur="tagBlur('anchors')"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Additional Context</label>
+        <div class="hint">Anything else the LLM should know when generating this agent's brain.</div>
+        <textarea id="f-context" placeholder="e.g. This agent will be paired with a hardware security lab and needs to understand embedded systems vulnerabilities..."></textarea>
+      </div>
+    </div>
+
+    <!-- Step 3: Personality -->
+    <div class="step-panel" id="step-3">
+      <div class="field">
+        <label>Voice / Tone</label>
+        <input id="f-voice" type="text" placeholder="e.g. precise and direct with dry humor"/>
+      </div>
+      <div class="field">
+        <label>Humor Level</label>
+        <div class="range-row">
+          <input type="range" id="f-humor" min="0" max="100" value="70" oninput="document.getElementById('humor-val').textContent=this.value+'%'"/>
+          <span class="range-val" id="humor-val">70%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Honesty Level</label>
+        <div class="range-row">
+          <input type="range" id="f-honesty" min="0" max="100" value="90" oninput="document.getElementById('honesty-val').textContent=this.value+'%'"/>
+          <span class="range-val" id="honesty-val">90%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Core Values</label>
+        <div class="hint">Press Enter or comma to add each value.</div>
+        <div class="tag-input-wrap" id="values-wrap">
+          <input class="tag-input" id="values-input" placeholder="e.g. scientific rigor → Enter"
+            onkeydown="tagKey(event,'values')" onblur="tagBlur('values')"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Mission -->
+    <div class="step-panel" id="step-4">
+      <div class="field">
+        <label>Mission</label>
+        <div class="hint">What problems does this agent exist to solve? Be concrete.</div>
+        <textarea id="f-mission" placeholder="e.g. Find vulnerabilities in quantum cryptographic implementations before adversaries do, and build tools that make quantum-secure systems accessible to teams without PhD cryptographers."></textarea>
+      </div>
+      <div class="field">
+        <label>Priority Layers</label>
+        <div class="hint">In order: operator first, then what? Press Enter to add each layer.</div>
+        <div class="tag-input-wrap" id="priorities-wrap">
+          <input class="tag-input" id="priorities-input" placeholder="e.g. useful security research → Enter"
+            onkeydown="tagKey(event,'priorities')" onblur="tagBlur('priorities')"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Anti-Patterns (Never Do)</label>
+        <div class="hint">Behaviors this agent must avoid. Press Enter to add each one.</div>
+        <div class="tag-input-wrap" id="anti-wrap">
+          <input class="tag-input" id="anti-input" placeholder="e.g. exaggerate vulnerability severity → Enter"
+            onkeydown="tagKey(event,'anti')" onblur="tagBlur('anti')"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Generate -->
+    <div class="step-panel" id="step-5">
+      <div class="field">
+        <label>Review Summary</label>
+        <div id="summary-block" style="font-size:11px;color:#a8b4ff;line-height:1.8;background:#0a0a1a;padding:10px;border:1px solid #2a2a4a;">
+          Fill in steps 1-4 and return here to see a summary.
+        </div>
+      </div>
+      <div class="field">
+        <label>Agent ID (optional override)</label>
+        <div class="hint">Leave blank to auto-generate from name.</div>
+        <input id="f-agent-id" type="text" placeholder="auto-generated"/>
+      </div>
+      <div id="generate-status" style="font-size:11px;color:#4c8;min-height:18px;"></div>
+    </div>
+
+    <!-- Nav -->
+    <div class="step-actions">
+      <button class="btn btn-ghost" id="btn-prev" onclick="goStep(currentStep-1)" style="display:none">← Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goStep(currentStep+1)">Next →</button>
+      <button class="btn btn-generate" id="btn-generate" style="display:none" onclick="generateBrain(false)">⚗️ Generate</button>
+      <button class="btn btn-deploy" id="btn-deploy" style="display:none" disabled onclick="deployAgent()">🚀 Deploy</button>
+    </div>
+
+  </div><!-- /wizard -->
+
+  <!-- PREVIEW -->
+  <div class="abb-preview">
+    <div class="preview-tabs" id="preview-tabs">
+      <button class="preview-tab active" onclick="showFile('SPIRIT.md')">SPIRIT</button>
+      <button class="preview-tab" onclick="showFile('PULSE.md')">PULSE</button>
+      <button class="preview-tab" onclick="showFile('INTERESTS.md')">INTERESTS</button>
+      <button class="preview-tab" onclick="showFile('RECALL.md')">RECALL</button>
+      <button class="preview-tab" onclick="showFile('CAPABILITIES.md')">CAPABILITIES</button>
+      <button class="preview-tab" onclick="showFile('SELF_AWARENESS.md')">SELF_AWARENESS</button>
+      <button class="preview-tab" onclick="showFile('IDENTITY.md')">IDENTITY</button>
+    </div>
+    <div class="preview-content" id="preview-content">
+      <div class="placeholder">
+        No files generated yet.
+        <span>Fill in the wizard and click Generate.</span>
+      </div>
+    </div>
+  </div><!-- /preview -->
+
+</div><!-- /wrap -->
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let currentStep = 1;
+const TOTAL_STEPS = 5;
+const tags = { domain: [], anchors: [], values: [], priorities: [], anti: [] };
+let generatedFiles = null;
+let generatedAgentId = null;
+let activeFile = 'SPIRIT.md';
+
+// ── Tag input ─────────────────────────────────────────────────────────────
+function addTag(group, val) {
+  val = val.trim().replace(/,$/, '').trim();
+  if (!val || tags[group].includes(val)) return;
+  tags[group].push(val);
+  renderTags(group);
+}
+
+function removeTag(group, idx) {
+  tags[group].splice(idx, 1);
+  renderTags(group);
+}
+
+function renderTags(group) {
+  const wrap = document.getElementById(group + '-wrap');
+  const input = document.getElementById(group + '-input');
+  // Remove existing tag spans
+  wrap.querySelectorAll('.tag').forEach(t => t.remove());
+  tags[group].forEach((t, i) => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.innerHTML = `${t} <span class="rm" onclick="removeTag('${group}',${i})">✕</span>`;
+    wrap.insertBefore(span, input);
+  });
+}
+
+function tagKey(e, group) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addTag(group, e.target.value);
+    e.target.value = '';
+  }
+}
+
+function tagBlur(group) {
+  const input = document.getElementById(group + '-input');
+  if (input.value.trim()) {
+    addTag(group, input.value);
+    input.value = '';
+  }
+}
+
+// ── Step navigation ────────────────────────────────────────────────────────
+function goStep(n) {
+  if (n < 1 || n > TOTAL_STEPS) return;
+  document.getElementById('step-' + currentStep).classList.remove('active');
+  document.querySelector('[data-step="' + currentStep + '"]').classList.remove('active');
+
+  currentStep = n;
+  document.getElementById('step-' + currentStep).classList.add('active');
+  document.querySelector('[data-step="' + currentStep + '"]').classList.add('active');
+
+  document.getElementById('btn-prev').style.display = currentStep > 1 ? '' : 'none';
+  document.getElementById('btn-next').style.display = currentStep < TOTAL_STEPS ? '' : 'none';
+  document.getElementById('btn-generate').style.display = currentStep === TOTAL_STEPS ? '' : 'none';
+  document.getElementById('btn-deploy').style.display = currentStep === TOTAL_STEPS ? '' : 'none';
+
+  if (currentStep === TOTAL_STEPS) renderSummary();
+}
+
+// ── Summary ────────────────────────────────────────────────────────────────
+function renderSummary() {
+  const spec = buildSpec();
+  const lines = [
+    `<b>Name:</b> ${spec.name || '<em>not set</em>'}`,
+    `<b>Role:</b> ${spec.role || '<em>not set</em>'}`,
+    `<b>Department:</b> ${spec.department || '—'}`,
+    `<b>Domain:</b> ${spec.domain.length ? spec.domain.join(', ') : '<em>not set</em>'}`,
+    `<b>Voice:</b> ${spec.voice || '—'} &nbsp;·&nbsp; Humor: ${spec.humor}% &nbsp;·&nbsp; Honesty: ${spec.honesty}%`,
+    `<b>Values:</b> ${spec.values.join(', ') || '—'}`,
+    `<b>Mission:</b> ${spec.mission || '<em>not set</em>'}`,
+    `<b>Anti-patterns:</b> ${spec.anti_patterns.join(', ') || '—'}`,
+    `<b>Curiosity anchors:</b> ${spec.curiosity_anchors.join(' · ') || '—'}`,
+  ];
+  document.getElementById('summary-block').innerHTML = lines.join('<br/>');
+}
+
+// ── Build spec object ──────────────────────────────────────────────────────
+function buildSpec(deploy = false) {
+  return {
+    name: document.getElementById('f-name').value.trim(),
+    role: document.getElementById('f-role').value.trim(),
+    department: document.getElementById('f-department').value.trim(),
+    emoji: document.getElementById('f-emoji').value.trim() || '🤖',
+    operator: document.getElementById('f-operator').value.trim() || 'Nate',
+    domain: [...tags.domain],
+    curiosity_anchors: [...tags.anchors],
+    context: document.getElementById('f-context').value.trim(),
+    voice: document.getElementById('f-voice').value.trim(),
+    humor: parseInt(document.getElementById('f-humor').value),
+    honesty: parseInt(document.getElementById('f-honesty').value),
+    values: [...tags.values],
+    mission: document.getElementById('f-mission').value.trim(),
+    priorities: tags.priorities.length
+      ? [...tags.priorities]
+      : ['operator first', 'useful work second', 'self-growth third'],
+    anti_patterns: [...tags.anti],
+    agent_id: document.getElementById('f-agent-id').value.trim() || undefined,
+    deploy: deploy,
+  };
+}
+
+// ── Generate ───────────────────────────────────────────────────────────────
+async function generateBrain(deployNow = false) {
+  const spec = buildSpec(deployNow);
+  if (!spec.name || !spec.role) {
+    setStatus('Name and Role are required (step 1)', 'err');
+    return;
+  }
+
+  const btnGen = document.getElementById('btn-generate');
+  const btnDep = document.getElementById('btn-deploy');
+  btnGen.disabled = true;
+  btnGen.innerHTML = '<span class="spinner"></span> Generating…';
+  btnDep.disabled = true;
+  setStatus('Calling LLM — this may take 30-90 seconds…', 'loading');
+
+  try {
+    const resp = await fetch('/agent-brain-builder/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(spec),
+    });
+    const data = await resp.json();
+
+    if (!data.success) {
+      setStatus('Error: ' + (data.error || 'unknown'), 'err');
+      return;
+    }
+
+    generatedFiles = data.files;
+    generatedAgentId = data.agent_id;
+
+    // Show first file
+    showFile('SPIRIT.md');
+
+    if (data.workspace_path) {
+      setStatus(`✓ Generated and deployed → ${data.workspace_path}`, 'ok');
+    } else {
+      setStatus(`✓ Generated ${Object.keys(data.files).length} files for agent "${data.agent_id}"`, 'ok');
+      btnDep.disabled = false;
+    }
+  } catch (e) {
+    setStatus('Request failed: ' + e.message, 'err');
+  } finally {
+    btnGen.disabled = false;
+    btnGen.innerHTML = '⚗️ Re-generate';
+  }
+}
+
+// ── Deploy ─────────────────────────────────────────────────────────────────
+async function deployAgent() {
+  if (!generatedFiles || !generatedAgentId) return;
+  const btnDep = document.getElementById('btn-deploy');
+  btnDep.disabled = true;
+  setStatus('Deploying…', 'loading');
+
+  try {
+    const resp = await fetch('/agent-brain-builder/api/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: generatedAgentId, files: generatedFiles }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      setStatus(`✓ Deployed to ${data.workspace_path}`, 'ok');
+    } else {
+      setStatus('Deploy failed: ' + (data.error || 'unknown'), 'err');
+      btnDep.disabled = false;
+    }
+  } catch (e) {
+    setStatus('Deploy request failed: ' + e.message, 'err');
+    btnDep.disabled = false;
+  }
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+function showFile(filename) {
+  activeFile = filename;
+  document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.preview-tab').forEach(t => {
+    if (t.textContent.trim() === filename.replace('.md','')) t.classList.add('active');
+  });
+
+  const el = document.getElementById('preview-content');
+  if (!generatedFiles) {
+    el.innerHTML = '<div class="placeholder">No files generated yet.<span>Fill in the wizard and click Generate.</span></div>';
+    return;
+  }
+  const content = generatedFiles[filename] || '_(empty)_';
+  el.textContent = content;
+}
+
+function syncPreview() {
+  // Live update IDENTITY preview if user is typing name
+  if (activeFile === 'IDENTITY.md' && generatedFiles) return;
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────
+function setStatus(msg, cls) {
+  const el = document.getElementById('generate-status');
+  el.className = cls || '';
+  el.innerHTML = msg;
+}
+
+// Init
+goStep(1);
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[Unit]
+Description=repryntt motor daemon — sole owner of GPIO/camera/sonar
+After=repryntt-pinmux.service
+# Other repryntt processes (nexus_app, agent daemon) connect via the
+# Unix socket published below; they must NOT touch GPIO directly.
+
+[Service]
+Type=simple
+User=reprynt
+Group=reprynt
+SupplementaryGroups=gpio dialout video
+RuntimeDirectory=repryntt
+RuntimeDirectoryMode=0755
+ExecStart=/usr/bin/python -m repryntt.hardware.motor_daemon --socket /run/repryntt/motor.sock --log-level INFO
+Restart=on-failure
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

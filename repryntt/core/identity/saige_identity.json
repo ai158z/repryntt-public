@@ -1,0 +1,15 @@
+{
+  "machine_id": "b18dec9c-d3ed-4505-8a78-762765837701",
+  "fingerprint": "f22eb88ea99696da",
+  "node_name": "saige-jetson-ubuntu",
+  "created_at": 1773255459.582194,
+  "created_at_human": "2026-03-11T18:57:39Z",
+  "role": "node",
+  "version": 1,
+  "platform": {
+    "system": "Linux",
+    "arch": "aarch64",
+    "hostname": "ubuntu",
+    "python": "3.10.12"
+  }
+}

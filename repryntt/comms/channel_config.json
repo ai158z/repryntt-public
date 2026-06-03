@@ -1,0 +1,25 @@
+{
+  "telegram": {
+    "enabled": false,
+    "bot_token": "",
+    "allowed_user_ids": [],
+    "allowed_usernames": [],
+    "max_message_length": 4096,
+    "typing_indicator": true,
+    "log_messages": true
+  },
+  "discord": {
+    "enabled": false,
+    "bot_token": "",
+    "allowed_user_ids": [],
+    "allowed_channel_ids": [],
+    "require_mention": true,
+    "dm_allowed": true
+  },
+  "gateway": {
+    "max_concurrent_requests": 3,
+    "request_timeout_seconds": 300,
+    "rate_limit_per_user": 10,
+    "rate_limit_window": 60
+  }
+}

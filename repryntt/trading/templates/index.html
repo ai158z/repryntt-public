@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>/trading/ — Degen Terminal — repryntt</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<link rel="stylesheet" href="/trading/static/degen-terminal.css"/>
+</head>
+<body>
+
+<!-- ═══ TOP NAV ═══ -->
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"          class="nav-link">hub</a>
+    <a href="/social"    class="nav-link">social</a>
+    <a href="/daemon"    class="nav-link">daemon</a>
+    <a href="/ops"       class="nav-link">ops</a>
+    <a href="/trading/"  class="nav-link active">trading</a>
+    <a href="/command/"  class="nav-link">command</a>
+    <a href="/chat/"     class="nav-link">chat</a>
+    <a href="/settings"  class="nav-link">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot" id="navStatusDot"></span>
+  </div>
+</nav>
+
+<!-- ═══ PAGE HEAD ═══ -->
+<section class="dt-pagehead">
+  <div class="dt-pagehead-row">
+    <div>
+      <div class="dt-title">Degen Terminal</div>
+      <div class="dt-subtitle">Solana memecoin scanner &middot; signals &middot; portfolio</div>
+    </div>
+    <div class="dt-meta">
+      <div class="portfolio-strip" id="portfolioStrip"></div>
+      <span id="healthStatus"><span class="status-dot warning"></span>Connecting</span>
+      <span class="refresh-info">refresh <b id="refreshTimer">3s</b></span>
+      <span class="refresh-info" id="lastUpdate">--:--:--</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS STRIP ═══ -->
+<div class="stats-strip">
+    <div class="stat-cell">
+        <div class="stat-label">Tokens Tracked</div>
+        <div class="stat-value" id="statTotalTokens">—</div>
+        <div class="stat-sub"><span id="statActiveTokens">—</span> active</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">Total Trades</div>
+        <div class="stat-value" id="statTotalTrades">—</div>
+        <div class="stat-sub"><span id="statWinRate">—</span>% win rate</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">P&L (SOL)</div>
+        <div class="stat-value" id="statPnl">—</div>
+        <div class="stat-sub" id="statPnlUsd">—</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">W / L</div>
+        <div class="stat-value"><span id="statWins" class="text-green">—</span> / <span id="statLosses" class="text-red">—</span></div>
+        <div class="stat-sub" id="statStreakInfo">—</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">Signals</div>
+        <div class="stat-value text-yellow" id="statSignals">—</div>
+        <div class="stat-sub"><span id="statPredictions">—</span> predictions</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">Uptrending</div>
+        <div class="stat-value text-green" id="statUptrending">—</div>
+        <div class="stat-sub"><span id="statNewTokens">—</span> new</div>
+    </div>
+    <div class="stat-cell">
+        <div class="stat-label">Bundled/Scam</div>
+        <div class="stat-value text-red" id="statBundled">—</div>
+        <div class="stat-sub">flagged</div>
+    </div>
+</div>
+
+<!-- ═══ MAIN GRID ═══ -->
+<div class="main">
+
+    <!-- ──── LEFT: Token Scanner ──── -->
+    <div class="panel token-table-wrap">
+        <div class="panel-header">
+            <div class="panel-title"><span class="icon">📡</span> TOKEN SCANNER</div>
+            <span class="panel-badge blue" id="tokenCount">0 tokens</span>
+            <button class="purge-btn" onclick="purgeBadTokens()" title="Remove all bundled & dead tokens">🗑️ Purge Bad</button>
+        </div>
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">ALL</button>
+            <button class="filter-btn" data-filter="hot" onclick="setFilter('hot', this)">🔥 HOT</button>
+            <button class="filter-btn" data-filter="uptrend" onclick="setFilter('uptrend', this)">📈 UP</button>
+            <button class="filter-btn" data-filter="new" onclick="setFilter('new', this)">🆕 NEW</button>
+            <button class="filter-btn" data-filter="volume" onclick="setFilter('volume', this)">💰 VOL</button>
+            <input type="text" class="filter-search" id="searchInput" placeholder="Search token..." oninput="filterTokens()">
+        </div>
+        <div class="panel-body" id="tokenTableBody">
+            <table class="token-table" id="tokenTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTokens('token_name')">Token</th>
+                        <th onclick="sortTokens('current_price')">Price</th>
+                        <th onclick="sortTokens('current_market_cap')">MCap</th>
+                        <th onclick="sortTokens('price_change_5s')">5s</th>
+                        <th onclick="sortTokens('price_change_30s')">30s</th>
+                        <th onclick="sortTokens('price_change_1m')">1m</th>
+                        <th onclick="sortTokens('price_change_5m')">5m</th>
+                        <th onclick="sortTokens('volume_5m')">Vol 5m</th>
+                        <th onclick="sortTokens('buys_5m')">B/S</th>
+                        <th onclick="sortTokens('top_20_holders_percentage')">Holders</th>
+                        <th style="width:50px;">AI</th>
+                        <th style="width:30px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tokenTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ──── RIGHT COLUMN ──── -->
+    <div class="right-col">
+        <!-- Top Movers -->
+        <div class="panel" style="flex-shrink: 0;">
+            <div class="panel-header">
+                <div class="panel-title"><span class="icon">⚡</span> TOP MOVERS</div>
+            </div>
+            <div class="movers-row">
+                <div class="mover-section">
+                    <div class="mover-section-title gainers">🚀 GAINERS</div>
+                    <div id="topGainers"></div>
+                </div>
+                <div class="mover-section" style="border-left: 1px solid var(--border);">
+                    <div class="mover-section-title losers">📉 LOSERS</div>
+                    <div id="topLosers"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs: Signals / History / Config -->
+        <div class="panel" style="flex: 1; min-height: 0;">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('signals', this)">🎯 Signals</button>
+                <button class="tab" onclick="switchTab('history', this)">📊 History</button>
+                <button class="tab" onclick="switchTab('config', this)">⚙️ Config</button>
+                <button class="tab" onclick="switchTab('jarvis', this)">🤖 JARVIS</button>
+                <button class="tab" onclick="switchTab('whales', this)">🐋 WHALES</button>
+            </div>
+            <div class="tab-panel active" id="tab-signals">
+                <div id="signalFeed">
+                    <div class="empty-state">
+                        <div class="icon">📡</div>
+                        <div class="text">Waiting for signals...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab-history">
+                <div id="tradeHistory">
+                    <div class="empty-state">
+                        <div class="icon">📊</div>
+                        <div class="text">No trades yet</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab-config">
+                <div id="configPanel"></div>
+            </div>
+            <div class="tab-panel" id="tab-jarvis">
+                <div id="jarvisPortfolio" class="jarvis-portfolio">
+                    <span class="label">💰 Cash:</span><span class="val" id="jarvisCash">—</span>
+                    <span class="label">📦 Positions:</span><span class="val" id="jarvisPositions">—</span>
+                </div>
+                <div id="jarvisFeed" class="jarvis-feed">
+                    <div class="empty-state">
+                        <div class="icon">🤖</div>
+                        <div class="text">Waiting for Jarvis trades...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab-whales">
+                <div id="whaleStats" class="whale-stats">
+                    <div class="ws-item"><span class="ws-label">Polls:</span><span class="ws-val" id="whalePolls">0</span></div>
+                    <div class="ws-item"><span class="ws-label">Swaps:</span><span class="ws-val" id="whaleSwaps">0</span></div>
+                    <div class="ws-item"><span class="ws-label">Buy Signals:</span><span class="ws-val" id="whaleBuys">0</span></div>
+                    <div class="ws-item"><span class="ws-label">Sell Signals:</span><span class="ws-val" id="whaleSells">0</span></div>
+                    <div class="ws-item"><span class="ws-label">RPC Errors:</span><span class="ws-val" id="whaleErrors">0</span></div>
+                </div>
+                <div class="panel-header" style="padding: 4px 0; margin-bottom: 4px;">
+                    <div class="panel-title" style="font-size: 11px;">📡 TRACKED WALLETS</div>
+                </div>
+                <div id="whaleWallets" class="whale-wallets">
+                    <div class="empty-state"><div class="icon">🐋</div><div class="text">Loading wallets...</div></div>
+                </div>
+                <div class="panel-header" style="padding: 4px 0; margin-bottom: 4px; margin-top: 6px;">
+                    <div class="panel-title" style="font-size: 11px;">⚡ RECENT WHALE SIGNALS</div>
+                </div>
+                <div id="whaleSignalFeed" class="whale-signal-feed">
+                    <div class="empty-state"><div class="icon">📡</div><div class="text">No whale signals yet</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ TOKEN DETAIL MODAL ═══ -->
+<div class="modal-overlay" id="tokenModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <span style="font-size:14px; font-weight:700;" id="modalTokenName">—</span>
+                <span style="font-size:10px; color:var(--text-muted); margin-left:8px;" id="modalTokenAddr">—</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">✕ ESC</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-stats-grid" id="modalStats"></div>
+            <div class="chart-container">
+                <canvas id="priceChart" class="chart-canvas"></canvas>
+            </div>
+            <div id="modalExtra" class="mt-2"></div>
+            <div class="modal-trade-bar" id="modalTradeBar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ARTEMIS AI PANEL ═══ -->
+<div class="artemis-overlay" id="artemisOverlay" onclick="closeArtemisPanel()"></div>
+<div class="artemis-panel" id="artemisPanel">
+    <div class="artemis-panel-header">
+        <div class="artemis-panel-title">🤖 ARTEMIS AI TRADER</div>
+        <button class="artemis-panel-close" onclick="closeArtemisPanel()">✕</button>
+    </div>
+    <div class="artemis-token-info" id="artemisTokenInfo">
+        <div>
+            <div class="ati-name" id="artemisTokenName">No token selected</div>
+            <div class="ati-addr" id="artemisTokenAddr">—</div>
+        </div>
+        <div class="ati-price" id="artemisTokenPrice">—</div>
+    </div>
+    <div class="artemis-actions" id="artemisActions">
+        <button class="artemis-btn analyze" onclick="artemisAction('analyze')" id="btnAnalyze">🔍 Analyze</button>
+        <button class="artemis-btn buy" onclick="artemisAction('buy50')" id="btnBuy50">💰 Buy $50</button>
+        <button class="artemis-btn buy" onclick="artemisAction('buy100')" id="btnBuy100">💰 Buy $100</button>
+        <button class="artemis-btn sell" onclick="artemisAction('sell')" id="btnSell">📤 Sell</button>
+        <div class="artemis-custom-row">
+            <input type="text" class="artemis-custom-input" id="artemisCustomPrompt" placeholder="Custom command... (e.g. 'buy $75 of this token')" onkeydown="if(event.key==='Enter')artemisAction('custom')">
+            <button class="artemis-btn" onclick="artemisAction('custom')" style="white-space:nowrap;">⚡ Send</button>
+        </div>
+    </div>
+    <div class="artemis-response" id="artemisResponse">
+        <div class="artemis-response-content" id="artemisResponseContent">
+            <span style="color:var(--text-muted);">Select a token and click an action to start trading with Artemis.</span>
+        </div>
+    </div>
+    <div class="artemis-status" id="artemisStatus">
+        <span id="artemisStatusText">Ready</span>
+    </div>
+</div>
+
+<!-- ═══ JAVASCRIPT ═══ -->
+<script>
+// ────────────────────────────────────────────────────────────────
+// State
+// ────────────────────────────────────────────────────────────────
+let allTokens = [];
+let currentFilter = 'all';
+let currentSort = 'current_market_cap';
+let currentSortDir = 'desc';
+let refreshInterval = 3000;
+let lastPrices = {};
+let searchQuery = '';
+
+// ────────────────────────────────────────────────────────────────
+// API Helpers
+// ────────────────────────────────────────────────────────────────
+async function api(endpoint) {
+    try {
+        const r = await fetch('api/' + endpoint);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return await r.json();
+    } catch (e) {
+        console.error(`API error [${endpoint}]:`, e);
+        return null;
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Formatters
+// ────────────────────────────────────────────────────────────────
+function formatPrice(p) {
+    if (p == null || p === 0) return '—';
+    p = parseFloat(p);
+    if (p < 0.00001) return '$' + p.toExponential(2);
+    if (p < 0.01) return '$' + p.toFixed(6);
+    if (p < 1) return '$' + p.toFixed(4);
+    if (p < 1000) return '$' + p.toFixed(2);
+    return '$' + p.toLocaleString('en-US', {maximumFractionDigits: 2});
+}
+function formatMcap(v) {
+    if (v == null || v === 0) return '—';
+    v = parseFloat(v);
+    if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+    return '$' + v.toFixed(0);
+}
+function formatVol(v) {
+    if (v == null || v === 0) return '—';
+    v = parseFloat(v);
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+    return v.toFixed(0);
+}
+function formatPct(v) {
+    if (v == null) return '<span class="pct-neutral">—</span>';
+    v = parseFloat(v);
+    const cls = v > 0 ? 'pct-positive' : v < 0 ? 'pct-negative' : 'pct-neutral';
+    const sign = v > 0 ? '+' : '';
+    return `<span class="${cls}">${sign}${v.toFixed(1)}%</span>`;
+}
+function formatPctRaw(v) {
+    if (v == null) return '—';
+    v = parseFloat(v);
+    const sign = v > 0 ? '+' : '';
+    return `${sign}${v.toFixed(1)}%`;
+}
+function formatAddr(addr) {
+    if (!addr) return '—';
+    return addr.substring(0, 4) + '...' + addr.substring(addr.length - 4);
+}
+function formatTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(typeof ts === 'number' ? ts * 1000 : ts);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return Math.floor(diff) + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return d.toLocaleDateString();
+}
+function formatSol(v) {
+    if (v == null) return '—';
+    v = parseFloat(v);
+    return (v >= 0 ? '+' : '') + v.toFixed(4) + ' SOL';
+}
+
+// ────────────────────────────────────────────────────────────────
+// Token Table
+// ────────────────────────────────────────────────────────────────
+function renderTokenTable(tokens) {
+    const tbody = document.getElementById('tokenTbody');
+    if (!tokens || tokens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-muted);">No tokens found. Start the scanner to populate data.</td></tr>';
+        return;
+    }
+
+    // Apply filter
+    let filtered = tokens;
+    if (currentFilter === 'hot') {
+        filtered = tokens.filter(t => t.is_uptrend || t.price_change_5m > 5 || t.volume_5m > 1000);
+    } else if (currentFilter === 'uptrend') {
+        filtered = tokens.filter(t => t.is_uptrend);
+    } else if (currentFilter === 'new') {
+        filtered = tokens.filter(t => t.is_new);
+    } else if (currentFilter === 'volume') {
+        filtered = [...tokens].sort((a, b) => (b.volume_5m || 0) - (a.volume_5m || 0));
+    }
+
+    // Apply search
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(t => 
+            (t.token_name || '').toLowerCase().includes(q) ||
+            (t.address || '').toLowerCase().includes(q) ||
+            (t.base_token_symbol || '').toLowerCase().includes(q)
+        );
+    }
+
+    document.getElementById('tokenCount').textContent = filtered.length + ' tokens';
+
+    let html = '';
+    for (const t of filtered) {
+        const addr = t.address || '';
+        const prevPrice = lastPrices[addr];
+        const flashClass = prevPrice ? (t.current_price > prevPrice ? 'flash-up' : t.current_price < prevPrice ? 'flash-down' : '') : '';
+        const trendClass = t.is_uptrend ? 'uptrend' : (t.is_downtrend ? 'downtrend' : '');
+        
+        const holdPct = t.top_20_holders_percentage || 0;
+        const holdClass = holdPct > 80 ? 'danger' : holdPct > 50 ? 'warn' : 'safe';
+        
+        html += `<tr class="${trendClass} ${flashClass}" onclick="openTokenDetail('${addr}')" style="cursor:pointer;">
+            <td>
+                <div class="token-name">${escHtml(t.token_name || t.base_token_symbol || 'Unknown')}
+                    ${t.is_new ? '<span class="token-new">NEW</span>' : ''}
+                    ${t.is_bundled ? '<span class="token-scam">⚠</span>' : ''}
+                </div>
+                <div class="token-addr">${formatAddr(addr)}</div>
+            </td>
+            <td>${formatPrice(t.current_price)}</td>
+            <td>${formatMcap(t.current_market_cap)}</td>
+            <td>${formatPct(t.price_change_5s)}</td>
+            <td>${formatPct(t.price_change_30s)}</td>
+            <td>${formatPct(t.price_change_1m)}</td>
+            <td>${formatPct(t.price_change_5m)}</td>
+            <td class="${(t.volume_5m || 0) > 5000 ? 'vol-high' : ''}">${formatVol(t.volume_5m)}</td>
+            <td><span class="text-green">${t.buys_5m || 0}</span>/<span class="text-red">${t.sells_5m || 0}</span></td>
+            <td>
+                ${holdPct.toFixed(0)}%
+                <div class="holder-bar"><div class="holder-bar-fill ${holdClass}" style="width:${Math.min(holdPct, 100)}%"></div></div>
+            </td>
+            <td><button class="trade-btn" onclick="event.stopPropagation(); openArtemisPanel('${addr}', '${escHtml(t.token_name || t.base_token_symbol || '?')}', ${t.current_price || 0}, ${t.current_market_cap || 0})">🤖</button></td>
+            <td><button class="remove-btn" onclick="event.stopPropagation(); removeToken('${addr}', '${escHtml(t.token_name || t.base_token_symbol || '?')}')" title="Remove token">✕</button></td>
+        </tr>`;
+        
+        lastPrices[addr] = t.current_price;
+    }
+    tbody.innerHTML = html;
+}
+
+function sortTokens(field) {
+    if (currentSort === field) {
+        currentSortDir = currentSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+        currentSort = field;
+        currentSortDir = 'desc';
+    }
+    
+    // Update sort indicators
+    document.querySelectorAll('.token-table th').forEach(th => th.classList.remove('sorted'));
+    
+    allTokens.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        if (typeof va === 'string') {
+            va = va.toLowerCase();
+            vb = (vb || '').toLowerCase();
+            return currentSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        va = parseFloat(va) || 0;
+        vb = parseFloat(vb) || 0;
+        return currentSortDir === 'asc' ? va - vb : vb - va;
+    });
+    
+    renderTokenTable(allTokens);
+}
+
+function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTokenTable(allTokens);
+}
+
+function filterTokens() {
+    searchQuery = document.getElementById('searchInput').value;
+    renderTokenTable(allTokens);
+}
+
+// ────────────────────────────────────────────────────────────────
+// Top Movers
+// ────────────────────────────────────────────────────────────────
+function renderMovers(gainers, losers) {
+    const gEl = document.getElementById('topGainers');
+    const lEl = document.getElementById('topLosers');
+    
+    if (!gainers || gainers.length === 0) {
+        gEl.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:10px;text-align:center;">No data</div>';
+    } else {
+        gEl.innerHTML = gainers.map(t => `
+            <div class="mover-item" onclick="openTokenDetail('${t.address}')" style="cursor:pointer;">
+                <span class="token-name" style="font-size:10px;">${escHtml(t.token_name || 'Unknown')}</span>
+                ${formatPct(t.price_change_5m)}
+            </div>`).join('');
+    }
+    
+    if (!losers || losers.length === 0) {
+        lEl.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:10px;text-align:center;">No data</div>';
+    } else {
+        lEl.innerHTML = losers.map(t => `
+            <div class="mover-item" onclick="openTokenDetail('${t.address}')" style="cursor:pointer;">
+                <span class="token-name" style="font-size:10px;">${escHtml(t.token_name || 'Unknown')}</span>
+                ${formatPct(t.price_change_5m)}
+            </div>`).join('');
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Signal Feed
+// ────────────────────────────────────────────────────────────────
+function renderSignals(signals) {
+    const el = document.getElementById('signalFeed');
+    if (!signals || signals.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">📡</div><div class="text">No signals yet. Waiting for the scanner...</div></div>';
+        return;
+    }
+    
+    el.innerHTML = signals.slice(0, 30).map(s => {
+        const type = (s.signal_type || s.trade_signal || 'Signal').toString();
+        const isBuy = type.toLowerCase().includes('buy') || type.toLowerCase().includes('higher') || type.toLowerCase().includes('tp');
+        const isSell = type.toLowerCase().includes('sell');
+        const isMomentum = type.toLowerCase().includes('momentum');
+        const typeClass = isBuy ? 'buy' : isSell ? 'sell' : isMomentum ? 'momentum' : 'alert';
+        
+        return `<div class="signal-item">
+            <span class="signal-type ${typeClass}">${escHtml(type.length > 12 ? type.substring(0, 12) : type)}</span>
+            <span class="signal-token">${escHtml(s.token_name || formatAddr(s.address))}</span>
+            <span class="signal-price">${formatPrice(s.current_price || s.price)}</span>
+            <span class="signal-time">${formatTime(s._mtime || s.timestamp || s.detection_timestamp)}</span>
+        </div>`;
+    }).join('');
+}
+
+// ────────────────────────────────────────────────────────────────
+// Trade History
+// ────────────────────────────────────────────────────────────────
+function renderTradeHistory(data) {
+    const el = document.getElementById('tradeHistory');
+    if (!data || data.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><div class="text">No trade history yet</div></div>';
+        return;
+    }
+    
+    el.innerHTML = data.slice(0, 50).map(t => {
+        const profit = t.net_profit || 0;
+        const isWin = t.isWin || profit > 0;
+        return `<div class="trade-hist-item">
+            <span class="trade-result ${isWin ? 'win' : 'loss'}">${isWin ? 'W' : 'L'}</span>
+            <span class="signal-token">${escHtml(t.token_name || '—')}</span>
+            <span class="trade-hist-profit ${isWin ? 'text-green' : 'text-red'}">${formatSol(profit)}</span>
+            <span class="signal-time">${formatTime(t.timestamp)}</span>
+        </div>`;
+    }).join('');
+}
+
+// ────────────────────────────────────────────────────────────────
+// Config
+// ────────────────────────────────────────────────────────────────
+function renderConfig(config) {
+    const el = document.getElementById('configPanel');
+    if (!config) {
+        el.innerHTML = '<div class="empty-state"><div class="text">Could not load config</div></div>';
+        return;
+    }
+    
+    let html = '';
+    for (const [section, params] of Object.entries(config)) {
+        html += `<div style="padding:8px 10px 4px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);border-bottom:1px solid var(--border);">${section}</div>`;
+        html += '<div class="config-grid">';
+        for (const [key, value] of Object.entries(params)) {
+            const label = key.replace(/_/g, ' ');
+            html += `<div class="config-item">
+                <span class="config-label">${escHtml(label)}</span>
+                <span class="config-value">${escHtml(String(value))}</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+    el.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────────────────────
+// Token Detail Modal
+// ────────────────────────────────────────────────────────────────
+async function openTokenDetail(address) {
+    const modal = document.getElementById('tokenModal');
+    modal.classList.add('active');
+    
+    document.getElementById('modalTokenName').textContent = 'Loading...';
+    document.getElementById('modalTokenAddr').textContent = address;
+    document.getElementById('modalStats').innerHTML = '';
+    document.getElementById('modalExtra').innerHTML = '';
+    
+    const data = await api('token/' + address);
+    if (!data || !data.token) {
+        document.getElementById('modalTokenName').textContent = 'Token not found';
+        return;
+    }
+    
+    const t = data.token;
+    const p = data.profile;
+    
+    document.getElementById('modalTokenName').textContent = t.token_name || t.base_token_symbol || 'Unknown';
+    document.getElementById('modalTokenAddr').textContent = address;
+    
+    // Stats grid
+    document.getElementById('modalStats').innerHTML = `
+        <div class="modal-stat">
+            <div class="label">Price</div>
+            <div class="value">${formatPrice(t.current_price)}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Market Cap</div>
+            <div class="value">${formatMcap(t.current_market_cap)}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">ATH Price</div>
+            <div class="value">${formatPrice(t.ath_price)}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">5m Change</div>
+            <div class="value">${formatPct(t.price_change_5m)}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Vol 24h</div>
+            <div class="value">${formatVol(t.volume_24h)}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Top 20 Holders</div>
+            <div class="value ${t.top_20_holders_percentage > 80 ? 'text-red' : t.top_20_holders_percentage > 50 ? 'text-yellow' : 'text-green'}">${(t.top_20_holders_percentage || 0).toFixed(1)}%</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Buys/Sells 5m</div>
+            <div class="value"><span class="text-green">${t.buys_5m || 0}</span> / <span class="text-red">${t.sells_5m || 0}</span></div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Status</div>
+            <div class="value">${t.is_uptrend ? '<span class="text-green">⬆ UPTREND</span>' : t.is_downtrend ? '<span class="text-red">⬇ DOWNTREND</span>' : '<span class="text-muted">NEUTRAL</span>'}</div>
+        </div>
+        <div class="modal-stat">
+            <div class="label">Bundled</div>
+            <div class="value">${t.is_bundled ? '<span class="text-red">⚠ YES</span>' : '<span class="text-green">CLEAN</span>'}</div>
+        </div>
+    `;
+    
+    // Extra info
+    let extra = '<div style="margin-top:12px;">';
+    if (t.bundling_reason) {
+        extra += `<div style="padding:8px;background:var(--red-bg);border:1px solid rgba(255,51,102,0.2);border-radius:4px;font-size:11px;color:var(--red);margin-bottom:8px;">⚠ ${escHtml(t.bundling_reason)}</div>`;
+    }
+    if (t.url) {
+        extra += `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;"><a href="${escHtml(t.url)}" target="_blank" style="color:var(--cyan);text-decoration:none;">📊 View on DexScreener →</a></div>`;
+    }
+    
+    // Volume breakdown
+    extra += `<div style="margin-top:12px;">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;">Volume Breakdown</div>
+        <table style="width:100%;font-size:10px;border-collapse:collapse;">
+            <tr><td style="padding:2px 0;color:var(--text-secondary);">5 min</td><td style="text-align:right;">${formatVol(t.volume_5m)}</td><td style="text-align:right;padding-left:12px;"><span class="text-green">${t.buys_5m || 0}B</span> / <span class="text-red">${t.sells_5m || 0}S</span></td></tr>
+            <tr><td style="padding:2px 0;color:var(--text-secondary);">1 hour</td><td style="text-align:right;">${formatVol(t.volume_1h)}</td><td style="text-align:right;padding-left:12px;"><span class="text-green">${t.buys_1h || 0}B</span> / <span class="text-red">${t.sells_1h || 0}S</span></td></tr>
+            <tr><td style="padding:2px 0;color:var(--text-secondary);">6 hours</td><td style="text-align:right;">${formatVol(t.volume_6h)}</td><td style="text-align:right;padding-left:12px;"><span class="text-green">${t.buys_6h || 0}B</span> / <span class="text-red">${t.sells_6h || 0}S</span></td></tr>
+            <tr><td style="padding:2px 0;color:var(--text-secondary);">24 hours</td><td style="text-align:right;">${formatVol(t.volume_24h)}</td><td style="text-align:right;padding-left:12px;"><span class="text-green">${t.buys_24h || 0}B</span> / <span class="text-red">${t.sells_24h || 0}S</span></td></tr>
+        </table>
+    </div>`;
+    extra += '</div>';
+    document.getElementById('modalExtra').innerHTML = extra;
+    
+    // Draw price chart from profile
+    if (p && p.price_history && p.price_history.length > 1) {
+        drawPriceChart(p.price_history);
+    } else {
+        const canvas = document.getElementById('priceChart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#555570';
+        ctx.font = '12px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText('No price history available', canvas.width / 2, canvas.height / 2);
+    }
+
+    // ── Trade buttons in modal ──
+    const tName = escHtml(t.token_name || t.base_token_symbol || 'Unknown');
+    document.getElementById('modalTradeBar').innerHTML = `
+        <button class="artemis-btn analyze" onclick="closeModal(); openArtemisPanel('${address}', '${tName}', ${t.current_price || 0}, ${t.current_market_cap || 0}); artemisAction('analyze');">🔍 Analyze</button>
+        <button class="artemis-btn buy" onclick="closeModal(); openArtemisPanel('${address}', '${tName}', ${t.current_price || 0}, ${t.current_market_cap || 0}); artemisAction('buy50');">💰 Buy $50</button>
+        <button class="artemis-btn buy" onclick="closeModal(); openArtemisPanel('${address}', '${tName}', ${t.current_price || 0}, ${t.current_market_cap || 0}); artemisAction('buy100');">💰 Buy $100</button>
+        <button class="artemis-btn" onclick="closeModal(); openArtemisPanel('${address}', '${tName}', ${t.current_price || 0}, ${t.current_market_cap || 0});">🤖 Open AI Panel</button>
+    `;
+}
+
+function closeModal() {
+    document.getElementById('tokenModal').classList.remove('active');
+}
+
+// Close modal on ESC
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+});
+
+// ────────────────────────────────────────────────────────────────
+// Canvas Price Chart
+// ────────────────────────────────────────────────────────────────
+function drawPriceChart(priceHistory) {
+    const canvas = document.getElementById('priceChart');
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth - 16;
+    canvas.height = container.clientHeight - 16;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    
+    ctx.clearRect(0, 0, W, H);
+    
+    if (!priceHistory || priceHistory.length < 2) return;
+    
+    // Use last 200 points max
+    const data = priceHistory.slice(-200);
+    const prices = data.map(d => parseFloat(d[1]));
+    const times = data.map(d => parseFloat(d[0]));
+    
+    const minP = Math.min(...prices) * 0.998;
+    const maxP = Math.max(...prices) * 1.002;
+    const rangeP = maxP - minP || 1;
+    const minT = times[0];
+    const maxT = times[times.length - 1];
+    const rangeT = maxT - minT || 1;
+    
+    const padL = 60, padR = 10, padT = 10, padB = 25;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    
+    const x = (t) => padL + ((t - minT) / rangeT) * chartW;
+    const y = (p) => padT + chartH - ((p - minP) / rangeP) * chartH;
+    
+    // Grid lines
+    ctx.strokeStyle = 'rgba(30, 30, 64, 0.6)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+        const yy = padT + (chartH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padL, yy);
+        ctx.lineTo(W - padR, yy);
+        ctx.stroke();
+        
+        // Y labels
+        const pVal = maxP - (rangeP / 4) * i;
+        ctx.fillStyle = '#555570';
+        ctx.font = '9px JetBrains Mono';
+        ctx.textAlign = 'right';
+        ctx.fillText(formatPrice(pVal).replace('$', ''), padL - 4, yy + 3);
+    }
+    
+    // Determine color
+    const startP = prices[0];
+    const endP = prices[prices.length - 1];
+    const isUp = endP >= startP;
+    const lineColor = isUp ? '#00ff88' : '#ff3366';
+    const gradTop = isUp ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 51, 102, 0.15)';
+    const gradBot = 'rgba(0, 0, 0, 0)';
+    
+    // Fill gradient
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+    grad.addColorStop(0, gradTop);
+    grad.addColorStop(1, gradBot);
+    
+    ctx.beginPath();
+    ctx.moveTo(x(times[0]), y(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+        ctx.lineTo(x(times[i]), y(prices[i]));
+    }
+    ctx.lineTo(x(times[times.length - 1]), padT + chartH);
+    ctx.lineTo(x(times[0]), padT + chartH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+    
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(x(times[0]), y(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+        ctx.lineTo(x(times[i]), y(prices[i]));
+    }
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    
+    // Current price dot
+    const lastX = x(times[times.length - 1]);
+    const lastY = y(prices[prices.length - 1]);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = lineColor;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.4;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    
+    // Current price label
+    ctx.fillStyle = lineColor;
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(formatPrice(endP), lastX + 8, lastY + 3);
+}
+
+// ────────────────────────────────────────────────────────────────
+// Tab System
+// ────────────────────────────────────────────────────────────────
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// ────────────────────────────────────────────────────────────────
+// Stats Update
+// ────────────────────────────────────────────────────────────────
+function updateStats(stats) {
+    if (!stats) return;
+    
+    const t = stats.tokens || {};
+    document.getElementById('statTotalTokens').textContent = t.total || 0;
+    document.getElementById('statActiveTokens').textContent = t.active || 0;
+    document.getElementById('statUptrending').textContent = t.uptrending || 0;
+    document.getElementById('statNewTokens').textContent = t.new || 0;
+    document.getElementById('statBundled').textContent = t.bundled || 0;
+    
+    const p = stats.performance || {};
+    document.getElementById('statTotalTrades').textContent = p.total_trades || 0;
+    document.getElementById('statWinRate').textContent = p.win_rate || 0;
+    document.getElementById('statWins').textContent = p.wins || 0;
+    document.getElementById('statLosses').textContent = p.losses || 0;
+    
+    const pnl = p.profit_sol || 0;
+    const pnlEl = document.getElementById('statPnl');
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(4);
+    pnlEl.className = 'stat-value ' + (pnl >= 0 ? 'profit' : 'loss');
+    document.getElementById('statPnlUsd').textContent = '≈ $' + (pnl * 150).toFixed(2);
+    
+    const s = stats.signals || {};
+    document.getElementById('statSignals').textContent = s.pending_signals || 0;
+    document.getElementById('statPredictions').textContent = s.pending_predictions || 0;
+}
+
+// ────────────────────────────────────────────────────────────────
+// Health Check
+// ────────────────────────────────────────────────────────────────
+function updateHealth(health) {
+    const el = document.getElementById('healthStatus');
+    if (!health) {
+        el.innerHTML = '<span class="status-dot offline"></span>OFFLINE';
+        return;
+    }
+    if (health.status === 'ok') {
+        el.innerHTML = '<span class="status-dot online"></span>ONLINE';
+    } else {
+        el.innerHTML = '<span class="status-dot warning"></span>DEGRADED';
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// HTML Escape
+// ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+    if (!s) return '';
+    return s.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ────────────────────────────────────────────────────────────────
+// Main Refresh Loop
+// ────────────────────────────────────────────────────────────────
+let countdown = 3;
+let refreshTimer;
+
+async function refreshData() {
+    try {
+        // Parallel API calls
+        const [tokensData, statsData, signalsData, tradeSignalsData, configData, healthData] = await Promise.all([
+            api('tokens?limit=200&sort=' + currentSort + '&order=' + (currentSortDir === 'desc' ? 'DESC' : 'ASC')),
+            api('stats'),
+            api('signals?limit=30'),
+            api('trade-signals'),
+            api('config'),
+            api('health'),
+        ]);
+        
+        // Tokens
+        if (tokensData && tokensData.tokens) {
+            allTokens = tokensData.tokens;
+            renderTokenTable(allTokens);
+        }
+        
+        // Stats
+        if (statsData) {
+            updateStats(statsData);
+            renderMovers(statsData.top_gainers, statsData.top_losers);
+        }
+        
+        // Signals
+        if (signalsData && signalsData.signals) {
+            renderSignals(signalsData.signals);
+        }
+        
+        // Trade history from trade-signals
+        if (tradeSignalsData && tradeSignalsData.signals) {
+            renderTradeHistory(tradeSignalsData.signals);
+        }
+        
+        // Config
+        if (configData) {
+            renderConfig(configData);
+        }
+        
+        // Health
+        updateHealth(healthData);
+        
+        // Update timestamp
+        const now = new Date();
+        document.getElementById('lastUpdate').textContent = 
+            now.toLocaleTimeString('en-US', { hour12: false });
+
+        // Jarvis feed — refresh every ~30s (every 10th cycle)
+        jarvisRefreshCounter++;
+        if (jarvisRefreshCounter >= 10 || jarvisRefreshCounter === 1) {
+            jarvisRefreshCounter = 0;
+            loadJarvisFeed();
+            loadWhaleMonitor();
+        }
+        
+    } catch (e) {
+        console.error('Refresh error:', e);
+        updateHealth(null);
+    }
+}
+
+// Countdown timer
+let jarvisRefreshCounter = 0;
+async function loadJarvisFeed() {
+    try {
+        const data = await api('jarvis-feed');
+        if (!data) return;
+        // Portfolio bar
+        if (data.portfolio) {
+            document.getElementById('jarvisCash').textContent = '$' + Number(data.portfolio.cash || 0).toFixed(2);
+            const pos = data.portfolio.positions || {};
+            const posCount = Object.keys(pos).length;
+            const posText = posCount === 0 ? 'None' : Object.entries(pos).map(([s, p]) => s + ' $' + Number(p.value_usd || 0).toFixed(2)).join(' · ');
+            document.getElementById('jarvisPositions').textContent = posText;
+        }
+        // Feed
+        const feed = data.feed || [];
+        const container = document.getElementById('jarvisFeed');
+        if (feed.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">🤖</div><div class="text">No Jarvis trades yet — cycle starts every 5 min</div></div>';
+            return;
+        }
+        container.innerHTML = feed.map(item => {
+            const action = (item.type || 'TRADE').toUpperCase().replace(' ', '_');
+            const dt = item.ts ? new Date(typeof item.ts === 'number' && item.ts < 1e12 ? item.ts * 1000 : (typeof item.ts === 'string' ? item.ts : item.ts)).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : '';
+            const amountStr = item.amount_usd ? ' · $' + Number(item.amount_usd).toFixed(2) : '';
+            const priceStr = item.price ? ' @ $' + Number(item.price).toFixed(6) : '';
+            const scoreStr = item.score ? ' · Score ' + Number(item.score).toFixed(1) : '';
+            const reason = item.reason || '';
+            return `<div class="jarvis-post">
+                <div class="jarvis-post-header">
+                    <div class="jarvis-avatar">🤖</div>
+                    <span class="jarvis-name">Jarvis ${item.source === 'journal' ? '(cycle)' : '(sim)'}</span>
+                    <span class="jarvis-ts">${dt}</span>
+                </div>
+                <span class="jarvis-action ${action}">${action}</span>
+                <span class="jarvis-symbol">${item.symbol || ''}</span>
+                <span class="jarvis-amount">${amountStr}${priceStr}${scoreStr}</span>
+                ${reason ? '<div class="jarvis-reason">' + reason.replace(/</g,'&lt;') + '</div>' : ''}
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error('Jarvis feed error:', e);
+    }
+}
+
+async function loadWhaleMonitor() {
+    try {
+        const data = await api('whale-monitor');
+        if (!data) return;
+        // Stats bar
+        const s = data.stats || {};
+        document.getElementById('whalePolls').textContent = s.polls || 0;
+        document.getElementById('whaleSwaps').textContent = s.swaps_detected || 0;
+        document.getElementById('whaleBuys').textContent = s.buy_signals_generated || 0;
+        document.getElementById('whaleSells').textContent = s.sell_signals_generated || 0;
+        document.getElementById('whaleErrors').textContent = s.rpc_errors || 0;
+        // Wallets
+        const wallets = data.wallets || [];
+        const wc = document.getElementById('whaleWallets');
+        if (wallets.length === 0) {
+            wc.innerHTML = '<div class="empty-state"><div class="icon">🐋</div><div class="text">No wallets tracked — use whale_add_wallet tool</div></div>';
+        } else {
+            wc.innerHTML = wallets.map(w => {
+                const st = w.stats || {};
+                const addr = w.address || '';
+                const short = addr.slice(0,6) + '...' + addr.slice(-4);
+                const copied = st.trades_copied || 0;
+                const profitable = st.profitable_copies || 0;
+                const pnl = st.total_pnl_usd || 0;
+                const pnlCls = pnl >= 0 ? 'text-green' : 'text-red';
+                return `<div class="whale-wallet-card">
+                    <span class="ww-tier ${escHtml(w.tier || 'whale')}">${escHtml(w.tier || 'whale')}</span>
+                    <span class="ww-label">${escHtml(w.label || 'Unknown')}</span>
+                    <span class="ww-addr" title="${escHtml(addr)}">${escHtml(short)}</span>
+                    <span class="ww-stats">
+                        <span>Copied: ${copied}</span>
+                        <span>Win: ${profitable}</span>
+                        <span class="${pnlCls}">P/L: $${pnl >= 0 ? '+' : ''}${Number(pnl).toFixed(2)}</span>
+                        <span>${w.enabled ? '🟢' : '🔴'}</span>
+                    </span>
+                </div>`;
+            }).join('');
+        }
+        // Recent signals
+        const signals = data.recent_signals || [];
+        const sf = document.getElementById('whaleSignalFeed');
+        if (signals.length === 0) {
+            sf.innerHTML = '<div class="empty-state"><div class="icon">📡</div><div class="text">No whale swaps detected yet — monitoring every 60s</div></div>';
+        } else {
+            sf.innerHTML = signals.map(sig => {
+                const dir = (sig.direction || sig.grade || 'BUY').toUpperCase();
+                const isBuy = dir.includes('BUY');
+                const dt = sig.scored_at ? new Date(sig.scored_at).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : '';
+                const sym = sig.symbol || sig.address?.slice(0,8) || '???';
+                const usd = sig.whale_swap_usd ? '$' + Number(sig.whale_swap_usd).toLocaleString('en-US', {maximumFractionDigits:0}) : '';
+                const who = sig.whale_label || '';
+                const tier = sig.whale_tier || 'whale';
+                const reason = sig.reasoning || '';
+                return `<div class="whale-signal">
+                    <div class="ws-header">
+                        <span class="ws-dir ${isBuy ? 'buy' : 'sell'}">${isBuy ? 'BUY' : 'SELL'}</span>
+                        <span class="ws-sym">${escHtml(sym)}</span>
+                        <span style="font-size:10px;color:var(--text-muted)">${escHtml(usd)}</span>
+                        <span class="ws-who">${escHtml(tier.toUpperCase())} ${escHtml(who)} · ${dt}</span>
+                    </div>
+                    ${reason ? '<div class="ws-detail">' + escHtml(reason) + '</div>' : ''}
+                </div>`;
+            }).join('');
+        }
+    } catch (e) {
+        console.error('Whale monitor error:', e);
+    }
+}
+
+function startCountdown() {
+    countdown = refreshInterval / 1000;
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(() => {
+        countdown--;
+        document.getElementById('refreshTimer').textContent = countdown + 's';
+        if (countdown <= 0) {
+            countdown = refreshInterval / 1000;
+            refreshData();
+        }
+    }, 1000);
+}
+
+// ────────────────────────────────────────────────────────────────
+// Init
+// ────────────────────────────────────────────────────────────────
+(async function init() {
+    await refreshData();
+    startCountdown();
+    loadPortfolioStrip();
+})();
+
+// ────────────────────────────────────────────────────────────────
+// Artemis AI Trading Panel
+// ────────────────────────────────────────────────────────────────
+let artemisToken = { address: '', name: '', price: 0, mcap: 0 };
+let artemisBusy = false;
+
+// ── Token Removal ───────────────────────────────────────────────
+function removeToken(address, name) {
+    if (!confirm(`Remove ${name} (${address.slice(0, 8)}…) from the terminal?`)) return;
+    fetch(`api/token/${address}/remove`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { alert('Error: ' + data.error); return; }
+            // Remove from local data and re-render
+            allTokens = allTokens.filter(t => t.address !== address);
+            renderTokenTable(allTokens);
+        })
+        .catch(e => alert('Remove failed: ' + e));
+}
+
+function purgeBadTokens() {
+    if (!confirm('Remove ALL bundled & dead tokens from the terminal?')) return;
+    fetch('api/tokens/purge-bad', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { alert('Error: ' + data.error); return; }
+            alert(`Purged ${data.removed_count} tokens`);
+            refreshData(); // Full refresh
+        })
+        .catch(e => alert('Purge failed: ' + e));
+}
+
+function openArtemisPanel(address, name, price, mcap) {
+    artemisToken = { address, name, price, mcap };
+    document.getElementById('artemisTokenName').textContent = name;
+    document.getElementById('artemisTokenAddr').textContent = address;
+    document.getElementById('artemisTokenPrice').textContent = '$' + formatPrice(price) + ' · MCap ' + formatMcap(mcap);
+    document.getElementById('artemisPanel').classList.add('open');
+    document.getElementById('artemisOverlay').classList.add('open');
+    // Check if we have a position in this token
+    updateArtemisSellBtn();
+}
+
+function closeArtemisPanel() {
+    document.getElementById('artemisPanel').classList.remove('open');
+    document.getElementById('artemisOverlay').classList.remove('open');
+}
+
+function updateArtemisSellBtn() {
+    // Show sell button only if we have a position
+    api('portfolio').then(data => {
+        if (!data || !data.positions) return;
+        const pos = Object.values(data.positions).find(p => p.token_address === artemisToken.address);
+        const btn = document.getElementById('btnSell');
+        if (pos) {
+            btn.style.display = '';
+            btn.textContent = '📤 Sell (' + (pos.pnl_pct >= 0 ? '+' : '') + pos.pnl_pct.toFixed(1) + '%)';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+}
+
+async function artemisAction(action) {
+    if (artemisBusy) return;
+    const t = artemisToken;
+    if (!t.address) return;
+
+    let prompt = '';
+    switch (action) {
+        case 'analyze':
+            prompt = `Analyze this token for a potential trade:\n` +
+                `Token: ${t.name}\nAddress: ${t.address}\nPrice: $${t.price}\nMarket Cap: $${t.mcap}\n\n` +
+                `Use degen_terminal_top() and sim_price_check("${t.address}") to get current data. ` +
+                `Check holder distribution, volume, trend direction. Give me a BUY/SKIP/WAIT verdict with reasoning.`;
+            break;
+        case 'buy50':
+            prompt = `Buy $50 of ${t.name} (${t.address}) using sim_buy("${t.address}", 50). ` +
+                `Current price: $${t.price}, MCap: $${t.mcap}. Execute the trade now.`;
+            break;
+        case 'buy100':
+            prompt = `Buy $100 of ${t.name} (${t.address}) using sim_buy("${t.address}", 100). ` +
+                `Current price: $${t.price}, MCap: $${t.mcap}. Execute the trade now.`;
+            break;
+        case 'sell':
+            prompt = `Sell my position in ${t.name} (${t.address}) using sim_sell("${t.address}", 100). ` +
+                `Close the full position. Show me the P&L.`;
+            break;
+        case 'custom':
+            const custom = document.getElementById('artemisCustomPrompt').value.trim();
+            if (!custom) return;
+            prompt = `Regarding token ${t.name} (${t.address}, price $${t.price}, mcap $${t.mcap}):\n\n${custom}`;
+            document.getElementById('artemisCustomPrompt').value = '';
+            break;
+    }
+
+    if (!prompt) return;
+    await sendToArtemis(prompt);
+}
+
+async function sendToArtemis(prompt) {
+    artemisBusy = true;
+    const btns = document.querySelectorAll('.artemis-btn');
+    btns.forEach(b => b.disabled = true);
+    const content = document.getElementById('artemisResponseContent');
+    const status = document.getElementById('artemisStatus');
+    content.innerHTML = '';
+    status.innerHTML = '<div class="spinner"></div> <span>Artemis is thinking...</span>';
+
+    try {
+        const resp = await fetch('api/artemis/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt }),
+        });
+        const data = await resp.json();
+        if (data.error) {
+            content.innerHTML = `<span style="color:var(--red);">Error: ${escHtml(data.error)}</span>`;
+        } else {
+            // Format response
+            let text = data.response || data.result || data.output || JSON.stringify(data, null, 2);
+            // Highlight tool calls
+            text = text.replace(/\[TOOL_CALL\]\s*(\w+)\((.*?)\)/g, '<div class="tool-call">🔧 $1($2)</div>');
+            text = text.replace(/\[TOOL_RESULT\]/g, '<span style="color:var(--cyan);">[Result]</span>');
+            content.innerHTML = text;
+        }
+        status.innerHTML = '<span style="color:var(--green);">✓ Complete</span>';
+        // Refresh portfolio after trade
+        loadPortfolioStrip();
+        updateArtemisSellBtn();
+    } catch (e) {
+        content.innerHTML = `<span style="color:var(--red);">Connection error: ${escHtml(e.message)}</span>`;
+        status.innerHTML = '<span style="color:var(--red);">✗ Failed</span>';
+    } finally {
+        artemisBusy = false;
+        btns.forEach(b => b.disabled = false);
+    }
+}
+
+// ── Portfolio Strip ──
+async function loadPortfolioStrip() {
+    try {
+        const data = await api('portfolio');
+        if (!data) return;
+        const strip = document.getElementById('portfolioStrip');
+        if (!strip) return;
+        const positions = data.positions || {};
+        const posCount = Object.keys(positions).length;
+        let totalValue = data.cash_balance || 0;
+        let totalPnl = 0;
+        for (const [sym, p] of Object.entries(positions)) {
+            totalValue += (p.current_value || p.total_cost || 0);
+            totalPnl += (p.unrealized_pnl || 0);
+        }
+        strip.innerHTML = `
+            <div><span class="ps-label">Cash</span><span class="ps-value" style="color:var(--green);">$${Number(data.cash_balance || 0).toFixed(0)}</span></div>
+            <div><span class="ps-label">Positions</span><span class="ps-value">${posCount}</span></div>
+            <div><span class="ps-label">Portfolio</span><span class="ps-value">$${totalValue.toFixed(0)}</span></div>
+            <div><span class="ps-label">Open P&L</span><span class="ps-value" style="color:${totalPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}</span></div>
+        `;
+    } catch (e) {}
+}
+
+// Close Artemis panel on ESC too
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('artemisPanel').classList.contains('open')) {
+        closeArtemisPanel();
+    }
+});
+</script>
+</body>
+</html>

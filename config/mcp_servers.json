@@ -1,0 +1,74 @@
+{
+  "_comment": "SAIGE MCP Server Configuration \u2014 Add MCP servers here",
+  "_docs": "Each server needs: command, args. Set enabled=true to connect on startup.",
+  "servers": {
+    "browser": {
+      "name": "browser",
+      "command": "python3",
+      "args": ["brain/mcp_browser_server.py"],
+      "cwd": ".",
+      "env": {
+        "DISPLAY": ":99"
+      },
+      "description": "Full Chromium web browser — navigate, click, search Google, read pages, take screenshots",
+      "tool_prefix": "mcp_browser_",
+      "enabled": false,
+      "auto_connect": true,
+      "timeout_seconds": 60
+    },
+    "fetch": {
+      "name": "fetch",
+      "command": "mcp-server-fetch",
+      "args": [],
+      "description": "Fetch web pages and convert to markdown \u2014 gives SAIGE real web browsing",
+      "tool_prefix": "mcp_fetch_",
+      "enabled": true,
+      "auto_connect": true,
+      "timeout_seconds": 30
+    },
+    "filesystem": {
+      "name": "filesystem",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "description": "File system access via MCP",
+      "tool_prefix": "mcp_fs_",
+      "enabled": false,
+      "auto_connect": true,
+      "timeout_seconds": 15
+    },
+    "computer_use": {
+      "name": "computer_use",
+      "command": "python3",
+      "args": ["brain/mcp_computer_server.py"],
+      "cwd": ".",
+      "env": {
+        "DISPLAY": ":99"
+      },
+      "description": "Full virtual desktop control — mouse, keyboard, windows, screenshots, OCR. SAIGE operates a computer like a human.",
+      "tool_prefix": "mcp_",
+      "enabled": false,
+      "auto_connect": true,
+      "timeout_seconds": 45
+    },
+    "brave_search": {
+      "name": "brave_search",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "YOUR_API_KEY_HERE"
+      },
+      "description": "Web search via Brave Search API",
+      "tool_prefix": "mcp_brave_",
+      "enabled": false,
+      "auto_connect": true,
+      "timeout_seconds": 30
+    }
+  }
+}

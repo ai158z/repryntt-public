@@ -1,0 +1,14 @@
+# twist_mux: arbitrates between Nav2 and repryntt brain
+# Higher priority wins when active. Nav2 overrides free-roam.
+twist_mux:
+  ros__parameters:
+    topics:
+      nav2:
+        topic: /cmd_vel_nav
+        timeout: 0.5
+        priority: 100
+      brain:
+        topic: /cmd_vel_brain
+        timeout: 0.5
+        priority: 10
+    locks: {}

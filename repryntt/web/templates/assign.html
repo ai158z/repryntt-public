@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/assign/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+:root {
+  --red:#cc2200; --green:#00883a; --cyan:#0044bb; --purple:#6600aa;
+  --yellow:#886600; --orange:#cc6600;
+  --text:#000; --text-dim:#999; --dim:#ccc; --bg:#fff;
+  --card:#fafafa; --surface:#f5f5f5; --border:#e0e0e0;
+  --mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:system-ui,-apple-system,Arial,sans-serif;
+}
+body { font-family:var(--sans); margin:0; background:#fff; color:#000; }
+
+.nav {
+  background:#000; color:#fff; padding:6px 16px; font-size:11px; font-weight:bold;
+  display:flex; gap:14px; align-items:center; letter-spacing:0.12em;
+  text-transform:uppercase; font-family:var(--mono);
+}
+.nav a { color:#999; text-decoration:none; padding:2px 6px; }
+.nav a:hover { color:#fff; }
+.nav a.active { color:#fff; background:#222; }
+.nav .logo { color:#fff; padding:0; margin-right:8px; }
+
+.container { padding:14px; max-width:1400px; margin:0 auto; }
+.panel { background:#fff; border:1px solid var(--border); margin-bottom:14px; }
+.panel-header {
+  background:#000; color:#fff; padding:6px 12px; font-size:11px;
+  font-weight:bold; letter-spacing:0.16em; text-transform:uppercase;
+  font-family:var(--mono); display:flex; justify-content:space-between; align-items:center;
+}
+.panel-body { padding:14px; }
+
+.form-grid { display:grid; grid-template-columns: 160px 1fr; gap:8px 12px; align-items:center; }
+.form-grid label {
+  font-family:var(--mono); font-size:11px; color:#666; font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.06em;
+}
+.form-grid input, .form-grid select, .form-grid textarea {
+  font-family:var(--mono); font-size:12px; padding:5px 8px;
+  border:1px solid var(--border); background:#fff; color:#000; width:100%;
+  box-sizing:border-box;
+}
+.form-grid textarea { min-height:60px; resize:vertical; }
+.form-grid .hint { color:#888; font-size:10px; font-family:var(--mono);
+  font-weight:normal; text-transform:none; letter-spacing:0; }
+.form-grid .span-2 { grid-column:1 / span 2; }
+
+.btn-row { margin-top:12px; display:flex; gap:8px; align-items:center; }
+.btn {
+  display:inline-block; padding:5px 14px; font-size:12px; font-weight:bold;
+  background:#fff; border:1px solid var(--border); color:#000; cursor:pointer;
+  font-family:var(--sans);
+}
+.btn:hover { background:#f5f5f5; border-color:#666; }
+.btn.primary { background:#000; color:#fff; border-color:#000; }
+.btn.primary:hover { background:#222; }
+.btn.muted { color:#666; }
+
+.flash {
+  margin-top:10px; padding:8px 12px; font-family:var(--mono); font-size:11px;
+  border:1px solid var(--border); display:none;
+}
+.flash.ok { background:#e7f6ec; color:var(--green); border-color:var(--green); }
+.flash.err { background:#fdecea; color:var(--red); border-color:var(--red); }
+.flash ul { margin:5px 0 0 18px; padding:0; }
+
+.tasks-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+.tasks-table th, .tasks-table td {
+  text-align:left; padding:5px 10px; border-bottom:1px solid var(--border); }
+.tasks-table th {
+  background:#f5f5f5; font-size:10px; text-transform:uppercase;
+  letter-spacing:0.1em; color:#666; font-weight:bold; }
+
+.status-pill {
+  display:inline-block; padding:1px 7px; font-size:10px; font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.06em; border-radius:2px;
+}
+.status-queued { background:#eee; color:#666; }
+.status-in_progress { background:#fff7e6; color:var(--orange); }
+.status-completed { background:#e7f6ec; color:var(--green); }
+.status-failed { background:#fdecea; color:var(--red); }
+.status-rejected { background:#fdecea; color:var(--red); }
+.status-skipped { background:#eee; color:#888; }
+
+.refresh-indicator {
+  display:inline-block; font-size:9px; color:var(--text-dim); margin-left:8px;
+  font-family:var(--mono); font-weight:normal; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="/">REPRYNTT</a>
+  <a href="/">hub</a>
+  <a href="/social">social</a>
+  <a href="/daemon">daemon</a>
+  <a href="/ops">ops</a>
+  <a href="/command/">command</a>
+  <a href="/chat/">chat</a>
+  <a href="/forge">forge</a>
+  <a href="/assign" class="active">assign</a>
+  <a href="/settings">settings</a>
+</nav>
+
+<div class="container">
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>Assign Andrew a Task</span>
+      <span class="refresh-indicator">priority 0 — preempts autonomous work</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="form-grid">
+        <label>title</label>
+        <input id="f-title" placeholder="e.g. Build URL-shortener microservice"/>
+
+        <label>description</label>
+        <textarea id="f-description" placeholder="Detailed instructions, constraints, references…"></textarea>
+
+        <label>artifact type</label>
+        <select id="f-type">
+          <option value="">— select —</option>
+        </select>
+
+        <label>expected location</label>
+        <input id="f-location" placeholder="workspace/agents/operator/code/url_shortener/setup.py"/>
+
+        <label>downstream consumer</label>
+        <input id="f-consumer" value="operator" placeholder="operator | customer | developer | auditor | …"/>
+
+        <label>success criterion</label>
+        <input id="f-success" placeholder="code installs cleanly; tests pass; POST /shorten returns short_url"/>
+
+        <label></label>
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#000;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="f-codeforge" style="width:auto"/> use CodeForge to build the package
+          </label>
+          <div class="hint" style="margin-top:4px">when ticked, description gets a "use forge_project()" instruction so Andrew routes the build through the CodeForge pipeline (deliberation → operator approval → build)</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="submitTask()">Inject task →</button>
+        <button class="btn muted" onclick="clearForm()">Clear</button>
+        <a class="btn muted" href="/forge">Open forge dashboard ↗</a>
+      </div>
+
+      <div id="flash" class="flash"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>Operator-injected tasks <span class="refresh-indicator" id="op-tasks-count"></span></span>
+      <span class="refresh-indicator" id="op-tasks-time"></span>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="tasks-table">
+        <thead>
+          <tr>
+            <th style="width:11%">id</th>
+            <th style="width:11%">status</th>
+            <th style="width:36%">title</th>
+            <th style="width:12%">type</th>
+            <th style="width:18%">expected_location</th>
+            <th style="width:12%">created</th>
+          </tr>
+        </thead>
+        <tbody id="op-tasks-tbody">
+          <tr><td colspan="6" style="padding:14px;text-align:center;color:#999;font-style:italic">no operator-injected tasks yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>All tasks in Andrew's queue <span class="refresh-indicator" id="all-tasks-count"></span></span>
+      <span class="refresh-indicator">auto-refresh every 5s</span>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="tasks-table">
+        <thead>
+          <tr>
+            <th style="width:9%">id</th>
+            <th style="width:11%">status</th>
+            <th style="width:8%">source</th>
+            <th style="width:36%">title</th>
+            <th style="width:12%">type</th>
+            <th style="width:24%">expected_location</th>
+          </tr>
+        </thead>
+        <tbody id="all-tasks-tbody">
+          <tr><td colspan="6" style="padding:14px;text-align:center;color:#999;font-style:italic">loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let TYPE_STUBS = {};
+
+async function fetchJSON(url, opts) {
+  try {
+    const r = await fetch(url, opts);
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+async function loadTypes() {
+  const r = await fetchJSON('/api/operator/types');
+  if (!r || !r.success) return;
+  const sel = document.getElementById('f-type');
+  sel.innerHTML = '<option value="">— select —</option>' +
+    r.types.map(t => '<option value="'+t+'">'+t+'</option>').join('');
+  TYPE_STUBS = r.location_stubs || {};
+  sel.onchange = () => {
+    const stub = TYPE_STUBS[sel.value] || '';
+    if (stub && !document.getElementById('f-location').value) {
+      document.getElementById('f-location').value = stub;
+    }
+  };
+}
+
+function pill(s) {
+  const safe = (s||'').toLowerCase().replace(/[^a-z_]/g, '_');
+  return '<span class="status-pill status-'+safe+'">'+(s||'?')+'</span>';
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = typeof iso === 'string' ? new Date(iso) : new Date(iso*1000);
+  return d.toLocaleTimeString();
+}
+
+function shortDesc(s, n=80) {
+  if (!s) return '';
+  s = s.replace(/\s+/g, ' ').trim();
+  return s.length > n ? s.slice(0,n)+'…' : s;
+}
+
+async function refreshTasks() {
+  const [op, all] = await Promise.all([
+    fetchJSON('/api/operator/tasks?source=operator'),
+    fetchJSON('/api/operator/tasks?limit=200'),
+  ]);
+  // operator-injected only
+  const opTbody = document.getElementById('op-tasks-tbody');
+  if (op && op.success && op.tasks.length) {
+    opTbody.innerHTML = op.tasks.map(t =>
+      '<tr><td>'+(t.id||'')+'</td>'
+      + '<td>'+pill(t.status)+'</td>'
+      + '<td title="'+(t.title||'').replace(/"/g,'&quot;')+'">'+shortDesc(t.title, 80)+'</td>'
+      + '<td>'+(t.expected_artifact_type||'<span style="color:#999">—</span>')+'</td>'
+      + '<td title="'+(t.expected_location||'')+'">'+shortDesc(t.expected_location, 28)+'</td>'
+      + '<td>'+fmtTime(t.created_at)+'</td>'
+      + '</tr>'
+    ).join('');
+    document.getElementById('op-tasks-count').textContent = '(' + op.tasks.length + ')';
+  } else {
+    opTbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#999;font-style:italic">no operator-injected tasks yet</td></tr>';
+    document.getElementById('op-tasks-count').textContent = '';
+  }
+  // full queue
+  const allTbody = document.getElementById('all-tasks-tbody');
+  if (all && all.success && all.tasks.length) {
+    allTbody.innerHTML = all.tasks.map(t =>
+      '<tr><td>'+(t.id||'')+'</td>'
+      + '<td>'+pill(t.status)+'</td>'
+      + '<td>'+(t.source||'?')+'</td>'
+      + '<td title="'+(t.title||'').replace(/"/g,'&quot;')+'">'+shortDesc(t.title, 80)+'</td>'
+      + '<td>'+(t.expected_artifact_type||'<span style="color:#999">—</span>')+'</td>'
+      + '<td title="'+(t.expected_location||'')+'">'+shortDesc(t.expected_location, 36)+'</td>'
+      + '</tr>'
+    ).join('');
+    document.getElementById('all-tasks-count').textContent = '(' + all.tasks.length + ')';
+  } else {
+    allTbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#999;font-style:italic">no tasks in queue</td></tr>';
+    document.getElementById('all-tasks-count').textContent = '';
+  }
+  document.getElementById('op-tasks-time').textContent = 'updated ' + new Date().toLocaleTimeString();
+}
+
+function flash(msg, ok=true, list=null) {
+  const f = document.getElementById('flash');
+  f.className = 'flash ' + (ok ? 'ok' : 'err');
+  f.style.display = 'block';
+  let html = '<b>'+msg+'</b>';
+  if (list && list.length) {
+    html += '<ul>' + list.map(x => '<li>'+x+'</li>').join('') + '</ul>';
+  }
+  f.innerHTML = html;
+}
+
+async function submitTask() {
+  const body = {
+    title: document.getElementById('f-title').value.trim(),
+    description: document.getElementById('f-description').value.trim(),
+    expected_artifact_type: document.getElementById('f-type').value.trim(),
+    expected_location: document.getElementById('f-location').value.trim(),
+    downstream_consumer: document.getElementById('f-consumer').value.trim(),
+    success_criterion: document.getElementById('f-success').value.trim(),
+    use_codeforge: document.getElementById('f-codeforge').checked,
+  };
+  if (!body.title) { flash('title is required', false); return; }
+  const r = await fetchJSON('/api/operator/inject_task', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (r && r.success) {
+    flash('Task injected → ' + (r.task && r.task.id) + ' (priority 0). Andrew will pick it up on his next heartbeat.', true);
+    clearForm();
+    refreshTasks();
+  } else {
+    flash(
+      r && r.status === 'rejected' ? 'Task rejected at intake' : 'Submit failed',
+      false,
+      r && r.reasons ? r.reasons : (r && r.error ? [r.error] : []),
+    );
+  }
+}
+
+function clearForm() {
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-description').value = '';
+  document.getElementById('f-type').value = '';
+  document.getElementById('f-location').value = '';
+  document.getElementById('f-consumer').value = 'operator';
+  document.getElementById('f-success').value = '';
+  document.getElementById('f-codeforge').checked = false;
+}
+
+loadTypes();
+refreshTasks();
+setInterval(refreshTasks, 5000);
+</script>
+</body>
+</html>

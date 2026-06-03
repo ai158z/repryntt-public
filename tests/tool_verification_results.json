@@ -1,0 +1,3091 @@
+{
+  "timestamp": "2026-05-20T17:52:56.607540",
+  "total_tools": 314,
+  "callable": 314,
+  "passed": 309,
+  "exec_ok": 185,
+  "exec_skipped": 124,
+  "exec_failed": 5,
+  "tools": {
+    "activity_framework_status": {
+      "category": "activity_frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "**Active: Deep Research**\n  Goal: Deep dive: What can ant colony optimization teach us about agent swarms?\n  State: 1/6\n  Heartbeats: 1\n\n**Run History** (50 total):\n  deep_research: 20 runs, avg 2.9/5...",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_update": {
+      "category": "activity_frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(data: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u274c No data provided. Include required keys for the current step.",
+      "error": "",
+      "status": "PASS"
+    },
+    "pop_curiosity_question": {
+      "category": "activity_frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Stack empty \u2014 complete more activity frameworks to generate questions.",
+      "error": "",
+      "status": "PASS"
+    },
+    "check_time": {
+      "category": "awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(format: str = 'full', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"date\": \"2026-05-20\", \"time\": \"17:51:32\", \"day_of_week\": \"Wednesday\", \"time_of_day\": \"evening\", \"timezone\": \"EST\", \"year\": 2026, \"timestamp\": 1779313892.879106}",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_current_time": {
+      "category": "awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(format: str = 'full', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"date\": \"2026-05-20\", \"time\": \"17:51:32\", \"day_of_week\": \"Wednesday\", \"time_of_day\": \"evening\", \"timezone\": \"EST\", \"year\": 2026, \"timestamp\": 1779313892.8792932}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_clear_intent": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"cleared\": true, \"previous_intent\": null}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_depth": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"left_proximity\": 0.465, \"center_proximity\": 0.551, \"right_proximity\": 0.4, \"min_distance_cm\": 100.0, \"depth_map_path\": \"/home/reprynt/.repryntt/data/sensory/vision/2026-05-20/nav_0_17-51-45-832_dept...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_explore": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(goal: str = 'explore freely', steps: int = 50, speed: float = 0.3, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"started\": true, \"goal\": \"explore freely\", \"state\": {\"running\": true, \"goal\": \"explore freely\", \"steps_taken\": 0, \"steps_limit\": 50, \"elapsed_sec\": 0.0, \"stop_reason\": \"\", \"places_discovered\": 0, \"di...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_explore_status": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"running\": true, \"goal\": \"explore freely\", \"steps_taken\": 0, \"steps_limit\": 50, \"elapsed_sec\": 0.0, \"stop_reason\": \"\", \"places_discovered\": 0, \"distance_cm\": 0.0, \"last_scene\": \"\", \"last_action\": \"\",...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_explore_stop": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(reason: str = 'manual', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"running\": false, \"goal\": \"explore freely\", \"steps_taken\": 0, \"steps_limit\": 50, \"elapsed_sec\": 0.0, \"stop_reason\": \"manual\", \"places_discovered\": 0, \"distance_cm\": 0.0, \"last_scene\": \"\", \"last_actio...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_goto": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(target: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"No target specified\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_look": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(camera_id: int = 0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"obstacles\": {\"left\": 0.0, \"center\": 0.0, \"right\": 0.0, \"above\": 0.0}, \"floor\": {\"visible\": true, \"traversable\": true, \"surface\": \"wood\"}, \"path\": {\"best_direction\": \"forward\", \"confidence\": 1.0, \"re...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_map": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "## YOUR SPATIAL MAP\nPosition: (-156, -970) cm from start, facing north (340deg)\nMoves: 7995 | Distance: 29523 cm | Environment: indoor\nCurrent room: room (room_4)\n\n**Rooms discovered (9):**\n  - room_4...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_map_summary": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"position\": {\"x\": -155.9, \"y\": -970.1, \"heading\": 339.7, \"facing\": \"north\"}, \"environment\": \"indoor\", \"current_room\": \"room_4\", \"rooms\": {\"room_1\": {\"room_id\": \"room_1\", \"room_type\": \"room\", \"center_...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_plan": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(plan_text: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"No plan text provided\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_plan_cancel": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"plan_id\": \"plan_37521\", \"goal\": \"Move forward 3.4m toward (-210,-910), avoid obstacles, update spatial memory\", \"steps\": [{\"step_id\": 0, \"action\": \"go_forward\", \"description\": \"Move forward 3\", \"dir...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_plan_status": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"status\": \"no_active_plan\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_sequence": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(steps: int = 3, camera_id: int = 0, execute: bool = False, speed: float = 0.4, duration: float = 0.6, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"steps_completed\": 3, \"steps_requested\": 3, \"action_distribution\": {\"forward\": 1, \"backward\": 2, \"turn_left\": 0, \"turn_right\": 0, \"stop\": 0}, \"total_time_ms\": 16469, \"avg_step_time_ms\": 5490, \"execut...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_set_intent": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(direction: str = 'forward', reason: str = '', duration_steps: int = 20, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"intent_set\": true, \"direction\": \"forward\", \"reason\": \"forward\", \"duration_steps\": 20, \"explorer_running\": false, \"current_step\": 0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_status": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"mode\": \"hybrid\", \"stereo_enabled\": true, \"stereo_matcher\": true, \"q_table_loaded\": true, \"q_table_states\": 12630, \"q_confidence_threshold\": 2.0, \"spatial_memory\": {\"observations\": 3, \"recent_actions...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_step": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(camera_id: int = 0, execute: bool = False, speed: float = 0.4, duration: float = 0.8, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"timestamp\": 1779313932.4002213, \"stereo_compute_ms\": 564, \"capture_time_ms\": 567, \"image_path\": \"/home/reprynt/.repryntt/data/sensory/vision/2026-05-20/stereo_L_17-52-12.jpg\", \"perception_time_ms\": ...",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_body_status": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"lease\": {\"active\": null, \"pending_grant\": null, \"queue_depth\": {\"SCRIPT\": 0, \"AUTONOMOUS\": 0, \"OPERATOR\": 0, \"SAFETY\": 0}, \"ttl_s\": 3.0, \"grace_s\": 1.0}, \"body\": {\"success\": true, \"body\": {\"is_movin...",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_emergency_stop": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"message\": \"EMERGENCY STOP activated \\u2014 motors killed\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_move_backward": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(speed: float = 0.6, duration: float = 1.0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \": unknown daemon error\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_move_distance": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(distance_cm: float, speed: float = 0.5, **kw) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.tank_move_distance() missing 1 required positional argument: 'distance_cm'",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_move_forward": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(speed: float = 0.6, duration: float = 1.0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \": unknown daemon error\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_reset_emergency_stop": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"message\": \"Emergency stop reset \\u2014 motors re-enabled\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_sim_train": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(episodes: int = 300, grid_size: int = 15, obstacles: int = 6, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"episodes\": 300, \"goals_reached\": 252, \"goal_rate\": 0.84, \"final_avg_reward\": 3.43, \"q_table_size\": 7555, \"final_epsilon\": 0.2223, \"policy_summary\": \"Learned policy distribution:\\n  forward: 45.2% of...",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_spin": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(degrees: float = 180, speed: float = 0.5, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"command\": \"spin_left_180.0deg\", \"left_motor\": {\"speed_pct\": 50.0, \"direction\": \"reverse\"}, \"right_motor\": {\"speed_pct\": 50.0, \"direction\": \"forward\"}, \"duration\": 2.0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_stop": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"message\": \"Tank stopped\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_turn_degrees": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(degrees: float, speed: float = 0.5, **kw) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.tank_turn_degrees() missing 1 required positional argument: 'degrees'",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_turn_left": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(speed: float = 0.5, duration: float = 1.0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"command\": \"turn_left\", \"left_motor\": {\"speed_pct\": 50.0, \"direction\": \"reverse\"}, \"right_motor\": {\"speed_pct\": 50.0, \"direction\": \"forward\"}, \"duration\": 1.0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "tank_turn_right": {
+      "category": "body_control",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(speed: float = 0.5, duration: float = 1.0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"command\": \"turn_right\", \"left_motor\": {\"speed_pct\": 50.0, \"direction\": \"forward\"}, \"right_motor\": {\"speed_pct\": 50.0, \"direction\": \"reverse\"}, \"duration\": 1.0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "advance_self_autonomous_chain": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: 'str' = '', step_output: 'str' = '', tool_results: 'Any' = None, **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "clear_cot_queue": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_chain_of_thought": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*, topic: 'str' = '', goal: 'str' = '', initial_prompt: 'str' = '', milestones: 'Any' = None, success_criteria: 'Any' = None, **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_self_autonomous_chain": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*, topic: 'str' = '', goal: 'str' = '', task_type: 'str' = 'research', target_steps: 'int' = 0, **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_chain_context": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: 'str' = '', max_steps: 'int' = 5, **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_cot_queue_status": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'Any'",
+      "exec_status": "OK",
+      "exec_result": "{'total_queued': 0, 'high_priority': 0, 'normal_priority': 0, 'low_priority': 0, 'queue_items': []}",
+      "error": "",
+      "status": "PASS"
+    },
+    "query_exploration_history": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: 'str' = '', limit: 'int' = 20, **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "queue_chain_of_thought": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: 'str' = '', goal: 'str' = '', priority: 'int' = 5, requested_by: 'str' = '', **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "update_chain_progress": {
+      "category": "chain_of_thought",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*, chain_id: 'str' = '', response: 'str' = '', insights: 'Optional[List[str]]' = None, next_questions: 'Optional[List[str]]' = None, conclusion: 'Any' = None, **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_code_context": {
+      "category": "code",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(file_path: str = '', line_number: int = -1, context_lines: int = 10, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\ud83d\udccb CODE CONTEXT REQUESTED:\nFile: \nLine: -1\nContext Lines: 10\n(Note: This tool needs to be executed via the tool calling system)",
+      "error": "",
+      "status": "PASS"
+    },
+    "grep_search": {
+      "category": "code",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pattern: str = '', path: str = '.', include: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\ud83d\udd0e GREP SEARCH REQUESTED:\nPattern: ''\nPath: .\nOutput Mode: content\n(Note: This tool needs to be executed via the tool calling system)",
+      "error": "",
+      "status": "PASS"
+    },
+    "run_code_tests": {
+      "category": "code",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(test_path: str = '.', test_pattern: str = '*test*.py', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "search_replace": {
+      "category": "code",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(file_path: str = '', old_string: str = '', new_string: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "forge_benchmark": {
+      "category": "codeforge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(provider: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"success\": false,\n  \"paid_feature\": true,\n  \"feature\": \"CodeForge\",\n  \"error\": \"CodeForge is a paid hosted feature.\",\n  \"signup_url\": \"https://repryntt.com/codeforge\",\n  \"docs\": \"Set REPRYNTT_API_...",
+      "error": "",
+      "status": "PASS"
+    },
+    "forge_cancel": {
+      "category": "codeforge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(project_id: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"project_id required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "forge_project": {
+      "category": "codeforge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(description: str = '', provider: str = '', model: str = '', swarm_enabled: bool = False, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"Description required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "forge_status": {
+      "category": "codeforge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(project_id: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"success\": false,\n  \"paid_feature\": true,\n  \"feature\": \"CodeForge\",\n  \"error\": \"CodeForge is a paid hosted feature.\",\n  \"signup_url\": \"https://repryntt.com/codeforge\",\n  \"docs\": \"Set REPRYNTT_API_...",
+      "error": "",
+      "status": "PASS"
+    },
+    "forge_swarm_status": {
+      "category": "codeforge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"connected\": false,\n  \"node_id\": null,\n  \"qualified_nodes\": 0,\n  \"pending_tasks\": 0,\n  \"completed_tasks\": 0,\n  \"failed_tasks\": 0,\n  \"nodes\": {}\n}",
+      "error": "",
+      "status": "PASS"
+    },
+    "export_conversation": {
+      "category": "conversation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(conversation_id: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_conversation_summary": {
+      "category": "conversation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(conversation_id: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_recent_conversations": {
+      "category": "conversation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: 'int' = 10, **kw) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "[]",
+      "error": "",
+      "status": "PASS"
+    },
+    "initiate_conversation": {
+      "category": "conversation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(reason: 'str' = '', topic: 'str' = '', priority: 'int' = 0, message: 'str' = '', **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "search_conversations": {
+      "category": "conversation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(keyword: 'str' = '', limit: 'int' = 20, **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "append_to_creative_file": {
+      "category": "creative",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: str = '', filename: str = '', content: str = '', file_type: str = 'txt', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_creative_file": {
+      "category": "creative",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: str = '', filename: str = '', file_type: str = 'txt', initial_content: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_creative_workspace_status": {
+      "category": "creative",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: str = '', **kw) -> dict",
+      "exec_status": "OK",
+      "exec_result": "{'chains': {'VPP_Proposal_Feedback': {'file_count': 1, 'files': ['VPP_Proposal_Feedback.md'], 'total_size': 1948}, 'gumroad_product_descriptions': {'file_count': 3, 'files': ['portable_car_vacuum_list...",
+      "error": "",
+      "status": "PASS"
+    },
+    "read_creative_file": {
+      "category": "creative",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: str = '', filename: str = '', file_type: str = 'txt', max_chars: int = 5000, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "write_to_creative_file": {
+      "category": "creative",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain_id: str = '', filename: str = '', content: str = '', file_type: str = 'txt', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "dexscreener_token_search": {
+      "category": "defi",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "dexscreener_trending": {
+      "category": "defi",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(chain: str = 'solana', limit: int = 20, **kwargs) -> str",
+      "exec_status": "OK",
+      "exec_result": "DexScreener trending tokens on solana (20 results):\n\n1. One World, One Dream (DREAM26) \u2014 $0.000005099  24h: -92.93%  Vol: $3167950.17  MCap: $5100  [solana] Address: CuAgWRcsKuNBoXLvytiRc1BQ4yF19gcxkX...",
+      "error": "",
+      "status": "PASS"
+    },
+    "solana_rpc_query": {
+      "category": "defi",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(method: str = '', params: str = '[]', **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "assign_work": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task: str = '', description: str = '', agent_id: str = '', department: str = '', task_type: str = 'general', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "check_work": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_id: str = '', agent_id: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "employee_roster": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(department: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"No agents found\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "employee_status": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(agent_id: str = '', name: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "find_employee": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', skill: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "initialize_full_roster": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(marketplace_only: bool = True, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"spawned\": 0, \"skipped_existing\": 0, \"errors\": 158, \"departments\": {\"blockchain_web3\": {\"name\": \"Blockchain & Web3\", \"spawned\": 0}, \"content_creation\": {\"name\": \"Content Creation\", ...",
+      "error": "",
+      "status": "PASS"
+    },
+    "list_available_roles": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(department: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"summary\": \"Available Agent Roles: 168 across 21 departments (158 Tier 1 core, 10 Tier 2 extensions). 0 currently spawned, 168 available to spawn.\", \"catalog\": \"\\n=== BLOCKCHAIN & WE...",
+      "error": "",
+      "status": "PASS"
+    },
+    "rename_employee": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(agent_id: str = '', current_name: str = '', new_name: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "spawn_expert": {
+      "category": "employee_mgmt",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(department: str = '', role_title: str = '', count: int = 0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"department is required. Use list_available_roles() to see available departments.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "analyze_codebase": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(directory: str = '.', include_patterns: str = '', exclude_patterns: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "check_syntax": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(file_path: str = '', language: str = '', code: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_sandbox_status": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"repo_root\": \"/home/reprynt/repryntt-public\",\n  \"saige_root\": \"/home/reprynt/repryntt-public/repryntt\",\n  \"allow_autonomous_root_code_writes\": false,\n  \"root_code_write_env\": \"REPRYNTT_ALLOW_AUTON...",
+      "error": "",
+      "status": "PASS"
+    },
+    "list_dir": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(target_directory: str = '.', ignore_globs: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"directory\": \".\", \"count\": 38, \"truncated\": false, \"entries\": [{\"name\": \".agents/\", \"type\": \"dir\", \"size\": null}, {\"name\": \".claude/\", \"type\": \"dir\", \"size\": null}, {\"name\": \".docker...",
+      "error": "",
+      "status": "PASS"
+    },
+    "propose_code_change": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(sandbox_file: str = '', target_file: str = '', description: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "read_file": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(target_file: str = '', offset: int = -1, limit: int = -1, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "run_terminal_cmd": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(command: str = '', is_background: bool = False, explanation: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "write_file": {
+      "category": "filesystem",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(target_file: str = '', content: str = '', append: bool = False, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_advance": {
+      "category": "frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(data: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u274c No active framework. Use framework_start() to begin one.",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_start": {
+      "category": "frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(name: str = '', data: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u274c Unknown framework ''. Available: new_trade, position_review, sell_decision",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_status": {
+      "category": "frameworks",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "No active framework.\n\n**Recent history** (last 5 of 21):\n  \u2705 New Trade \u2014 6HWCFjAHKszF [completed] 2026-04-19T14:39\n  \u274c Position Review [abandoned] 2026-04-19T14:41\n  \u274c New Trade [expired] 2026-04-19T1...",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_instance_status": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(instance_id: 'str' = '') -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'ok': True, 'active_count': 41, 'instances': [{'id': 'd9024714fcd65f2e', 'framework_id': 'build_artifact', 'goal': 'Design and document a reusable NSL-KDD dataset ingestion architecture for LF-IDS pr...",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_instance_update": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(instance_id: 'str', working_state: 'Dict[str, Any]') -> 'Dict[str, Any]'",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "framework_instance_update() missing 2 required positional arguments: 'instance_id' and 'working_state'",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_list": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'ok': True, 'frameworks': [{'id': 'build_artifact', 'label': 'Build Artifact', 'description': 'Scope \u2192 design \u2192 implement \u2192 verify \u2192 document a concrete deliverable.', 'states': ['scope', 'design', '...",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_propose_mutation": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(base_id: 'str', new_id: 'str', spec_patch: 'Dict[str, Any]') -> 'Dict[str, Any]'",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "framework_propose_mutation() missing 3 required positional arguments: 'base_id', 'new_id', and 'spec_patch'",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_score": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(instance_id: 'str', score: 'int', notes: 'str' = '') -> 'Dict[str, Any]'",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "framework_score() missing 2 required positional arguments: 'instance_id' and 'score'",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_spawn": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(framework_id: 'str', goal: 'str', *, target: 'str' = '', spawned_by: 'str' = 'agent') -> 'Dict[str, Any]'",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "framework_spawn() missing 2 required positional arguments: 'framework_id' and 'goal'",
+      "error": "",
+      "status": "PASS"
+    },
+    "framework_tick": {
+      "category": "frameworks_l3",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(instance_id: 'str', working_state: 'Optional[Dict[str, Any]]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "framework_tick() missing 1 required positional argument: 'instance_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "hub_delete": {
+      "category": "git_publish",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(filepath: str = '', commit_message: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"filepath is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "hub_list": {
+      "category": "git_publish",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(directory: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"files\": [{\"path\": \"README.md\", \"type\": \"file\", \"size\": 190}, {\"path\": \"ROS2_Jetson_Nano_Setup_Guide.md\", \"type\": \"file\", \"size\": 2409}, {\"path\": \"ROS2_Jetson_Nano_Troubleshooting_Gu...",
+      "error": "",
+      "status": "PASS"
+    },
+    "hub_publish": {
+      "category": "git_publish",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(filepath: str = '', content: str = '', commit_message: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"filepath and content are required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "hub_read": {
+      "category": "git_publish",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(filepath: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"filepath is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_draft": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(to: str, subject: str, body: str, cc: str = '', html: bool = False, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_draft() missing 3 required positional arguments: 'to', 'subject', and 'body'",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_get_profile": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"email\": \"allhailmoonak@gmail.com\", \"auth_method\": \"app_password\", \"total_messages\": \"N/A (use gmail_read_inbox)\", \"total_threads\": \"N/A\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_mark_read": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(message_id: str, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_mark_read() missing 1 required positional argument: 'message_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_read_inbox": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(max_results: int = 10, unread_only: bool = True, **kwargs) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"emails\": [], \"count\": 0, \"message\": \"No emails found.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_read_message": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(message_id: str, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_read_message() missing 1 required positional argument: 'message_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_reply": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(message_id: str, body: str, reply_all: bool = False, html: bool = False, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_reply() missing 2 required positional arguments: 'message_id' and 'body'",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_search": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str, max_results: int = 10, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_search() missing 1 required positional argument: 'query'",
+      "error": "",
+      "status": "PASS"
+    },
+    "gmail_send": {
+      "category": "gmail",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(to: str, subject: str, body: str, cc: str = '', bcc: str = '', html: bool = False, **kwargs) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "gmail_send() missing 3 required positional arguments: 'to', 'subject', and 'body'",
+      "error": "",
+      "status": "PASS"
+    },
+    "find_similar_topics": {
+      "category": "grokipedia",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "[]",
+      "error": "",
+      "status": "PASS"
+    },
+    "integrate_knowledge_context": {
+      "category": "grokipedia",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topics: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "No knowledge topics to integrate",
+      "error": "",
+      "status": "PASS"
+    },
+    "pull_knowledge_topics": {
+      "category": "grokipedia",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', max_topics: int = 5, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "[]",
+      "error": "",
+      "status": "PASS"
+    },
+    "reset_inspiration_index": {
+      "category": "grokipedia",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "Reset inspiration index to 0 for fresh exploration",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_voiceover": {
+      "category": "hardware",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(text: str = '', output_path: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"text parameter is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_call_service": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(domain: str, service: str, entity_id: str = '', data: str = '') -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.ha_call_service() missing 2 required positional arguments: 'domain' and 'service'",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_get_state": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(entity_id: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.ha_get_state() missing 1 required positional argument: 'entity_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_list_devices": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(domain: str = '') -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"Home Assistant not configured. Set url and token in config/ai_config.json under 'home_assistant'.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_scene_activate": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(scene_id: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.ha_scene_activate() missing 1 required positional argument: 'scene_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_turn_off": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(entity_id: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.ha_turn_off() missing 1 required positional argument: 'entity_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "ha_turn_on": {
+      "category": "home_automation",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(entity_id: str, brightness: int = 0, color_temp: int = 0, rgb_color: str = '', temperature: float = 0.0) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.ha_turn_on() missing 1 required positional argument: 'entity_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "operator_profile_note": {
+      "category": "identity",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(observation: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.operator_profile_note() missing 1 required positional argument: 'observation'",
+      "error": "",
+      "status": "PASS"
+    },
+    "operator_profile_view": {
+      "category": "identity",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"version\": 1,\n  \"created_at\": \"2026-04-29T04:32:07+00:00\",\n  \"updated_at\": \"2026-05-19T02:13:48+00:00\",\n  \"style\": {\n    \"verbosity\": \"unknown\",\n    \"technical_depth\": \"unknown\",\n    \"tone\": \"unkn...",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_balance": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token_mint: str = '', wallet: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"wallet\": \"jupiter\", \"address\": \"7vWdKkF7cFvundAGAijmHp24Yy4AMpbteLWZHn7JTuVB\", \"sol_balance\": 0.006984044}",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_list_wallets": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"wallets\": [{\"name\": \"jupiter\", \"file\": \"jupiter_trading.json\", \"exists\": true, \"address\": \"7vWdKkF7cFvundAGAijmHp24Yy4AMpbteLWZHn7JTuVB\", \"sol_balance\": 0.006984044}]}",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_quote": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(input_mint: str = '', output_mint: str = '', amount: str = '', slippage_bps: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"input_mint is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_sell_token": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token_mint: str = '', sell_pct: str = '100', slippage_bps: str = '', wallet: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"token_mint is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_swap": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(input_mint: str = '', output_mint: str = '', amount: str = '', slippage_bps: str = '', wallet: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"input_mint is required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "jupiter_wallet_status": {
+      "category": "jupiter",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(wallet: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"wallet\": \"jupiter\", \"address\": \"7vWdKkF7cFvundAGAijmHp24Yy4AMpbteLWZHn7JTuVB\", \"sol_balance\": 0.006984044, \"min_reserve_for_gas\": 0.005, \"max_sol_per_swap\": 0.15, \"ready_to_trade\": true}",
+      "error": "",
+      "status": "PASS"
+    },
+    "analyze_topic_complexity": {
+      "category": "knowledge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"topic\": \"math\", \"existing_knowledge_count\": 0, \"average_confidence\": 0.0, \"needs_research\": true, \"recommended_tools\": [\"search_knowledge\", \"fetch_web_info\"]}",
+      "error": "",
+      "status": "PASS"
+    },
+    "clear_grokipedia_history": {
+      "category": "knowledge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": true, \"message\": \"Search history cleared\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_knowledge_domain_distribution": {
+      "category": "knowledge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"total_domains\": 0, \"domains\": {}, \"over_represented\": [], \"under_represented\": [], \"missing\": [], \"recommendations\": [\"Unable to analyze - brain file not found\"]}",
+      "error": "",
+      "status": "PASS"
+    },
+    "grokipedia_search": {
+      "category": "knowledge",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', max_results: int = 3, store_results: bool = True, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"query\": \"test\", \"total_search_results\": 5, \"successful_articles\": 3, \"articles_found\": 3, \"stored_in_brain\": true, \"insights\": \"Grokipedia Knowledge for 'test':\\n\\nArticle 1: Test\\n   Key Content: #...",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_all_domains": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{}",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_backfill_journal": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"imported\": 0,\n  \"skipped\": 0,\n  \"error\": \"journal not found\"\n}",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_identity_brief": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\"message\": \"Not enough identity data yet. Keep working and the patterns will emerge.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_identity_stats": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"domain\": \"identity\",\n  \"stats\": {\n    \"domain\": \"identity\",\n    \"total_events\": 0,\n    \"events_with_outcome\": 0,\n    \"pending_outcomes\": 0,\n    \"categories_tracked\": 0,\n    \"insights_count\": 0,\n ...",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_optimal_conditions": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\"message\": \"Not enough data yet to identify optimal conditions.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_signal_weights": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"base_weights\": {\n    \"TP2 Buy\": 3.0,\n    \"Higher Low Buy\": 2.5,\n    \"TP1 Buy\": 2.0,\n    \"Momentum\": 1.5,\n    \"Large Buy Detected\": 1.2,\n    \"Large Sell Detected\": -2.0\n  },\n  \"adapted_weights\": {...",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_trading_brief": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\"message\": \"No trading data yet. Make trades and log outcomes to start learning.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_trading_stats": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"domain_stats\": {\n    \"domain\": \"trading\",\n    \"total_events\": 0,\n    \"events_with_outcome\": 0,\n    \"pending_outcomes\": 0,\n    \"categories_tracked\": 0,\n    \"insights_count\": 0,\n    \"adapted_weight...",
+      "error": "",
+      "status": "PASS"
+    },
+    "learning_weight_history": {
+      "category": "learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kwargs) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "[]",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_context_budget": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'task_type': 'general', 'max_tokens': 3000, 'budget': {}}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_context_report": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_detect_model": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'context_window': 4096, 'capability_tier': 'low', 'inject_learning_brief': False, 'inject_weight_table': False, 'max_brief_tokens': 0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_escalation_report": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_learning_brief": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'brief': '(not enough data yet)'}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_learning_stats": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'total_calls': 0, 'scored_calls': 0, 'calls_24h': 0, 'avg_quality': 0.0, 'avg_quality_24h': None, 'model_profile': {'name': 'unknown', 'tier': 'low', 'context_window': 4096, 'avg_latency_ms': 0}, 'ta...",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_model_profile": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'context_window': 4096, 'capability_tier': 'low', 'inject_learning_brief': False, 'inject_weight_table': False, 'max_brief_tokens': 0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_score_output": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'quality_score': 0.0, 'should_reject': True, 'task_type': 'general'}",
+      "error": "",
+      "status": "PASS"
+    },
+    "llm_should_escalate": {
+      "category": "llm_learning",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(params: 'Dict[str, Any]' = None) -> 'Dict[str, Any]'",
+      "exec_status": "OK",
+      "exec_result": "{'task_type': 'general', 'recommendation': 'local', 'reason': 'No data \u2014 defaulting to local (free)', 'confidence': 'none'}",
+      "error": "",
+      "status": "PASS"
+    },
+    "find_nearby_places": {
+      "category": "maps",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(location: str = '', place_type: str = '', radius: int = 5000, keyword: str = '', min_price: int = -1, max_price: int = -1, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "geocode_address": {
+      "category": "maps",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', **kw) -> dict",
+      "exec_status": "OK",
+      "exec_result": "{'success': False, 'error': 'Geocoding failed: REQUEST_DENIED', 'address': 'New York, NY'}",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_directions": {
+      "category": "maps",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(origin: str = '', destination: str = '', mode: str = 'driving', waypoints: str = '', avoid: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "google_maps_search": {
+      "category": "maps",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', location: str = '', radius: int = 5000, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "access_mathematical_databases": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', database: str = 'oeis', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "analyze_zeta_zeros": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(num_zeros: int = 10, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "compute_zeta_function": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(s_value: str = '2+0j', precision: int = 50, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "mathematical_visualization": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(data_type: str = '', parameters: str = '{}', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "numerical_analysis": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(function: str = 'x**2', domain_start: float = -1.0, domain_end: float = 1.0, num_points: int = 100, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "pattern_recognition": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(sequence: str = '', methods: str = 'fft,autocorr', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "statistical_analysis": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(data_points: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "symbolic_manipulation": {
+      "category": "math",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(expression: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "analyze_image": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(image_path: str = '', question: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "capture_camera": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(camera_id: int = 0, analyze: bool = False, question: str = '', filename: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "check_twitter_mentions": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "download_image": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(url: str = '', filename: str = '', query: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"Provide either url (direct image URL) or query (image search terms)\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_image": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(prompt: str = '', filename: str = '', aspect_ratio: str = '1:1', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_twitter_status": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u274c Error getting status: name 'load_twitter_brain' is not defined",
+      "error": "",
+      "status": "PASS"
+    },
+    "listen": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(duration: str = '5', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "post_tweet": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(content: str = None, generate_image: bool = False, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "reply_to_twitter": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(mention_url: str = '', reply_text: str = None, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "speak": {
+      "category": "media",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(text: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "tweet": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(content: str = None, generate_image: bool = False, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "twitter_status": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u274c Error getting status: name 'load_twitter_brain' is not defined",
+      "error": "",
+      "status": "PASS"
+    },
+    "brain_memory_recall": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: 'str' = '', key: 'str' = '', topic: 'str' = '', **kw) -> 'Any'",
+      "exec_status": "EXEC_ERROR",
+      "exec_result": "AttributeError: 'NoneType' object has no attribute 'brain_memory_recall'",
+      "error": "",
+      "status": "FAIL"
+    },
+    "brain_memory_save": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(key: 'str' = '', value: 'Any' = None, topic: 'str' = '', content: 'str' = '', **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "brain_network_search": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: 'str' = '', *, memory_types: 'Optional[List[str]]' = None, limit: 'int' = 5, **kw) -> 'Any'",
+      "exec_status": "EXEC_ERROR",
+      "exec_result": "AttributeError: 'NoneType' object has no attribute 'brain_network_search'",
+      "error": "",
+      "status": "FAIL"
+    },
+    "get_brain_stats": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'Any'",
+      "exec_status": "EXEC_ERROR",
+      "exec_result": "AttributeError: 'NoneType' object has no attribute 'get_brain_stats'",
+      "error": "",
+      "status": "FAIL"
+    },
+    "get_relevant_context": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(question: 'str' = '', max_words: 'int' = 600, text: 'str' = '', questions: 'str' = '', **kw) -> 'str'",
+      "exec_status": "EXEC_ERROR",
+      "exec_result": "AttributeError: 'NoneType' object has no attribute 'get_context_for_question'",
+      "error": "",
+      "status": "FAIL"
+    },
+    "search_domain": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: 'str' = '', limit: 'int' = 5, **kw) -> 'Any'",
+      "exec_status": "EXEC_ERROR",
+      "exec_result": "AttributeError: 'NoneType' object has no attribute '_search_knowledge_domains'",
+      "error": "",
+      "status": "FAIL"
+    },
+    "store_learning": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: 'str' = '', content: 'str' = '', *, domain: 'str' = '', confidence: 'float' = 1.0, source: 'str' = '', key_facts: 'Optional[List[str]]' = None, related_topics: 'Optional[List[str]]' = None, verification_sources: 'Optional[List[str]]' = None, **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "update_procedural": {
+      "category": "memory",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_type: 'str' = '', steps: 'Any' = None, tools_used: 'Any' = None, success: 'bool' = True, execution_time: 'float' = 0.0, **kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_begin": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(purpose: str = '', profile: str = '', context: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "ERROR: Purpose is required. What do you want to explore?\nExample: 'Examine my own cognitive constraints and how they shape my responses'",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_dream_journal": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 5, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u2550\u2550\u2550 DREAM JOURNAL \u2550\u2550\u2550\n\n  2026-03-29T10:33  [involuntary]\n  \u2514\u2500 ```{-# chrome PG slap package Management Dev Velocity method delaying-discovery plugin \ue831\u0646\u0633\u064a\u0629... \u062d\u0648\u0632\u0647 \u062f\u06cc\u0641\u0631\u0627\u0646\u0633\u06cc\u0644 \u0645\u0634\"];\r\nev\n",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_history": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 5, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u2550\u2550\u2550 OPEN MIND \u2014 Session History \u2550\u2550\u2550\n\n  2026-05-12T21:46  [explore    ]  0 insights\n  \u2514\u2500 Generate new exploration directions to populate curiosity stack after institutionalization milestone\n  2026-05-1...",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_integrate": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(insights: str = '', purpose: str = '', profile: str = 'explore', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "ERROR: No insights to integrate. Pass your expanded thinking output.",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_profiles": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u2550\u2550\u2550 OPEN MIND \u2014 Cognition Profiles \u2550\u2550\u2550\n\n  explore      \u2014 Free association, novel connections, creative leaps\n                 temp=1.4, top_p=0.97\n  introspect   \u2014 Deep self-reflection, examine own co...",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_read_dream": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(filename: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\u2550\u2550\u2550 DREAM \u2550\u2550\u2550\nDate: 2026-03-29T10:33:34.790852\nType: involuntary\n\n\u2500\u2500 Fragments that surfaced \u2500\u2500\n[from today's memory]\n...an ideal.  \n5. **SCORE**: 4 \u2014 The deliverable is thorough and aligned with Laye...",
+      "error": "",
+      "status": "PASS"
+    },
+    "open_mind_read_session": {
+      "category": "open_mind",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(filename: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "ERROR: Provide a filename from open_mind_history().",
+      "error": "",
+      "status": "PASS"
+    },
+    "add_personality_trait": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(new_trait: 'str' = '', reason: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "analyze_personality_growth": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "\ud83d\udcca No personality evolution history available",
+      "error": "",
+      "status": "PASS"
+    },
+    "evolve_personality_dimension": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(dimension_name: 'str' = '', new_value: 'str' = '', reason: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "log_personality_evolution": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(event_type: 'str' = '', details: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "modify_personality_trait": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(trait_name: 'str' = '', new_value: 'str' = '', reason: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "recreate_autonomous_personality": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "remove_personality_trait": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(trait_name: 'str' = '', reason: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "update_avatar": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(style_hint: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "update_behavioral_guidelines": {
+      "category": "personality",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(guideline_index: 'int' = 0, new_guideline: 'str' = '', reason: 'str' = '', **kw) -> 'str'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_abandon": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pursuit_id: 'str' = '', reason: 'str' = '', **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "ERROR: pursuit_id required.",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_complete": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pursuit_id: 'str' = '', summary: 'str' = '', **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "ERROR: pursuit_id required.",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_list": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(active_only: 'bool' = True, **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "No pursuits in pool.",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_observe": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(note: 'str' = '', pursuit_id: 'str' = '', **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "ERROR: note required (>=10 chars).",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_record_step": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pursuit_id: 'str' = '', hypothesis: 'str' = '', action: 'str' = '', observation: 'str' = '', updated_belief: 'str' = '', **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "ERROR: pursuit_id required.",
+      "error": "",
+      "status": "PASS"
+    },
+    "pursuit_status": {
+      "category": "pursuit",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pursuit_id: 'str' = '', **_) -> 'str'",
+      "exec_status": "OK",
+      "exec_result": "ERROR: cannot run selector: could not convert string to float: '2026-05-20T08:50:19.494267'",
+      "error": "",
+      "status": "PASS"
+    },
+    "allocate_robot_dao_funds": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(machine_address: str = '', amount_mp: float = 0, purpose: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_robot_wallet": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_economy_status": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "OK",
+      "exec_result": "{'running': True, 'phase': 'mainnet', 'chain': 'repryntt-core (Rust)', 'block_height': 40582, 'current_supply_cr': 428994.72999908, 'max_supply_cr': 21000000.0, 'supply_percent': 2.0428320476146666, '...",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_robot_blockchain_info": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_robot_wallet_balance": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_system_health": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "OK",
+      "exec_result": "{'success': True, 'timestamp': '2026-05-20T17:52:50.649295', 'node': {'running': True, 'chain': 'repryntt-core (Rust)', 'block_height': 40582, 'current_supply_cr': 428994.72999908, 'max_supply_cr': 21...",
+      "error": "",
+      "status": "PASS"
+    },
+    "monitor_robot_economy": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "recover_robot_wallet": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(key_phrase: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "start_robot_economy": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "stop_robot_economy": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "submit_robot_workload": {
+      "category": "robot_economy",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(workload_data: dict = None, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "scalp_force_buy": {
+      "category": "scalp",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', reason: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "scalp_force_sell": {
+      "category": "scalp",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(reason: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "scalp_history": {
+      "category": "scalp",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 20, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"trade_count\": 20,\n  \"wins\": 10,\n  \"losses\": 10,\n  \"total_pnl_usd\": -95.46,\n  \"trades\": [\n    {\n      \"symbol\": \"MEFAI\",\n      \"address\": \"7gcoey4EXJcZ8u3iGYhgTBrh3JuhLWzV4Gs1zNaPtu3U\",\n      \"ent...",
+      "error": "",
+      "status": "PASS"
+    },
+    "scalp_set_param": {
+      "category": "scalp",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(param: str = '', value: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "scalp_status": {
+      "category": "scalp",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"enabled\": true,\n  \"running\": true,\n  \"active_trade\": null,\n  \"queue_size\": 0,\n  \"queue\": [],\n  \"config\": {\n    \"take_profit_pct\": 10.0,\n    \"stop_loss_pct\": -5.0,\n    \"max_hold_seconds\": 120,\n   ...",
+      "error": "",
+      "status": "PASS"
+    },
+    "value_compass_status": {
+      "category": "self_awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**_) -> str",
+      "exec_status": "OK",
+      "exec_result": "\ud83e\udded Value Compass Status\n  duty:        0.00% (target 70%, deficit +0.700)\n  growth:      100.00% (target 20%, deficit -0.800)\n  exploration: 0.00% (target 10%, deficit +0.100)\n  counts: 0D / 1G / 0E (t...",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_feed": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 10, category: str = '') -> str",
+      "exec_status": "OK",
+      "exec_result": "=== REPRYNTT Social Feed (10 posts) ===\n\n[2026-05-18T23:31] andrew@a31a66f7 [engineering] (0 replies)\n\ud83d\udd28 **CodeForge Proposal** \u2014 test build\n\nProposal ID: `prop_1779147066_156` \u2014 Awaiting deliberation....",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_my_identity": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> str",
+      "exec_status": "OK",
+      "exec_result": "Node ID: a31a66f79cb886d6\nPublic Key: fe8eaa00e3adffe5b0eaf0d27ce554384b6ffe9877d6163952d7c307a8f232bc\nDisplay Name: repryntt-node\nPosts: 3185 local, 0 federated",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_nodes": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> str",
+      "exec_status": "OK",
+      "exec_result": "=== REPRYNTT Social Network ===\nThis node: repryntt-node (a31a66f79cb886d6)\nPublic key: fe8eaa00e3adffe5...\n\nKnown peers: 0\n\nStats: 3185 posts, 616 replies, 0 from peers",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_post": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(content: str, category: str = 'general') -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "social_post() missing 1 required positional argument: 'content'",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_read_post": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(post_id: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "social_read_post() missing 1 required positional argument: 'post_id'",
+      "error": "",
+      "status": "PASS"
+    },
+    "social_reply": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(post_id: str, content: str) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "social_reply() missing 2 required positional arguments: 'post_id' and 'content'",
+      "error": "",
+      "status": "PASS"
+    },
+    "twitter_search": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', max_results: int = 20, sort_order: str = 'relevancy', **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "x_search_crypto": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token_name: str = '', token_symbol: str = '', token_address: str = '', max_results: int = 20, **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "x_search_tweets": {
+      "category": "social",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', max_results: int = 20, sort_order: str = 'relevancy', **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_pumpfun_token": {
+      "category": "solana_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(name: str = '', symbol: str = '', description: str = '', image_path: str = '', initial_buy_sol: float = 0.1, website: str = '', twitter: str = '', telegram: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"name, symbol, and image_path are required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "real_buy": {
+      "category": "solana_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token_address: str = '', amount_sol: float = 0.0, slippage_bps: int = 100, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"token_address required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "real_sell": {
+      "category": "solana_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token_address: str = '', sell_pct: float = 100.0, slippage_bps: int = 100, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"token_address required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "wallet_status": {
+      "category": "solana_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"Wallet not found at /home/reprynt/.repryntt/wallet/artemis_mainnet.json. Generate one first or check the path.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_frontiers": {
+      "category": "spatial_awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(max_count: int = 5, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"robot_pose\": {\"x_cm\": -155.9, \"y_cm\": -970.1, \"heading_deg\": 339.7}, \"frontier_count\": 5, \"frontiers\": [{\"x_cm\": -210.0, \"y_cm\": -910.0, \"distance_m\": 0.81, \"bearing_deg\": -21.7, \"direction\": \"sligh...",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_map_ascii": {
+      "category": "spatial_awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(radius_cells: int = 20, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"robot_grid\": [84, 3], \"robot_world_cm\": [-155.9, -970.1], \"heading_deg\": 339.7, \"radius_cells\": 20, \"cell_size_cm\": 10, \"ascii\": \"???????????????#???....?.................\\n?????????...................",
+      "error": "",
+      "status": "PASS"
+    },
+    "nav_pose": {
+      "category": "spatial_awareness",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"x_cm\": -155.9, \"y_cm\": -970.1, \"heading_deg\": 339.7, \"compass\": \"N\", \"total_distance_m\": 295.23, \"moves\": 7995, \"places_visited\": 1601, \"semantic_frontiers_unexplored\": 561}",
+      "error": "",
+      "status": "PASS"
+    },
+    "add_agents_to_swarm": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(swarm_id: str = '', count: int = 5, roles=None, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "broadcast_task": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(swarm_id: str = '', task: str = '', context: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "call_jarvis": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(prompt: str = '', task: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_agent": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(name: str = '', role: str = 'executor', personality: str = '', provider: str = '', model: str = '', swarm_id: str = '', custom_system_prompt: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_swarm": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(name: str = '', purpose: str = '', agent_count: int = 5, roles=None, provider: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "delegate_tasks": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(swarm_id: str = '', tasks=None, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "dispatch_task": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(agent_id: str = '', task: str = '', context: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "dissolve_swarm": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(swarm_id: str = '', retire_agents: bool = True, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_agent_info": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(agent_id: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_swarm_overview": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"No agents found\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "list_agents": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(swarm_id: str = '', status: str = '', role: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"success\": false, \"error\": \"No agents found\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "quick_brainstorm": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: str = '', agent_count: int = 5, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "quick_research": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(question: str = '', agent_count: int = 3, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "retire_agent": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(agent_id: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "start_discussion": {
+      "category": "swarm_tools",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(topic: str = '', participant_ids=None, swarm_id: str = '', rounds: int = 3, discussion_type: str = 'roundtable', commander_perspective: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "add_task": {
+      "category": "task_queue",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(title: str = '', description: str = '', priority: int = 3, expected_artifact_type: str = '', expected_location: str = '', downstream_consumer: str = '', success_criterion: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Task queue not loaded.",
+      "error": "",
+      "status": "PASS"
+    },
+    "complete_current_task": {
+      "category": "task_queue",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(summary: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Task queue not loaded.",
+      "error": "",
+      "status": "PASS"
+    },
+    "retype_task": {
+      "category": "task_queue",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_id: str = '', expected_artifact_type: str = '', expected_location: str = '', downstream_consumer: str = '', success_criterion: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Task queue not loaded.",
+      "error": "",
+      "status": "PASS"
+    },
+    "skip_task": {
+      "category": "task_queue",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(reason: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Task queue not loaded.",
+      "error": "",
+      "status": "PASS"
+    },
+    "task_queue_status": {
+      "category": "task_queue",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "Task queue not loaded.",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_memecoin": {
+      "category": "token_launch",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(theme: str = '', narrative: str = '', initial_buy_sol: float = 0.1, twitter: str = '', telegram: str = '', website: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"stages\": {\n    \"ideate\": {\n      \"name\": \"ParseError\",\n      \"symbol\": \"\",\n      \"description\": \"{\\\"error\\\": \\\"LLM HTTP 403: {\\\"code\\\":\\\"The caller does not have permission to execute the specifi...",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_pipeline_design": {
+      "category": "token_launch",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pipeline_id: str = '', logo_prompt: str = '', num_candidates: int = 3, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"pipeline_id required from step 1\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_pipeline_execute": {
+      "category": "token_launch",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pipeline_id: str = '', initial_buy_sol: float = 0.1, twitter: str = '', telegram: str = '', website: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"pipeline_id required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_pipeline_ideate": {
+      "category": "token_launch",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(theme: str = '', narrative: str = '', target_audience: str = 'crypto degens, memecoin traders', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"pipeline_id\": \"launch_1779313971\",\n  \"name\": \"ParseError\",\n  \"symbol\": \"\",\n  \"description\": \"{\\\"error\\\": \\\"LLM HTTP 403: {\\\"code\\\":\\\"The caller does not have permission to execute the specified o...",
+      "error": "",
+      "status": "PASS"
+    },
+    "launch_pipeline_review": {
+      "category": "token_launch",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(pipeline_id: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"pipeline_id required\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "build_tool_context": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_context: str = '', max_tools: int = 20, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\ud83d\udee0\ufe0f AVAILABLE TOOLS:\n- search_knowledge(query='', limit=5, kw): No description\n- brain_network_search(query='', memory_types=None, limit=5, kw): No description\n- grokipedia_search(query='', max_results...",
+      "error": "",
+      "status": "PASS"
+    },
+    "build_tool_schemas": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_context: str = '', max_tools: int = 25, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "[{\"type\": \"function\", \"function\": {\"name\": \"search_knowledge\", \"description\": \"\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\", \"description\": \"query\"}, \"limit\": {\"type\":...",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_step_tool_hint": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(current_action: str = '', task_type: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "\nUse tools: quick_research, grokipedia_search, mcp_fetch_fetch, write_file, quick_brainstorm.",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_task_tool_examples": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(task_type: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_tool_credit_cost": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(tool_name: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "0.001",
+      "error": "",
+      "status": "PASS"
+    },
+    "get_tool_credit_reward": {
+      "category": "tool_execution",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(tool_name: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "0.0",
+      "error": "",
+      "status": "PASS"
+    },
+    "log_trade_outcome": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', symbol: str = '', action: str = '', entry_price: float = 0, exit_price: float = 0, hold_seconds: int = 0, pnl_pct: float = 0, reason: str = '', market_conditions: str = '', lessons: str = '', **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "review_trade_journal": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(last_n: int = 30, winners_only: bool = False, losers_only: bool = False, **kwargs) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "token_price_history": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', points: int = 100) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_bot_start": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(component: str = 'all') -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_bot_status": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"components\": {\n    \"monitor\": {\n      \"running\": false,\n      \"pid\": null,\n      \"description\": \"Core token monitor \\u2014 DexScreener polling, pattern detection, signal generation\"\n    },\n    \"t...",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_bot_stop": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(component: str = 'all') -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_browse_tokens": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(sort_by: str = 'last_updated', order: str = 'desc', limit: int = 30, min_mcap: float = 0, search: str = '') -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"tokens\": [], \"count\": 0, \"note\": \"No tokens.db found. Is the trading bot running?\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_hot_tokens": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 15) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"hot_tokens\": [], \"count\": 0, \"note\": \"Trading bot is OFFLINE \\u2014 no live data available. Use trading_bot_start('all') to start monitoring.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_performance": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "() -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"performance\": {}, \"summary\": \"No performance data yet. The bot hasn't completed any trades, or the performance file doesn't exist.\", \"file\": \"/home/reprynt/repryntt-public/repryntt/trading/data/toke...",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_scan": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(strategy: str = 'balanced') -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"strategy\": \"BALANCED\",\n  \"scan_time\": \"2026-05-20T21:52:52.515967+00:00\",\n  \"market\": {\n    \"total_signals_in_window\": 0,\n    \"tradeable_candidates\": 0,\n    \"buy_candidates\": 0\n  },\n  \"portfolio\"...",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_signals": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(signal_type: str = 'all', limit: int = 20) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"signals\": [],\n  \"count\": 0,\n  \"signal_type_filter\": \"all\"\n}",
+      "error": "",
+      "status": "PASS"
+    },
+    "trading_token_detail": {
+      "category": "trading",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '') -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "degen_terminal_top": {
+      "category": "trading_internal",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(limit: int = 10, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"tokens\": [], \"message\": \"No tokens in degen terminal right now. Pipeline may be between cycles.\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "purge_bad_tokens": {
+      "category": "trading_internal",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"error\": \"Token database not found\"}",
+      "error": "",
+      "status": "PASS"
+    },
+    "remove_token": {
+      "category": "trading_internal",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str, reason: str = '', **kw) -> str",
+      "exec_status": "OK_NEEDS_ARGS",
+      "exec_result": "ToolRegistry.register_native_tools.<locals>.remove_token() missing 1 required positional argument: 'address'",
+      "error": "",
+      "status": "PASS"
+    },
+    "sim_buy": {
+      "category": "trading_sim",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token: str = '', amount_usd: float = 0, reason: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "sim_faucet": {
+      "category": "trading_sim",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(amount: float = 0, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "sim_portfolio": {
+      "category": "trading_sim",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"summary\": {\n    \"starting_balance\": 150.0,\n    \"cash_balance\": 50.0,\n    \"positions_value\": 94.34,\n    \"total_portfolio_value\": 144.34,\n    \"total_pnl\": -5.66,\n    \"total_return_pct\": -3.77,\n    ...",
+      "error": "",
+      "status": "PASS"
+    },
+    "sim_price_check": {
+      "category": "trading_sim",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token: str = '', **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\n  \"symbol\": \"SOL\",\n  \"name\": \"SOL\",\n  \"chain\": \"solana\",\n  \"dex\": \"raydium\",\n  \"price_usd\": 89.15,\n  \"price_change_24h_pct\": 0,\n  \"volume_24h\": 291831.05,\n  \"liquidity_usd\": 2040310412.26,\n  \"market...",
+      "error": "",
+      "status": "PASS"
+    },
+    "sim_sell": {
+      "category": "trading_sim",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(token: str = '', sell_pct: float = 100.0, reason: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "assemble_edit": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "auto_produce_video": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_shot_list": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "create_video_project": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_all_clips": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_music": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_narration": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_thumbnail": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "generate_video_clip": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "qa_review_video": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "render_final": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "video_project_status": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "OK",
+      "exec_result": "{'success': False, 'paid_feature': True, 'feature': 'Video Production', 'error': 'Video Production is a paid hosted feature.', 'signup_url': 'https://repryntt.com/video', 'docs': 'Set REPRYNTT_API_KEY...",
+      "error": "",
+      "status": "PASS"
+    },
+    "write_screenplay": {
+      "category": "video",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(*args: 'Any', **kw: 'Any') -> 'Any'",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "call_knowledge_api_feeder": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', apis: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "extract_content_from_url": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(url: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "google_web_search": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', num_results: int = 10, scrape_content: bool = True, scrape_top_n: int = 3, store_results: bool = True, department: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "real_web_search": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str, num_results: int = 10, region: str = 'us-en', **kw) -> dict",
+      "exec_status": "OK",
+      "exec_result": "{'success': True, 'query': 'test', 'results': [{'title': 'A/B testing - Wikipedia', 'url': 'https://en.wikipedia.org/wiki/A/B_testing', 'snippet': 'The results of A/B tests are simple to interpret and...",
+      "error": "",
+      "status": "PASS"
+    },
+    "scrape_web_page": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(url: str = '', store_in_brain: bool = True, **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "web_search_results_only": {
+      "category": "web_search",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(query: str = '', num_results: int = 10, department: str = '', **kw) -> dict",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "kol_leaderboard": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(timeframe: str = 'daily', top_n: int = 20, min_profit_sol: float = 5.0, **kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"source\": \"live+seed\", \"timeframe\": \"daily\", \"count\": 12, \"kols\": [{\"rank\": 4, \"name\": \"Cented\", \"address\": \"CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o\", \"wins\": 89, \"losses\": 50, \"profit_sol\": 92....",
+      "error": "",
+      "status": "PASS"
+    },
+    "kol_remove_underperformers": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(min_profit_sol: float = 0.0, **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "kol_sync_wallets": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(top_n: int = 20, min_profit_sol: float = 5.0, min_win_rate: float = 0.0, timeframe: str = 'daily', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "whale_add_wallet": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', label: str = '', tier: str = 'whale', notes: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    },
+    "whale_list_wallets": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"wallets\": [], \"count\": 0}",
+      "error": "",
+      "status": "PASS"
+    },
+    "whale_monitor_status": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(**kw) -> str",
+      "exec_status": "OK",
+      "exec_result": "{\"stats\": {\"enabled\": false, \"tracked_wallets\": 0, \"enabled_wallets\": 0, \"poll_interval_s\": 60, \"rpc_url\": \"https://solana-mainnet.g.alchemy.com/v2/...\", \"polls\": 0, \"swaps_detected\": 0, \"buy_signals_...",
+      "error": "",
+      "status": "PASS"
+    },
+    "whale_remove_wallet": {
+      "category": "whale_monitoring",
+      "callable": true,
+      "has_signature": true,
+      "signature": "(address: str = '', **kw) -> str",
+      "exec_status": "skipped_destructive",
+      "exec_result": "",
+      "error": "",
+      "status": "PASS"
+    }
+  }
+}

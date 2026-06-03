@@ -1,0 +1,73 @@
+{
+  "id": "build_artifact",
+  "label": "Build Artifact",
+  "description": "Scope → design → implement → verify → document a concrete deliverable.",
+  "match_keywords": ["build", "create", "implement", "write code", "make a", "develop", "ship"],
+  "version": 1,
+  "lineage": [],
+  "tags": ["engineering", "output"],
+  "success_criteria": "An artifact exists on disk, it has been exercised at least once without error, and its purpose is documented.",
+  "author": "system",
+  "states": [
+    {
+      "name": "scope",
+      "label": "Define Scope",
+      "guidance": "Write working_state['scope'] (>= 80 chars) describing what will exist when done, and list working_state['non_goals'] (>= 2 items) for what is explicitly out of scope.",
+      "tools": ["think"],
+      "gate": {
+        "required_keys": ["scope", "non_goals"],
+        "min_length": {"scope": 80},
+        "min_list_length": {"non_goals": 2}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "design",
+      "label": "Sketch Design",
+      "guidance": "Produce working_state['design'] (>= 150 chars) describing the shape — interfaces, data flow, files to create. List working_state['files'] (>= 1 item) of planned paths.",
+      "tools": ["think", "list_files"],
+      "gate": {
+        "required_keys": ["design", "files"],
+        "min_length": {"design": 150},
+        "min_list_length": {"files": 1}
+      },
+      "max_heartbeats": 3,
+      "on_fail_state": "scope"
+    },
+    {
+      "name": "implement",
+      "label": "Implement",
+      "guidance": "Create / edit the files listed in design. Record each edit as an entry in working_state['edits'] (list of {file, summary}).",
+      "tools": ["create_file", "edit_file", "shell_exec"],
+      "gate": {
+        "required_keys": ["edits"],
+        "min_list_length": {"edits": 1}
+      },
+      "max_heartbeats": 6,
+      "on_fail_state": "design"
+    },
+    {
+      "name": "verify",
+      "label": "Verify",
+      "guidance": "Exercise the artifact at least once — import it, run it, or test it. Record working_state['verification'] (>= 60 chars) describing what you ran and the outcome.",
+      "tools": ["shell_exec", "python_exec", "read_file"],
+      "gate": {
+        "required_keys": ["verification"],
+        "min_length": {"verification": 60}
+      },
+      "max_heartbeats": 4,
+      "on_fail_state": "implement"
+    },
+    {
+      "name": "document",
+      "label": "Document",
+      "guidance": "Write working_state['doc'] (>= 120 chars) — what it is, how to use it, where it lives — and persist it to memory or a file.",
+      "tools": ["store_knowledge", "create_file"],
+      "gate": {
+        "required_keys": ["doc"],
+        "min_length": {"doc": 120}
+      },
+      "max_heartbeats": 2
+    }
+  ]
+}

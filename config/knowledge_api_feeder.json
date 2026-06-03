@@ -1,0 +1,121 @@
+{
+  "apis": {
+    "wikipedia": {
+      "enabled": false,
+      "base_url": "https://en.wikipedia.org/api/rest_v1/",
+      "endpoints": {
+        "summary": "page/summary/{title}",
+        "search": "page/search",
+        "random": "page/random/summary"
+      }
+    },
+    "openlibrary": {
+      "enabled": true,
+      "base_url": "https://openlibrary.org/",
+      "endpoints": {
+        "search": "search.json",
+        "works": "works/{olid}.json",
+        "authors": "authors/{olid}.json"
+      }
+    },
+    "dbpedia": {
+      "enabled": true,
+      "sparql_endpoint": "https://dbpedia.org/sparql",
+      "default_graph": "http://dbpedia.org"
+    },
+    "pubmed": {
+      "enabled": true,
+      "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "endpoints": {
+        "search": "esearch.fcgi",
+        "summary": "esummary.fcgi",
+        "fetch": "efetch.fcgi"
+      },
+      "api_key": ""
+    },
+    "arxiv": {
+      "enabled": true,
+      "base_url": "http://export.arxiv.org/api/query",
+      "max_results": 10
+    },
+    "semantic_scholar": {
+      "enabled": false,
+      "base_url": "https://api.semanticscholar.org/",
+      "version": "v1"
+    },
+    "github": {
+      "enabled": true,
+      "base_url": "https://api.github.com/search/",
+      "token": ""
+    },
+    "mit_ocw": {
+      "enabled": true,
+      "base_url": "https://ocw.mit.edu/",
+      "endpoints": {
+        "search": "search/",
+        "courses": "courses/"
+      }
+    },
+    "newsapi": {
+      "enabled": false,
+      "base_url": "https://newsapi.org/v2/",
+      "api_key": "",
+      "endpoints": {
+        "top_headlines": "top-headlines",
+        "everything": "everything"
+      }
+    },
+    "currents": {
+      "enabled": true,
+      "base_url": "https://api.currentsapi.services/v1/",
+      "endpoints": {
+        "latest": "latest-news",
+        "search": "search"
+      },
+      "api_key": ""
+    },
+    "dictionary": {
+      "enabled": true,
+      "base_url": "https://api.dictionaryapi.dev/api/v2/entries/en/"
+    },
+    "restcountries": {
+      "enabled": true,
+      "base_url": "https://restcountries.com/v3.1/"
+    },
+    "opentdb": {
+      "enabled": true,
+      "base_url": "https://opentdb.com/api.php"
+    },
+    "stackexchange": {
+      "enabled": true,
+      "base_url": "https://api.stackexchange.com/2.3/"
+    },
+    "worldbank": {
+      "enabled": true,
+      "base_url": "https://api.worldbank.org/v2/"
+    },
+    "nasa": {
+      "enabled": true,
+      "base_url": "https://api.nasa.gov/",
+      "api_key": "DEMO_KEY"
+    },
+    "omdb": {
+      "enabled": true,
+      "base_url": "http://www.omdbapi.com/",
+      "api_key": ""
+    }
+  },
+  "processing": {
+    "max_results_per_api": 10,
+    "min_relevance_threshold": 0.1,
+    "cache_results": true,
+    "cache_ttl_hours": 24,
+    "parallel_requests": true,
+    "timeout_seconds": 30
+  },
+  "output": {
+    "knowledge_data": "data/knowledge_entries.json",
+    "api_stats": "data/api_stats.json",
+    "search_results": "data/search_results.json"
+  }
+}

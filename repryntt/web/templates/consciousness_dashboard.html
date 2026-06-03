@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Consciousness Dashboard — Andrew</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── CONSCIOUSNESS DASHBOARD ── */
+.cd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  margin: 8px;
+  min-height: calc(100vh - 80px);
+}
+@media (max-width: 1100px) { .cd-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px)  { .cd-grid { grid-template-columns: 1fr; } }
+
+.cd-full  { grid-column: 1/-1; }
+
+.panel { background: #fafafa; border: 1px solid #e0e0e0; }
+.panel h2 {
+  background: #98e; color: #fff; font-size: 12px; font-weight: bold;
+  padding: 4px 8px; margin: 0; display: flex; justify-content: space-between; align-items: center;
+}
+.panel h2 .badge {
+  font-size: 10px; padding: 1px 5px; border-radius: 2px; font-weight: normal;
+}
+.badge-running { background: #2c5; color: #fff; }
+.badge-stopped { background: #b33; color: #fff; }
+.badge-idle    { background: #888; color: #fff; }
+.panel-body { padding: 8px; }
+
+/* Status bar */
+.status-bar {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  font-size: 12px; font-family: monospace;
+}
+.status-item { display: flex; gap: 4px; align-items: center; }
+.status-label { color: #999999; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+.status-val   { color: #000000; font-weight: bold; }
+.status-val.running { color: #080; }
+.status-val.stopped { color: #900; }
+
+/* Camera frame */
+#camera-frame {
+  width: 100%; max-height: 280px; object-fit: contain;
+  background: #111; display: block;
+  border: 1px solid #333;
+}
+.no-frame {
+  width: 100%; height: 200px; background: #111; display: flex;
+  align-items: center; justify-content: center;
+  color: #555; font-size: 12px; font-family: monospace;
+}
+
+/* Reasoning panel */
+#reasoning-scene {
+  font-size: 12px; line-height: 1.6; color: #000000;
+  max-height: 200px; overflow-y: auto;
+  padding: 6px; background: #ffffff; border: 1px solid #e0e0e0;
+  white-space: pre-wrap; word-break: break-word;
+}
+.dir-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 2px;
+  font-size: 11px; font-weight: bold; font-family: monospace;
+  background: #000000; color: #fff; margin-right: 4px;
+}
+.obstacle-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px; margin-top: 6px;
+}
+.obs-cell {
+  text-align: center; padding: 4px; font-size: 11px; font-family: monospace;
+  background: #ffffff; border: 1px solid #e0e0e0;
+}
+.obs-cell.high { background: #f8d7da; border-color: #f5c6cb; }
+.obs-cell .obs-label { font-size: 9px; color: #999999; display: block; text-transform: uppercase; }
+.obs-cell .obs-val   { font-size: 14px; font-weight: bold; color: #000000; }
+
+/* Decision panel */
+.decision-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+}
+.decision-row:last-child { border-bottom: none; }
+.decision-key { color: #999999; font-weight: bold; min-width: 80px; font-size: 11px; text-transform: uppercase; }
+.decision-val { color: #000000; font-family: monospace; font-weight: bold; }
+
+.intent-box {
+  padding: 8px; background: #fffbe6; border: 1px solid #e6d700;
+  font-size: 11px; font-family: monospace;
+  margin-top: 6px;
+}
+.intent-box .intent-label { color: #856404; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+
+/* Intent override form */
+.override-form { display: flex; flex-direction: column; gap: 8px; }
+.form-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.form-row label { font-size: 11px; color: #999999; font-weight: bold; text-transform: uppercase; min-width: 60px; }
+.form-row select, .form-row input[type=text], .form-row input[type=number] {
+  font-size: 12px; font-family: monospace; padding: 3px 6px;
+  border: 1px solid #e0e0e0; background: #fff; color: #000000;
+  flex: 1; min-width: 0;
+}
+.btn {
+  padding: 5px 14px; font-size: 12px; font-weight: bold;
+  border: 1px solid #e0e0e0; cursor: pointer;
+  font-family: arial, sans-serif;
+}
+.btn-send    { background: #d4edda; color: #155724; }
+.btn-send:hover  { background: #c3e6cb; }
+.btn-clear   { background: #fff3cd; color: #856404; }
+.btn-clear:hover { background: #ffeeba; }
+.btn-stop    { background: #f8d7da; color: #721c24; }
+.btn-stop:hover  { background: #f5c6cb; }
+
+/* Connection indicator */
+#conn-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; margin-right: 4px;
+  background: #888;
+  transition: background 0.3s;
+}
+#conn-dot.live    { background: #2c5; box-shadow: 0 0 4px #2c5; }
+#conn-dot.error   { background: #c00; }
+
+/* Feed log */
+#feed-log {
+  background: #111; color: #9d9; font-family: monospace; font-size: 10px;
+  height: 100px; overflow-y: auto; padding: 6px;
+  border: 1px solid #333; line-height: 1.5; white-space: pre-wrap;
+}
+</style>
+</head>
+<body>
+
+<div style="background:#98e;color:#fff;padding:6px 12px;font-weight:bold;font-size:14px;display:flex;align-items:center;gap:10px;">
+  <span id="conn-dot"></span>
+  Andrew — Consciousness Dashboard
+  <span style="font-size:11px;font-weight:normal;opacity:0.85;margin-left:4px;">real-time VLM reasoning &amp; intent override</span>
+</div>
+
+<!-- Status bar -->
+<div class="panel cd-full" style="margin:8px 8px 0;">
+  <div class="panel-body">
+    <div class="status-bar" id="status-bar">
+      <div class="status-item">
+        <span class="status-label">Status</span>
+        <span class="status-val" id="s-running">—</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Goal</span>
+        <span class="status-val" id="s-goal">—</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Step</span>
+        <span class="status-val" id="s-step">—</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Elapsed</span>
+        <span class="status-val" id="s-elapsed">—</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Places</span>
+        <span class="status-val" id="s-places">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cd-grid">
+
+  <!-- Column 1: Camera -->
+  <div class="panel">
+    <h2>
+      Through Andrew's Eyes
+      <span class="badge" id="cam-badge">no signal</span>
+    </h2>
+    <div class="panel-body" style="padding:4px;">
+      <div id="cam-container">
+        <div class="no-frame" id="no-frame-msg">waiting for camera frame…</div>
+        <img id="camera-frame" src="" alt="camera frame" style="display:none;" />
+      </div>
+      <div style="font-size:10px;color:#999999;margin-top:4px;font-family:monospace;" id="frame-time">—</div>
+    </div>
+  </div>
+
+  <!-- Column 2: VLM Reasoning -->
+  <div class="panel">
+    <h2>VLM Reasoning (Cortex Output)</h2>
+    <div class="panel-body">
+      <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:#999999;font-weight:bold;text-transform:uppercase;">Recommendation</span>
+        <span class="dir-badge" id="vlm-direction">—</span>
+        <span style="font-size:11px;font-family:monospace;color:#999999;" id="vlm-confidence"></span>
+      </div>
+      <div id="reasoning-scene">waiting for VLM output…</div>
+
+      <!-- Obstacles -->
+      <div style="margin-top:10px;">
+        <div style="font-size:10px;color:#999999;font-weight:bold;text-transform:uppercase;margin-bottom:4px;">Proximity</div>
+        <div class="obstacle-grid">
+          <div class="obs-cell" id="obs-left">
+            <span class="obs-label">Left</span>
+            <span class="obs-val" id="obs-left-val">—</span>
+          </div>
+          <div class="obs-cell" id="obs-center">
+            <span class="obs-label">Center</span>
+            <span class="obs-val" id="obs-center-val">—</span>
+          </div>
+          <div class="obs-cell" id="obs-right">
+            <span class="obs-label">Right</span>
+            <span class="obs-val" id="obs-right-val">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 3: Decision + Override -->
+  <div class="panel">
+    <h2>Decision Layer</h2>
+    <div class="panel-body">
+      <div class="decision-row">
+        <span class="decision-key">Action</span>
+        <span class="decision-val" id="d-action">—</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-key">Reason</span>
+        <span class="decision-val" id="d-reason" style="font-size:11px;white-space:pre-wrap;word-break:break-word;max-width:200px;">—</span>
+      </div>
+
+      <!-- Active intent -->
+      <div id="intent-display" style="display:none;">
+        <div class="intent-box">
+          <div class="intent-label">Active conscious intent</div>
+          <div id="intent-text" style="margin-top:2px;"></div>
+          <div id="intent-expires" style="color:#856404;margin-top:2px;font-size:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Override form -->
+      <div style="margin-top:12px;border-top:1px solid #e0e0e0;padding-top:10px;">
+        <div style="font-size:11px;color:#999999;font-weight:bold;text-transform:uppercase;margin-bottom:8px;">Intent Override (you → Andrew's body)</div>
+        <div class="override-form">
+          <div class="form-row">
+            <label>Direction</label>
+            <select id="intent-dir">
+              <option value="forward">Forward</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="backward">Backward</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Reason</label>
+            <input type="text" id="intent-reason" placeholder="I see a doorway…" />
+          </div>
+          <div class="form-row">
+            <label>Steps</label>
+            <input type="number" id="intent-steps" value="20" min="1" max="200" style="max-width:70px;" />
+          </div>
+          <div class="form-row" style="gap:6px;">
+            <button class="btn btn-send" onclick="sendIntent()">Set Intent</button>
+            <button class="btn btn-clear" onclick="clearIntent()">Clear</button>
+            <button class="btn btn-stop" onclick="stopExplorer()">Stop Robot</button>
+          </div>
+          <div id="form-feedback" style="font-size:11px;font-family:monospace;min-height:16px;color:#000000;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom: event log -->
+  <div class="panel cd-full">
+    <h2>Live Event Log</h2>
+    <div class="panel-body" style="padding:4px;">
+      <div id="feed-log"></div>
+    </div>
+  </div>
+
+</div><!-- /cd-grid -->
+
+<script>
+// ── SSE connection ─────────────────────────────────────────────────────────
+
+const connDot   = document.getElementById('conn-dot');
+const feedLog   = document.getElementById('feed-log');
+let   evtSource = null;
+
+function log(msg) {
+  const t = new Date().toISOString().slice(11,19);
+  feedLog.textContent = `[${t}] ${msg}\n` + feedLog.textContent;
+  if (feedLog.textContent.length > 8000) {
+    feedLog.textContent = feedLog.textContent.slice(0, 8000);
+  }
+}
+
+function connect() {
+  if (evtSource) evtSource.close();
+  evtSource = new EventSource('/consciousness/stream');
+
+  evtSource.onopen = () => {
+    connDot.className = 'live';
+    log('connected to stream');
+  };
+
+  evtSource.onmessage = (e) => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'connected') return;
+      if (d.type === 'error') { log('stream error: ' + d.message); return; }
+      updateDashboard(d);
+    } catch(err) {
+      log('parse error: ' + err);
+    }
+  };
+
+  evtSource.onerror = () => {
+    connDot.className = 'error';
+    log('stream disconnected — retrying in 3s…');
+    evtSource.close();
+    setTimeout(connect, 3000);
+  };
+}
+
+// ── Dashboard update ──────────────────────────────────────────────────────
+
+function updateDashboard(d) {
+  // Status bar
+  const running = d.running;
+  const sEl = document.getElementById('s-running');
+  sEl.textContent = running ? 'RUNNING' : 'STOPPED';
+  sEl.className = 'status-val ' + (running ? 'running' : 'stopped');
+
+  setText('s-goal',    d.goal || '—');
+  setText('s-step',    d.step != null ? `${d.step} / ${d.steps_limit}` : '—');
+  setText('s-elapsed', d.elapsed_sec != null ? `${d.elapsed_sec}s` : '—');
+  setText('s-places',  d.places_discovered != null ? d.places_discovered : '—');
+
+  // Camera frame
+  const frameUrl = d.frame_url;
+  const img      = document.getElementById('camera-frame');
+  const noFrame  = document.getElementById('no-frame-msg');
+  const camBadge = document.getElementById('cam-badge');
+  if (frameUrl) {
+    img.src = frameUrl + '?t=' + Date.now();
+    img.style.display = 'block';
+    noFrame.style.display = 'none';
+    camBadge.textContent = 'live';
+    camBadge.className = 'badge badge-running';
+    document.getElementById('frame-time').textContent = new Date().toLocaleTimeString();
+  }
+
+  // VLM reasoning
+  const r = d.reasoning || {};
+  setText('vlm-direction',  r.recommendation || '—');
+  setText('vlm-confidence',
+    r.confidence != null ? `conf ${(r.confidence * 100).toFixed(0)}%` : '');
+  setText('reasoning-scene', r.scene || '(no scene description)');
+
+  const obs = r.obstacles || {};
+  setObstacle('obs-left',   obs.left   != null ? obs.left   : obs.left_prox);
+  setObstacle('obs-center', obs.center != null ? obs.center : obs.center_prox);
+  setObstacle('obs-right',  obs.right  != null ? obs.right  : obs.right_prox);
+
+  // Decision
+  const dec = d.decision || {};
+  setText('d-action', dec.action || '—');
+  setText('d-reason', dec.reason || '—');
+
+  // Active intent
+  const intent = d.intent_override;
+  const intentDisplay = document.getElementById('intent-display');
+  if (intent) {
+    intentDisplay.style.display = '';
+    document.getElementById('intent-text').textContent =
+      `${intent.direction} — "${intent.reason || ''}"`;
+    document.getElementById('intent-expires').textContent =
+      intent.steps_remaining != null ? `${intent.steps_remaining} steps remaining` : '';
+    log(`intent active: ${intent.direction} (${intent.reason || ''})`);
+  } else {
+    intentDisplay.style.display = 'none';
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setObstacle(cellId, val) {
+  const cell = document.getElementById(cellId);
+  if (!cell) return;
+  const valEl = cell.querySelector('.obs-val');
+  if (!valEl) return;
+  if (val == null) { valEl.textContent = '—'; cell.className = 'obs-cell'; return; }
+  const n = parseFloat(val);
+  valEl.textContent = isNaN(n) ? val : n.toFixed(2);
+  cell.className = 'obs-cell' + (n > 0.7 ? ' high' : '');
+}
+
+// ── Intent controls ────────────────────────────────────────────────────────
+
+function feedback(msg, color) {
+  const el = document.getElementById('form-feedback');
+  el.textContent = msg;
+  el.style.color = color || '#000000';
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+async function sendIntent() {
+  const dir    = document.getElementById('intent-dir').value;
+  const reason = document.getElementById('intent-reason').value || 'operator override';
+  const steps  = parseInt(document.getElementById('intent-steps').value) || 20;
+  try {
+    const resp = await fetch('/consciousness/intent', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({direction: dir, reason, duration_steps: steps}),
+    });
+    const data = await resp.json();
+    if (data.error) { feedback('Error: ' + data.error, '#c00'); return; }
+    feedback(`Intent set: ${dir} for ${steps} steps`, '#080');
+    log(`intent sent: ${dir} (${reason})`);
+  } catch(e) { feedback('Request failed', '#c00'); }
+}
+
+async function clearIntent() {
+  try {
+    const resp = await fetch('/consciousness/intent/clear', {method: 'POST'});
+    const data = await resp.json();
+    feedback('Intent cleared — VLM resumes control', '#856404');
+    log('intent cleared');
+  } catch(e) { feedback('Request failed', '#c00'); }
+}
+
+async function stopExplorer() {
+  const reason = document.getElementById('intent-reason').value || 'operator stop';
+  try {
+    const resp = await fetch('/consciousness/intent', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({direction: 'stop', reason}),
+    });
+    feedback('Stop command sent', '#721c24');
+    log('stop command sent');
+  } catch(e) { feedback('Request failed', '#c00'); }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+connect();
+</script>
+</body>
+</html>

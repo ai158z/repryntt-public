@@ -1,0 +1,59 @@
+# repryntt node - lightweight blockchain + Nexus image
+
+FROM rust:1.86-slim AS rust-builder
+
+WORKDIR /src/repryntt-core
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY repryntt-core/Cargo.toml repryntt-core/Cargo.lock ./
+COPY repryntt-core/src ./src
+RUN cargo build --release
+
+
+FROM python:3.10-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PIP_NO_CACHE_DIR=1 \
+    REPRYNTT_DATA_DIR=/data \
+    REPRYNTT_PROVIDER=local \
+    REPRYNTT_START_CHAIN=1 \
+    REPRYNTT_BLOCKCHAIN_ENABLED=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    curl \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/sh repryntt
+
+COPY pyproject.toml README.md ./
+COPY config ./config
+COPY repryntt ./repryntt
+COPY --from=rust-builder /src/repryntt-core/target/release/repryntt_core \
+    /app/repryntt-core/target/release/repryntt_core
+COPY docker/entrypoint.sh /usr/local/bin/repryntt-docker-entrypoint
+
+RUN chmod +x /usr/local/bin/repryntt-docker-entrypoint \
+    && chmod +x /app/repryntt-core/target/release/repryntt_core \
+    && pip install -e ".[p2p]" \
+    && mkdir -p /data \
+    && chown -R repryntt:repryntt /data /app
+
+USER repryntt
+
+EXPOSE 5001 8089 9332
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8089/health || exit 1
+
+ENTRYPOINT ["repryntt-docker-entrypoint"]
+CMD ["repryntt", "start", "--no-llm", "--no-evolution", "--no-blockchain"]

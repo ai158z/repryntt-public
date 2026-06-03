@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Settings — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+.settings-wrap {
+  max-width: 680px;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+
+.settings-section {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  margin-bottom: 20px;
+}
+
+.settings-section-header {
+  background: #fafafa;
+  border-bottom: 1px solid #eeeeee;
+  padding: 10px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+}
+
+.settings-section-body { padding: 16px; }
+
+.field {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+  gap: 12px;
+}
+.field label {
+  width: 240px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.field input, .field select {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #000;
+}
+.field input[type="number"] { width: 72px; }
+.field select { width: 200px; }
+.field input:focus, .field select:focus { outline: none; border-color: #000; }
+.field .hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #999;
+  letter-spacing: 0.02em;
+}
+
+.save-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 20px;
+  background: #000;
+  color: #fff;
+  border: 1px solid #000;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.save-btn:hover { background: #333; }
+
+.status-msg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #00883a;
+  margin-left: 12px;
+  display: none;
+  letter-spacing: 0.04em;
+}
+
+/* ── PROPOSALS TABLE ── */
+.proposals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 10px;
+}
+.proposals-table th {
+  background: #fafafa;
+  padding: 7px 10px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #000;
+  border-bottom: 1px solid #e0e0e0;
+}
+.proposals-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+  color: #000;
+}
+.proposals-table tr:hover td { background: #fafafa; }
+
+.action-btn {
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  margin: 1px;
+  background: #fff;
+  color: #000;
+  letter-spacing: 0.04em;
+}
+.action-btn:hover { border-color: #000; }
+.approve-btn { color: #00883a; }
+.approve-btn:hover { border-color: #00883a; }
+.reject-btn { color: #cc2200; }
+.reject-btn:hover { border-color: #cc2200; }
+.build-btn { color: #886600; }
+.build-btn:hover { border-color: #886600; }
+
+.status-proposed    { color: #886600; }
+.status-deliberating { color: #0044bb; }
+.status-approved    { color: #00883a; font-weight: 700; }
+.status-rejected    { color: #cc2200; }
+.status-building    { color: #000; font-weight: 700; }
+.status-done        { color: #999; }
+
+.remaining-bar {
+  background: #fafafa;
+  border-bottom: 1px solid #eeeeee;
+  padding: 8px 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #999;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.remaining-bar b { color: #000; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link active">settings</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-company">ai158z</span>
+    <span class="nav-status-dot"></span>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="board-header">
+  <div class="board-title">System Settings</div>
+  <div class="board-subtitle">CodeForge governance · API providers · daily caps · project proposals</div>
+</div>
+
+<!-- DAILY REMAINING -->
+<div class="remaining-bar">
+  CodeForge projects remaining today:
+  <b id="dailyRemaining">—</b> / <b id="dailyCap">—</b>
+</div>
+
+<!-- SETTINGS BODY -->
+<div class="settings-wrap">
+
+  <!-- CODEFORGE -->
+  <div class="settings-section">
+    <div class="settings-section-header">CodeForge Governance</div>
+    <div class="settings-section-body">
+      <div class="field">
+        <label>Daily project cap</label>
+        <input type="number" id="dailyProjectCap" min="0" max="20" value="2"/>
+        <span class="hint">Max projects per day (0 = disabled)</span>
+      </div>
+      <div class="field">
+        <label>Require deliberation</label>
+        <select id="requireDeliberation">
+          <option value="true">Yes</option>
+          <option value="false">No — auto-approve</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Auto-approve after deliberation</label>
+        <select id="autoApprove">
+          <option value="false">No — operator must approve</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Primary coding model</label>
+        <select id="primaryModel">
+          <option value="nvidia">NVIDIA (free tier)</option>
+          <option value="xai">Grok (xAI)</option>
+          <option value="anthropic">Claude (Anthropic)</option>
+          <option value="google_gemini">Gemini (Google)</option>
+          <option value="openai">GPT (OpenAI)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Deliberation reviewer model</label>
+        <select id="deliberationModel">
+          <option value="xai">Grok (xAI)</option>
+          <option value="nvidia">NVIDIA (free tier)</option>
+          <option value="google_gemini">Gemini (Google)</option>
+          <option value="anthropic">Claude (Anthropic)</option>
+        </select>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+      <span class="status-msg" id="saveStatus">&#10003; Saved</span>
+    </div>
+  </div>
+
+  <!-- PROPOSALS -->
+  <div class="settings-section">
+    <div class="settings-section-header">Project Proposals</div>
+    <div class="settings-section-body">
+      <div id="proposalsArea" style="font-family:var(--mono);font-size:12px;color:#999;">Loading...</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="board-footer">REPRYNTT · ai158z · System Configuration</div>
+
+<script>
+const API = '/api/forge';
+
+async function loadSettings() {
+  try {
+    const r = await fetch(`${API}/settings`);
+    const d = await r.json();
+    if (!d.success) return;
+    const s = d.settings;
+    document.getElementById('dailyProjectCap').value    = s.daily_project_cap;
+    document.getElementById('requireDeliberation').value = String(s.require_deliberation);
+    document.getElementById('autoApprove').value         = String(s.auto_approve_after_deliberation);
+    document.getElementById('primaryModel').value        = s.primary_model || 'nvidia';
+    document.getElementById('deliberationModel').value   = s.deliberation_model || 'xai';
+    document.getElementById('dailyRemaining').textContent = s.daily_remaining;
+    document.getElementById('dailyCap').textContent       = s.daily_project_cap;
+  } catch(e) { console.error('Settings load failed:', e); }
+}
+
+async function saveSettings() {
+  const body = {
+    daily_project_cap:                   parseInt(document.getElementById('dailyProjectCap').value) || 2,
+    require_deliberation:                document.getElementById('requireDeliberation').value === 'true',
+    auto_approve_after_deliberation:     document.getElementById('autoApprove').value === 'true',
+    primary_model:                       document.getElementById('primaryModel').value,
+    deliberation_model:                  document.getElementById('deliberationModel').value,
+  };
+  try {
+    const r = await fetch(`${API}/settings`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.success) {
+      const el = document.getElementById('saveStatus');
+      el.style.display = 'inline';
+      setTimeout(() => el.style.display = 'none', 2000);
+    }
+  } catch(e) { alert('Save failed: ' + e); }
+}
+
+async function loadProposals() {
+  try {
+    const r = await fetch(`${API}/proposals`);
+    const d = await r.json();
+    if (!d.success) return;
+    document.getElementById('dailyRemaining').textContent = d.daily_remaining;
+    document.getElementById('dailyCap').textContent       = d.daily_cap;
+
+    const proposals = d.proposals;
+    if (!proposals.length) {
+      document.getElementById('proposalsArea').innerHTML =
+        '<div style="color:#999;text-align:center;padding:20px;font-family:var(--mono);font-size:11px;">No proposals yet — agents will submit via the forge_project tool</div>';
+      return;
+    }
+
+    let html = `<table class="proposals-table">
+      <tr><th>ID</th><th>Description</th><th>Status</th><th>Opinions</th><th>Actions</th></tr>`;
+    for (const p of proposals) {
+      const desc         = (p.description || '').substring(0, 120);
+      const deliberations = (p.deliberation || []).length;
+      const created      = new Date(p.created_at * 1000).toLocaleString();
+      let actions = '';
+      if (p.status === 'proposed' || p.status === 'deliberating') {
+        actions = `<button class="action-btn approve-btn" onclick="approveProposal('${p.id}')">Approve</button>` +
+                  `<button class="action-btn reject-btn"  onclick="rejectProposal('${p.id}')">Reject</button>`;
+      } else if (p.status === 'approved') {
+        actions = `<button class="action-btn build-btn"  onclick="buildProposal('${p.id}')">Build</button>` +
+                  `<button class="action-btn reject-btn" onclick="rejectProposal('${p.id}')">Cancel</button>`;
+      } else if (p.status === 'building') {
+        actions = `<span style="font-size:10px;color:#999">${p.project_id || 'building...'}</span>`;
+      }
+      html += `<tr>
+        <td style="font-family:var(--mono);font-size:10px;color:#999">${p.id}</td>
+        <td title="${created}">${desc}</td>
+        <td><span class="status-${p.status}">${p.status}</span></td>
+        <td>${deliberations}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    document.getElementById('proposalsArea').innerHTML = html;
+  } catch(e) {
+    document.getElementById('proposalsArea').innerHTML = '<div style="color:#cc2200;font-family:var(--mono);font-size:11px;">Failed to load proposals</div>';
+  }
+}
+
+async function approveProposal(id) {
+  const r = await fetch(`${API}/proposals/${id}/approve`, {method: 'POST'});
+  const d = await r.json();
+  if (!d.success) alert(d.error || 'Failed');
+  loadProposals();
+}
+
+async function rejectProposal(id) {
+  const reason = prompt('Rejection reason (optional):') || '';
+  const r = await fetch(`${API}/proposals/${id}/reject`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({reason})
+  });
+  const d = await r.json();
+  if (!d.success) alert(d.error || 'Failed');
+  loadProposals();
+}
+
+async function buildProposal(id) {
+  if (!confirm('Start the forge pipeline for this proposal?')) return;
+  const r = await fetch(`${API}/proposals/${id}/build`, {method: 'POST'});
+  const d = await r.json();
+  if (d.error) alert(d.error);
+  loadProposals();
+}
+
+loadSettings();
+loadProposals();
+setInterval(loadProposals, 30000);
+</script>
+</body>
+</html>

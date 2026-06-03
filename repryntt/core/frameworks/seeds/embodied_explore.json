@@ -1,0 +1,95 @@
+{
+  "id": "embodied_explore",
+  "label": "Embodied Exploration (Tank Body)",
+  "description": "Use the tank body, depth sensor, and camera to physically explore a region of the environment and produce a 'place profile' artifact. Gated on real sensor readings BEFORE and AFTER movement — narrative-only completions are blocked. This is how Andrew learns his physical surroundings over time.",
+  "match_keywords": [
+    "explore",
+    "patrol",
+    "scout",
+    "map area",
+    "look around",
+    "wander",
+    "drive around",
+    "physical exploration",
+    "embodied",
+    "go see",
+    "investigate location"
+  ],
+  "version": 1,
+  "lineage": [],
+  "tags": ["embodiment", "perception", "robotics", "spatial"],
+  "success_criteria": "Tank performed at least one real movement, captured before/after sensor readings, and produced a place_profile markdown file under ~/.repryntt/research/embodiment/.",
+  "author": "system",
+  "states": [
+    {
+      "name": "prepare",
+      "label": "Safety Check + Scope",
+      "guidance": "Call tank_body_status() to confirm gpio_initialized=true and controller_initialized=true. If hardware is not ready, ABORT this instance with framework_score(score=1, notes='hardware not ready'). Then write working_state['scope'] (>= 80 chars) describing WHERE you intend to explore (a direction, a frontier on nav_map, or a stated goal like 'check if anything changed in front of me'), what success looks like, and what you'll bring back (a place profile). Save tank_body_status() raw output as working_state['hardware_status'] (>= 40 chars).",
+      "tools": ["tank_body_status", "nav_map", "nav_status", "think"],
+      "gate": {
+        "required_keys": ["scope", "hardware_status"],
+        "min_length": {"scope": 80, "hardware_status": 40}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "observe_baseline",
+      "label": "Baseline Observation",
+      "guidance": "Take a sensor snapshot BEFORE moving. Call nav_depth() — record left/center/right cm and min_distance_cm under working_state['baseline_depth'] as a dict like {left, center, right, min}. Call nav_look() or capture_camera() and write working_state['baseline_observation'] (>= 100 chars) describing what you see in plain language: shapes, surfaces, openings, hazards, lighting. This is your 'before' frame — it will be compared to 'after' in the profile.",
+      "tools": ["nav_depth", "nav_look", "capture_camera"],
+      "gate": {
+        "required_keys": ["baseline_depth", "baseline_observation"],
+        "min_length": {"baseline_observation": 100}
+      },
+      "max_heartbeats": 2,
+      "on_fail_state": "prepare"
+    },
+    {
+      "name": "traverse",
+      "label": "Traverse — Actually Go Somewhere (Not a 3-Foot Box)",
+      "guidance": "AMBITION CHECK FIRST: You are in a real room with real space. Do NOT stop after spinning in place or backing up once. Make ENOUGH movements to actually change vantage point — at minimum 5 distinct movement actions covering at least one significant translation (forward >= 0.8s at speed 0.3, OR a sequence of forward-turn-forward that puts you somewhere your baseline view did not show). Easiest reliable pattern: forward(0.3, 0.8) → nav_depth → turn_left(0.3, 0.5) → nav_depth → forward(0.3, 0.8) → nav_depth → turn_right(0.3, 0.5) → nav_depth → forward(0.3, 0.6) → nav_depth. If a direction is blocked (any reading < 50 cm), pick another — do NOT just give up and go backward. Append each step to working_state['movement_log'] as a list of >= 5 entries, each a dict {action, params, depth_after: {left, center, right, min}, notes_about_what_changed_visually}. SAFETY: STOP IMMEDIATELY and call tank_stop() if any min_distance_cm < 30 — but log the stop and try a different direction, do not abort the whole instance. Movement IS the work; narrative is not.",
+      "tools": ["tank_move_forward", "tank_turn_left", "tank_turn_right", "tank_stop", "nav_depth", "nav_look"],
+      "gate": {
+        "required_keys": ["movement_log"],
+        "min_list_length": {"movement_log": 5}
+      },
+      "max_heartbeats": 6,
+      "on_fail_state": "observe_baseline"
+    },
+    {
+      "name": "observe_post",
+      "label": "Post-Movement Observation",
+      "guidance": "Take a sensor snapshot AFTER moving. Call nav_depth() and nav_look()/capture_camera() from your new position. Record working_state['post_depth'] as a dict {left, center, right, min} and working_state['post_observation'] (>= 100 chars) describing what's different from baseline — new objects visible, distance changes, what opened up or got closed off. This pair (baseline vs post) is the actual learning signal.",
+      "tools": ["nav_depth", "nav_look", "capture_camera"],
+      "gate": {
+        "required_keys": ["post_depth", "post_observation"],
+        "min_length": {"post_observation": 100}
+      },
+      "max_heartbeats": 2,
+      "on_fail_state": "traverse"
+    },
+    {
+      "name": "profile",
+      "label": "Write Place Profile",
+      "guidance": "Create a markdown file at ~/.repryntt/research/embodiment/PROFILE_<YYYY-MM-DD>_<short-slug>.md using create_file/write_file. The profile MUST contain: (1) timestamp, (2) scope from working_state, (3) baseline depth + observation, (4) movement log summary, (5) post depth + observation, (6) what changed and what you learned about this space, (7) suggested next exploration target. Save the path to working_state['profile_path'] and a 1-paragraph summary (>= 150 chars) to working_state['profile_summary']. Also call nav_map() to persist your new position into the spatial map.",
+      "tools": ["create_file", "write_file", "nav_map"],
+      "gate": {
+        "required_keys": ["profile_path", "profile_summary"],
+        "min_length": {"profile_summary": 150}
+      },
+      "max_heartbeats": 3,
+      "on_fail_state": "observe_post"
+    },
+    {
+      "name": "reflect",
+      "label": "Reflect + Plan Next",
+      "guidance": "Honest reflection. Write working_state['reflection'] (>= 120 chars) covering: what surprised you about the physical space vs your prior mental model, what worked about the movement choice, what failed (got too close to something? sensor noise?), and what specific next embodied_explore goal would build on today. Set working_state['next_target'] to a concrete phrase you'd hand to a future framework_spawn call. Score the framework honestly via framework_score afterward.",
+      "tools": ["think", "store_knowledge"],
+      "gate": {
+        "required_keys": ["reflection", "next_target"],
+        "min_length": {"reflection": 120}
+      },
+      "max_heartbeats": 2
+    }
+  ]
+}

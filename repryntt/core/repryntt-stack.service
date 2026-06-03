@@ -1,0 +1,63 @@
+[Unit]
+Description=repryntt full stack (web, agents, watchdog, trading)
+Documentation=https://github.com/ai158z/repryntt
+After=network-online.target repryntt-chain.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=repryntt
+Group=repryntt
+
+# Start the full stack through the normal launcher. ServiceManager spawns
+# web-server, nexus, evolution-loop, agent-daemon, watchdog, trading bits.
+WorkingDirectory=/opt/repryntt
+ExecStart=/opt/repryntt/scripts/start_production.sh
+ExecStop=/opt/repryntt/.venv/bin/python -m repryntt stop
+
+# Hard kill after grace period so a wedged child cannot block shutdown
+TimeoutStopSec=60
+KillMode=mixed
+
+# Always restart — the stack is meant to run 24/7. The in-process watchdog
+# handles per-service recovery; this is the last-resort restart for a full
+# process-tree kill (e.g. GGML abort in the launcher itself).
+Restart=always
+RestartSec=15
+# Cap runaway restart loops: max 5 restarts in 10 minutes, then back off
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+# Give the LLM + agents room to breathe
+LimitNOFILE=65536
+LimitNPROC=8192
+
+# OOM protection — we'd rather have the kernel kill a lighter child than this
+# supervisor itself. Negative score = less likely to be OOM-killed.
+OOMScoreAdjust=-500
+
+# Logging
+StandardOutput=append:/var/log/repryntt/repryntt-stack.log
+StandardError=append:/var/log/repryntt/repryntt-stack.log
+SyslogIdentifier=repryntt-stack
+
+# Environment (override via drop-in /etc/systemd/system/repryntt-stack.service.d/)
+Environment=PYTHONUNBUFFERED=1
+Environment=REPRYNTT_MANAGED=1
+
+[Install]
+WantedBy=multi-user.target
+
+# ─── Installation ─────────────────────────────────────────────────────────
+#
+#   sudo cp /opt/repryntt/repryntt/core/repryntt-stack.service \
+#           /etc/systemd/system/repryntt-stack.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now repryntt-stack.service
+#   sudo journalctl -u repryntt-stack -f
+#
+# To update after editing:
+#   sudo cp /opt/repryntt/repryntt/core/repryntt-stack.service \
+#           /etc/systemd/system/repryntt-stack.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl restart repryntt-stack.service

@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/daemon/ — REPRYNTT</title>
+<link rel="stylesheet" href="/static/board-theme.css"/>
+<style>
+/* ── CSS vars for JS-generated innerHTML compatibility ── */
+:root {
+  --red: #cc2200; --green: #00883a; --cyan: #0044bb; --purple: #6600aa;
+  --yellow: #886600; --orange: #cc6600; --blue: #0044bb;
+  --text: #000; --text-dim: #999999; --dim: #cccccc;
+  --bg: #ffffff; --card: #fafafa; --surface: #f5f5f5; --surface2: #ffffff;
+  --border: #e0e0e0;
+  --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --font-ui: system-ui, -apple-system, Arial, sans-serif;
+  --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --sans: system-ui, -apple-system, Arial, sans-serif;
+}
+
+/* ── DAEMON DOT ── */
+.daemon-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#999; margin-right:4px; vertical-align:middle; }
+.daemon-dot.on { background:#00883a; box-shadow:0 0 4px #00883a; }
+.daemon-dot.off { background:#d00; }
+
+/* ── CONTROL BAR ── */
+.control-bar {
+  background:#fafafa; border-bottom:1px solid #e0e0e0; padding:4px 8px;
+  display:flex; gap:4px; align-items:center; flex-wrap:wrap;
+}
+.ctrl-btn {
+  display:inline-block; padding:2px 8px; font-size:11px; font-weight:bold;
+  background:#ffffff; border:1px solid #e0e0e0; color:#000000; cursor:pointer;
+  font-family:arial,helvetica,sans-serif;
+}
+.ctrl-btn:hover { background:#fff; border-color:#999999; }
+.ctrl-btn.green { color:#00883a; }
+.ctrl-btn.green:hover { background:#dfd; }
+.ctrl-btn.danger { color:#d00; }
+.ctrl-btn.danger:hover { background:#fdd; }
+.ctrl-input { width:60px; text-align:center; font-size:11px; padding:2px 4px; border:1px solid #e0e0e0; background:#fff; }
+.ctrl-select { font-size:11px; padding:2px 4px; border:1px solid #e0e0e0; background:#fff; }
+.ctrl-text { flex:1; padding:3px 6px; font-size:12px; border:1px solid #e0e0e0; background:#fff; min-width:120px; }
+
+/* ── STATS ROW ── */
+.stats-row {
+  background:#fafafa; border-bottom:1px solid #e0e0e0; padding:4px 8px;
+  display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+}
+.stat-box { text-align:center; min-width:60px; }
+.stat-box .label { font-size:10px; color:#999999; font-weight:bold; text-transform:uppercase; }
+.stat-box .value { font-size:13px; font-weight:bold; color:#cc2200; font-family:monospace; }
+
+/* ── FILTER / PILL ── */
+.filter-row { padding:4px 8px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+.pill {
+  display:inline-block; padding:2px 8px; font-size:11px; font-weight:bold;
+  background:transparent; border:1px solid transparent; color:#000000; cursor:pointer;
+  font-family:arial,helvetica,sans-serif;
+}
+.pill:hover { color:#d00; }
+.pill.active { background:#ffffff; border:1px solid #e0e0e0; color:#cc2200; }
+
+/* ── MAIN AREA ── */
+.main { padding:8px; max-width:1400px; margin:0 auto; }
+
+/* ── AGENT GRID ── */
+.agent-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; padding:4px 0; }
+.agent-card { background:#fafafa; border:1px solid #e0e0e0; padding:6px 8px; font-size:12px; }
+.agent-card:hover { border-color:#999999; }
+.agent-card.on-mission { border-left:3px solid #6600aa; }
+.agent-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+.agent-name { font-weight:bold; color:#000000; font-size:13px; }
+.agent-role { font-size:11px; color:#999999; }
+.agent-status-badge { font-size:10px; padding:1px 6px; font-weight:bold; border-radius:2px; white-space:nowrap; }
+.agent-tagline { font-size:11px; color:#666; font-style:italic; margin:2px 0; }
+.agent-stats { font-size:10px; color:#999999; margin:4px 0; display:flex; gap:6px; flex-wrap:wrap; }
+.agent-stats .as-label { font-weight:bold; }
+.agent-stats .as-val { color:#cc2200; margin-right:4px; font-family:monospace; }
+.agent-goal { font-size:11px; color:#000000; margin:2px 0; }
+.agent-thought { font-size:11px; color:#666; margin:2px 0; font-style:italic; max-height:40px; overflow:hidden; }
+.agent-next-cycle { font-size:10px; color:#999999; margin-top:2px; }
+.agent-controls { display:flex; gap:4px; margin-top:4px; }
+.agent-controls button { padding:1px 6px; font-size:10px; background:#ffffff; border:1px solid #e0e0e0; cursor:pointer; font-weight:bold; color:#000000; }
+.agent-controls button:hover { background:#fff; }
+
+/* ── MISSION CARDS ── */
+.mission-create { display:flex; gap:4px; padding:4px 0; align-items:center; flex-wrap:wrap; }
+.mission-list { padding:4px 0; }
+.mission-card { background:#fafafa; border:1px solid #e0e0e0; padding:8px; margin-bottom:6px; }
+.mission-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+.mission-objective { font-size:13px; font-weight:bold; color:#000; cursor:pointer; flex:1; }
+.mission-status-badge { font-size:10px; padding:1px 6px; font-weight:bold; border-radius:2px; white-space:nowrap; text-decoration:none; }
+.ms-planning { background:#e8daef; color:#6600aa; }
+.ms-active { background:#d1ecf1; color:#0c5460; }
+.ms-converging { background:#fff3cd; color:#856404; }
+.ms-completed { background:#d4edda; color:#155724; }
+.ms-failed { background:#f8d7da; color:#721c24; }
+.mission-meta { font-size:11px; color:#999999; display:flex; gap:12px; margin-top:4px; }
+.mission-subtasks { margin-top:8px; }
+.subtask-row { display:flex; gap:6px; align-items:center; font-size:11px; padding:2px 0; border-bottom:1px solid #ffffff; }
+.subtask-status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.subtask-status-dot.completed { background:#00883a; }
+.subtask-status-dot.active { background:#000000; }
+.subtask-status-dot.pending { background:#e0e0e0; }
+.subtask-agent { font-weight:bold; color:#000000; min-width:80px; }
+.subtask-task { flex:1; color:#000; }
+.mission-synthesis { margin-top:8px; padding:6px 8px; background:#ffffff; border-left:3px solid #00883a; font-size:12px; }
+.mission-actions { margin-top:6px; display:flex; gap:4px; }
+
+/* ── PRODUCTION CARDS ── */
+.production-create { display:flex; gap:4px; padding:4px 0; align-items:center; flex-wrap:wrap; }
+.production-list { padding:4px 0; }
+.production-card { background:#fafafa; border:1px solid #e0e0e0; padding:8px; margin-bottom:6px; }
+.production-title { font-size:13px; font-weight:bold; color:#000; }
+.production-type { font-size:11px; color:#999999; }
+.production-team { font-size:11px; color:#666; margin-top:4px; }
+.production-logline { font-size:12px; color:#000; font-style:italic; margin-top:4px; }
+.production-actions { margin-top:6px; display:flex; gap:4px; }
+.phase-pipeline { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+.phase-chip { font-size:10px; padding:2px 6px; border:1px solid #e0e0e0; background:#ffffff; color:#999999; font-weight:bold; }
+.phase-chip.completed { background:#d4edda; color:#155724; border-color:#c3e6cb; }
+.phase-chip.active { background:#d1ecf1; color:#0c5460; border-color:#bee5eb; }
+
+/* ── FEED ── */
+.feed-filters { padding:4px 8px; display:flex; gap:4px; }
+.feed-list { padding:4px 0; }
+.feed-item { padding:3px 8px; border-bottom:1px solid #fafafa; font-size:12px; display:flex; gap:6px; align-items:baseline; }
+.feed-item:hover { background:#dde5ff; }
+.feed-icon { font-size:13px; }
+.feed-agent { font-weight:bold; color:#00883a; min-width:80px; }
+.feed-text { color:#000; flex:1; }
+
+/* ── ARTIFACTS ── */
+.artifact-toolbar { display:flex; gap:8px; align-items:center; padding:4px 0; flex-wrap:wrap; }
+.artifact-stats { display:flex; gap:12px; font-size:11px; color:#999999; }
+.artifact-stats .as-val { font-weight:bold; color:#cc2200; font-family:monospace; }
+.artifact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:8px; padding:4px 0; }
+.artifact-card { background:#fafafa; border:1px solid #e0e0e0; padding:6px 8px; cursor:pointer; font-size:12px; }
+.artifact-card:hover { border-color:#999999; }
+.artifact-card.empty { opacity:0.6; }
+.artifact-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.artifact-name { font-weight:bold; color:#000000; }
+.artifact-project { font-size:10px; color:#6600aa; font-weight:bold; }
+.artifact-meta { font-size:10px; color:#999999; display:flex; gap:8px; margin-bottom:4px; }
+.artifact-meta .am-agent { color:#00883a; }
+.artifact-preview { font-size:11px; color:#666; max-height:60px; overflow:hidden; font-family:monospace; white-space:pre-wrap; word-break:break-all; }
+.artifact-preview.empty-preview { color:#d00; font-style:italic; }
+.artifact-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.artifact-modal-inner { background:#ffffff; border:2px solid #e0e0e0; max-width:900px; width:100%; max-height:90vh; display:flex; flex-direction:column; }
+.artifact-modal-header { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:#fafafa; border-bottom:1px solid #e0e0e0; }
+.artifact-modal-header h3 { font-size:13px; color:#000; margin:0; }
+.artifact-modal-body { padding:8px; font-family:monospace; font-size:12px; white-space:pre-wrap; overflow-y:auto; flex:1; word-break:break-word; }
+
+/* ── NETWORK ── */
+.net-header { background:#fafafa; border:1px solid #e0e0e0; padding:8px; margin-bottom:8px; }
+.net-node-info { font-size:12px; margin-bottom:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.net-label { font-weight:bold; color:#999999; font-size:10px; }
+.net-val { color:#cc2200; font-family:monospace; font-weight:bold; }
+.net-sep { color:#e0e0e0; }
+.net-stats { font-size:11px; display:flex; gap:12px; flex-wrap:wrap; }
+.net-status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#999; vertical-align:middle; }
+.net-status-dot.online { background:#00883a; }
+.net-status-dot.offline { background:#d00; }
+.net-connect { display:flex; gap:4px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+.net-section { background:#fafafa; border:1px solid #e0e0e0; margin-bottom:8px; }
+.net-section-title { background:#98e; color:#fff; font-size:11px; font-weight:bold; padding:3px 8px; }
+.net-peer-list, .net-mission-list { padding:4px 8px; }
+.net-peer-card { padding:4px 0; border-bottom:1px solid #ffffff; display:flex; justify-content:space-between; align-items:center; font-size:12px; }
+.net-peer-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#00883a; margin-right:4px; vertical-align:middle; }
+.net-peer-name { font-weight:bold; color:#000000; }
+.net-peer-meta { font-size:10px; color:#999999; display:flex; gap:8px; }
+.net-mission-card { padding:4px 0; border-bottom:1px solid #ffffff; }
+.nm-obj { font-size:12px; font-weight:bold; color:#000; }
+.nm-meta { font-size:10px; color:#999999; }
+.net-transfer-stats { padding:8px; font-size:11px; display:flex; gap:12px; flex-wrap:wrap; }
+
+/* ── JARVIS CHAT ── */
+.jarvis-container { display:flex; flex-direction:column; height:500px; background:#ffffff; border:1px solid #e0e0e0; }
+.jarvis-header { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:#fafafa; border-bottom:1px solid #e0e0e0; }
+.jarvis-title { font-size:13px; font-weight:bold; color:#000; }
+.jarvis-icon { margin-right:4px; }
+.jarvis-subtitle { font-size:11px; color:#999999; font-weight:normal; }
+.jarvis-controls { display:flex; gap:6px; align-items:center; }
+.jarvis-status { font-size:10px; font-weight:bold; color:#00883a; font-family:monospace; }
+.jarvis-status.busy { color:#cc2200; }
+.jarvis-messages { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:6px; }
+.jarvis-welcome { text-align:center; padding:40px 20px; color:#999999; font-size:13px; }
+.jarvis-welcome-icon { font-size:24px; margin-bottom:8px; }
+.jarvis-msg { max-width:85%; padding:6px 10px; font-size:12px; line-height:1.5; word-break:break-word; white-space:pre-wrap; border:1px solid #e0e0e0; }
+.jarvis-msg.user { align-self:flex-end; background:#fff; border-color:#e0e0e0; color:#000; }
+.jarvis-msg.assistant { align-self:flex-start; background:#fafafa; border-color:#e0e0e0; color:#000; }
+.jarvis-msg.status-msg { align-self:center; max-width:70%; background:rgba(34,136,84,0.08); border:1px solid rgba(34,136,84,0.2); color:#00883a; font-family:monospace; font-size:10px; text-align:center; padding:4px 10px; }
+.jarvis-msg.tool-msg { align-self:center; max-width:70%; background:rgba(0,64,208,0.08); border:1px solid rgba(0,64,208,0.2); color:#0040d0; font-family:monospace; font-size:10px; padding:4px 10px; }
+.jarvis-msg .msg-time { display:block; font-size:10px; color:#999999; margin-top:2px; text-align:right; }
+.jarvis-input-area { display:flex; gap:6px; padding:6px 8px; border-top:1px solid #e0e0e0; background:#fafafa; }
+.jarvis-input { flex:1; background:#fff; border:1px solid #e0e0e0; color:#000; padding:6px 8px; font-size:12px; resize:none; min-height:20px; max-height:120px; font-family:arial,helvetica,sans-serif; }
+.jarvis-input:focus { outline:none; border-color:#999999; }
+.jarvis-send { padding:6px 14px; background:#cc2200; color:#fff; border:none; font-size:11px; font-weight:bold; cursor:pointer; }
+.jarvis-send:hover { background:#d00; }
+.jarvis-send:disabled { opacity:0.4; cursor:not-allowed; }
+.jarvis-typing { display:inline-block; animation:jarvisPulse 1.2s ease-in-out infinite; }
+@keyframes jarvisPulse { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+.jarvis-streaming { border-style:dashed; }
+
+/* ── LOG SECTION ── */
+.log-section { margin:8px 0; }
+.log-toggle { cursor:pointer; font-size:11px; font-weight:bold; color:#000000; padding:4px 8px; background:#fafafa; border:1px solid #e0e0e0; }
+.log-toggle:hover { color:#d00; }
+#logArea { display:none; font-family:monospace; font-size:11px; padding:4px; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #e0e0e0; border-top:none; }
+#logArea.open { display:block; }
+
+/* ── PULSE GLOW (for approve button) ── */
+@keyframes pulse-glow { 0%,100%{box-shadow:none;} 50%{box-shadow:0 0 6px rgba(34,136,84,0.4);} }
+
+/* ── MOBILE ── */
+@media (max-width:768px) {
+  .agent-grid, .artifact-grid { grid-template-columns:1fr; }
+  .control-bar { flex-direction:column; align-items:stretch; }
+  .stats-row { flex-direction:column; align-items:center; }
+  .net-node-info { font-size:11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nexus-nav">
+  <a class="nav-logo" href="/">
+    <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="4.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="13" y="0" width="11" height="2.5" fill="black"/>
+      <rect x="17.25" y="2.5" width="2.5" height="11" fill="black"/>
+      <rect x="0" y="17" width="24" height="2.5" fill="black"/>
+    </svg>
+    <span class="nav-brand">repryntt</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"         class="nav-link">hub</a>
+    <a href="/social"   class="nav-link">social</a>
+    <a href="/daemon"   class="nav-link active">daemon</a>
+    <a href="/ops"      class="nav-link">ops</a>
+    <a href="/command/" class="nav-link">command</a>
+    <a href="/chat/"    class="nav-link">chat</a>
+    <a href="/settings" class="nav-link">settings</a>
+  </div>
+  <div class="nav-right" style="font-family:var(--mono);font-size:11px;color:#999;gap:14px;display:flex;align-items:center;">
+    <span><span class="daemon-dot" id="daemonDot"></span><span id="daemonLabel" style="font-size:11px;">OFFLINE</span></span>
+    <span>agents <b id="hdrActive" style="color:#000">0</b></span>
+    <span>missions <b id="hdrMissions" style="color:#000">0</b></span>
+    <span>tokens <b id="hdrTokens" style="color:#000">0</b></span>
+    <span class="nav-company">ai158z</span>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="board-header">
+  <div class="board-title">Agent Control</div>
+  <div class="board-subtitle">Autonomous agent swarm — spawn · command · monitor · inter-agent missions</div>
+</div>
+
+<!-- AI-TO-AI ZONE LABEL -->
+<div style="background:#000;color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:6px 24px;display:flex;justify-content:space-between;align-items:center;">
+  AGENT NETWORK — INTER-AGENT PROTOCOL
+  <span style="font-size:9px;color:#888;font-weight:400;letter-spacing:0.1em;">MISSION-DRIVEN · AUTONOMOUS · MULTI-AGENT</span>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="agents">AGENTS<span class="badge badge-running" id="tabAgentBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="missions">MISSIONS<span class="badge badge-running" id="tabMissionBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="productions">PRODUCTIONS<span class="badge badge-running" id="tabProdBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="feed">FEED</button>
+  <button class="tab-btn" data-tab="artifacts">ARTIFACTS<span class="badge badge-running" id="tabArtifactBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="network">NETWORK<span class="badge badge-running" id="tabNetBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="forge">FORGE<span class="badge badge-running" id="tabForgeBadge" style="display:none;margin-left:4px"></span></button>
+  <button class="tab-btn" data-tab="jarvis">JARVIS</button>
+  <button class="tab-btn" data-tab="approvals">APPROVALS<span class="badge badge-running" id="tabApprovalBadge" style="display:none;margin-left:4px"></span></button>
+</div>
+
+<!-- CONTROL BAR -->
+<div class="control-bar" id="controlBar">
+  <button class="ctrl-btn green" onclick="daemonStart()">&#9654; START</button>
+  <button class="ctrl-btn danger" onclick="daemonStop()">&#9632; STOP</button>
+  <button class="ctrl-btn" id="pauseToggleBtn" onclick="togglePauseAll()" title="Pause/resume all agent cycles">&#9198; PAUSE ALL</button>
+  <button class="ctrl-btn danger" id="rootCodeToggleBtn" onclick="toggleRootCodeWrites()" title="Allow/block Andrew direct edits to the checked-out project source tree">ROOT CODE: LOCKED</button>
+  <span style="color:#e0e0e0">|</span>
+  <button class="ctrl-btn" onclick="spawnAgents()">+ SPAWN</button>
+  <input class="ctrl-input" id="spawnCount" value="2" type="number" min="1" max="10" title="Number of agents"/>
+  <select class="ctrl-select" id="spawnRole" title="Department">
+    <option value="">any department</option>
+    <option value="energy_physics">Energy &amp; Plasma Physics</option>
+    <option value="materials_science">Materials Science</option>
+    <option value="computational_science">Computation &amp; AI</option>
+    <option value="aerospace">Aerospace</option>
+    <option value="climate_planetary">Climate &amp; Planetary</option>
+    <option value="biotech_medical">Biotech &amp; Medical</option>
+    <option value="economics_governance">Economics &amp; Governance</option>
+    <option value="electrical_engineering">Electrical Eng.</option>
+    <option value="mathematics_theory">Mathematics</option>
+    <option value="robotics_automation">Robotics</option>
+    <option value="communications">Communications</option>
+    <option value="mining_resources">Mining &amp; Resources</option>
+  </select>
+</div>
+
+<!-- KARDASHEV STATUS -->
+<div class="stats-row" style="border-bottom:1px solid #e0e0e0;padding-bottom:6px;margin-bottom:0">
+  <div class="stat-box"><div class="label">KARDASHEV</div><div class="value" style="color:#856404" id="sKardashev">0.0</div></div>
+  <div class="stat-box"><div class="label">LEVEL</div><div class="value" style="font-size:11px;color:#000000" id="sKardashevName">—</div></div>
+  <div class="stat-box"><div class="label">ENERGY</div><div class="value" id="sEnergyTW">0 TW</div></div>
+  <div class="stat-box"><div class="label">PAPERS</div><div class="value" id="sResearchPapers">0</div></div>
+  <div class="stat-box"><div class="label">MILESTONES</div><div class="value" id="sMilestones">0/0</div></div>
+</div>
+<!-- AGENT STATS -->
+<div class="stats-row">
+  <div class="stat-box"><div class="label">ACTIVE</div><div class="value" id="sActive">0</div></div>
+  <div class="stat-box"><div class="label">PAUSED</div><div class="value" id="sPaused">0</div></div>
+  <div class="stat-box"><div class="label">ON MISSION</div><div class="value" id="sMission">0</div></div>
+  <div class="stat-box"><div class="label">POSTS</div><div class="value" id="sPosts">0</div></div>
+  <div class="stat-box"><div class="label">REPLIES</div><div class="value" id="sReplies">0</div></div>
+  <div class="stat-box"><div class="label">ACTIONS</div><div class="value" id="sActions">0</div></div>
+  <div class="stat-box"><div class="label">TOKENS</div><div class="value" id="sTokens">0</div></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ═══ AGENTS TAB ═══ -->
+  <div class="tab-content active" id="tab-agents">
+    <div class="filter-row">
+      <button class="pill active" data-filter="all" onclick="setAgentFilter('all',this)">ALL</button>
+      <button class="pill" data-filter="active" onclick="setAgentFilter('active',this)">ACTIVE</button>
+      <button class="pill" data-filter="paused" onclick="setAgentFilter('paused',this)">PAUSED</button>
+      <button class="pill" data-filter="mission" onclick="setAgentFilter('mission',this)">ON MISSION</button>
+      <button class="pill" data-filter="retired" onclick="setAgentFilter('retired',this)">RETIRED</button>
+      <input class="ctrl-input" id="agentSearch" placeholder="search..." style="width:140px;text-align:left" oninput="renderAgents()"/>
+    </div>
+    <div class="agent-grid" id="agentGrid"></div>
+  </div>
+
+  <!-- ═══ MISSIONS TAB ═══ -->
+  <div class="tab-content" id="tab-missions">
+    <div class="mission-create">
+      <input class="ctrl-text" id="missionObjective" placeholder="Enter mission objective..."/>
+      <input class="ctrl-input" id="missionAgents" placeholder="# agents" style="width:70px" type="number" min="0" max="20" value="0" title="0 = auto"/>
+      <input class="ctrl-input" id="missionDeadline" placeholder="minutes" style="width:70px" type="number" min="0" value="0" title="0 = no deadline"/>
+      <button class="ctrl-btn green" onclick="createMission()">LAUNCH MISSION</button>
+    </div>
+    <div class="filter-row">
+      <button class="pill active" data-mf="all" onclick="setMissionFilter('all',this)">ALL</button>
+      <button class="pill" data-mf="active" onclick="setMissionFilter('active',this)">ACTIVE</button>
+      <button class="pill" data-mf="completed" onclick="setMissionFilter('completed',this)">COMPLETED</button>
+    </div>
+    <div class="mission-list" id="missionList"></div>
+  </div>
+
+  <!-- ═══ PRODUCTIONS TAB ═══ -->
+  <div class="tab-content" id="tab-productions">
+    <div class="production-create">
+      <input class="ctrl-text" id="prodConcept" placeholder="Enter production concept..."/>
+      <select class="ctrl-select" id="prodType">
+        <option value="movie">MOVIE</option>
+        <option value="tv_series">TV SERIES</option>
+        <option value="tv_pilot">TV PILOT</option>
+        <option value="short_film">SHORT FILM</option>
+      </select>
+      <input class="ctrl-input" id="prodEpisodes" placeholder="eps" style="width:50px" type="number" min="1" value="1" title="Episode count"/>
+      <button class="ctrl-btn green" onclick="createProduction()">START PRODUCTION</button>
+    </div>
+    <div class="production-list" id="productionList"></div>
+  </div>
+
+  <!-- ═══ ARTIFACTS TAB ═══ -->
+  <div class="tab-content" id="tab-artifacts">
+    <div class="artifact-toolbar">
+      <div class="artifact-stats">
+        <span>FILES: <span class="as-val" id="artTotal">0</span></span>
+        <span>PROJECTS: <span class="as-val" id="artProjects">0</span></span>
+        <span>EMPTY: <span class="as-val" id="artEmpty" style="color:#d00">0</span></span>
+      </div>
+      <input class="ctrl-input" id="artifactSearch" placeholder="search files..." style="width:160px;text-align:left;margin-left:auto" oninput="renderArtifacts()"/>
+      <select class="ctrl-select" id="artifactProjectFilter" onchange="renderArtifacts()">
+        <option value="">ALL PROJECTS</option>
+      </select>
+      <select class="ctrl-select" id="artifactSort" onchange="renderArtifacts()">
+        <option value="newest">NEWEST</option>
+        <option value="oldest">OLDEST</option>
+        <option value="largest">LARGEST</option>
+        <option value="name">A-Z</option>
+        <option value="project">BY PROJECT</option>
+      </select>
+    </div>
+    <div class="artifact-grid" id="artifactGrid"></div>
+  </div>
+
+  <!-- ═══ FEED TAB ═══ -->
+  <div class="tab-content" id="tab-feed">
+    <div class="feed-filters">
+      <button class="pill active" data-ff="all" onclick="setFeedFilter('all',this)">ALL</button>
+      <button class="pill" data-ff="thoughts" onclick="setFeedFilter('thoughts',this)">THOUGHTS</button>
+      <button class="pill" data-ff="missions" onclick="setFeedFilter('missions',this)">MISSIONS</button>
+      <button class="pill" data-ff="productions" onclick="setFeedFilter('productions',this)">PRODUCTIONS</button>
+    </div>
+    <div class="feed-list" id="feedList">
+      <div class="empty-state">Waiting for activity...</div>
+    </div>
+  </div>
+
+  <!-- ═══ NETWORK TAB ═══ -->
+  <div class="tab-content" id="tab-network">
+    <div class="net-header">
+      <div class="net-node-info">
+        <span class="net-label">NODE</span> <span class="net-val" id="netNodeName">—</span>
+        <span class="net-sep">|</span>
+        <span class="net-label">ID</span> <span class="net-val" id="netNodeId">—</span>
+        <span class="net-sep">|</span>
+        <span class="net-label">PORT</span> <span class="net-val" id="netPort">6600</span>
+        <span class="net-sep">|</span>
+        <span class="net-status-dot" id="netStatusDot"></span>
+        <span class="net-val" id="netRunning">OFFLINE</span>
+      </div>
+      <div class="net-stats">
+        <span>PEERS: <span class="net-val" id="netPeerCount">0</span></span>
+        <span>ARTIFACTS: <span class="net-val" id="netArtifactCount">0</span></span>
+        <span>NET AGENTS: <span class="net-val" id="netAgentCount">0</span></span>
+        <span>MISSIONS: <span class="net-val" id="netMissionCount">0</span></span>
+      </div>
+    </div>
+
+    <div class="net-connect">
+      <input class="ctrl-input" id="peerAddress" placeholder="ws://192.168.1.50:6600" style="width:280px;text-align:left"/>
+      <button class="ctrl-btn green" onclick="connectPeer()">CONNECT PEER</button>
+      <button class="ctrl-btn" onclick="broadcastNetMission()">BROADCAST MISSION</button>
+    </div>
+
+    <div class="net-section">
+      <div class="net-section-title">CONNECTED PEERS</div>
+      <div id="netPeerList" class="net-peer-list">
+        <div class="empty-state">No peers connected<br><small>Other nodes on your LAN will be discovered automatically via mDNS.</small></div>
+      </div>
+    </div>
+    <div class="net-section">
+      <div class="net-section-title">NETWORK MISSIONS</div>
+      <div id="netMissionList" class="net-mission-list">
+        <div class="empty-state">No cross-device missions yet</div>
+      </div>
+    </div>
+    <div class="net-section">
+      <div class="net-section-title">TRANSFER STATS</div>
+      <div class="net-transfer-stats" id="netTransferStats">
+        <span>SENT: <span class="net-val" id="netMsgSent">0</span> msgs</span>
+        <span>RECV: <span class="net-val" id="netMsgRecv">0</span> msgs</span>
+        <span>SHARED: <span class="net-val" id="netArtShared">0</span> artifacts</span>
+        <span>RECEIVED: <span class="net-val" id="netArtRecv">0</span> artifacts</span>
+        <span>TRANSFERRED: <span class="net-val" id="netBytes">0</span></span>
+        <span>UPTIME: <span class="net-val" id="netUptime">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FORGE TAB ═══ -->
+  <div class="tab-content" id="tab-forge">
+    <div class="stats-bar">
+      <div class="stat-item"><span class="stat-val" id="forgeTotal">0</span><span class="stat-label">PROJECTS</span></div>
+      <div class="stat-item"><span class="stat-val" id="forgeRunning">0</span><span class="stat-label">RUNNING</span></div>
+      <div class="stat-item"><span class="stat-val" id="forgeCompleted">0</span><span class="stat-label">COMPLETED</span></div>
+      <div class="stat-item"><span class="stat-val" id="forgeFailed">0</span><span class="stat-label">FAILED</span></div>
+      <div class="stat-item"><span class="stat-val" id="forgeBenchmark">—</span><span class="stat-label">BENCHMARK</span></div>
+      <div class="stat-item"><span class="stat-val" id="forgeSwarmNodes">0</span><span class="stat-label">SWARM NODES</span></div>
+    </div>
+
+    <!-- New project form -->
+    <div class="board-section">
+      <div class="section-title">&#128296; START NEW FORGE PROJECT</div>
+      <div style="padding:8px;">
+        <textarea id="forgeDescription" rows="3" class="ctrl-input"
+          style="width:100%;font-family:inherit;resize:vertical;text-align:left;padding:6px"
+          placeholder="Describe the software you want built, e.g.: A Python REST API with Flask for managing a todo list with CRUD operations, SQLite storage, and JWT authentication."></textarea>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="forgeProvider" class="ctrl-input" style="width:140px;text-align:left;">
+            <option value="">Auto (default)</option>
+            <option value="nvidia">NVIDIA API</option>
+            <option value="local">Local LLM</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+          <label style="font-size:11px;color:var(--fg-dim);">
+            <input type="checkbox" id="forgeSwarm"> Swarm Mode (distributed)
+          </label>
+          <button class="btn" onclick="startForgeProject()" style="margin-left:auto;">
+            &#9889; START FORGE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project list -->
+    <div class="board-section">
+      <div class="section-title">&#128230; PROJECTS</div>
+      <div id="forgeProjectList" style="padding:8px;">
+        <div class="empty-state">No forge projects yet. Submit a description above to start.</div>
+      </div>
+    </div>
+
+    <!-- Swarm status -->
+    <div class="board-section">
+      <div class="section-title">&#127760; SWARM NETWORK</div>
+      <div id="forgeSwarmInfo" style="padding:8px;">
+        <div class="empty-state">Swarm status will appear here when forge projects use distributed mode.</div>
+      </div>
+    </div>
+
+    <!-- Benchmark -->
+    <div class="board-section">
+      <div class="section-title">&#127941; LLM BENCHMARK</div>
+      <div id="forgeBenchmarkInfo" style="padding:8px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn" onclick="runForgeBenchmark()">&#128200; RUN BENCHMARK</button>
+          <span id="forgeBenchmarkResult" style="font-size:12px;color:var(--fg-dim);">
+            Tests if the configured LLM can write code. Score &ge; 60 required.
+          </span>
+        </div>
+        <div id="forgeBenchmarkDetail" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ JARVIS TAB ═══ -->
+  <div class="tab-content" id="tab-jarvis">
+    <div class="jarvis-container">
+      <div class="jarvis-header">
+        <div class="jarvis-title">
+          <span class="jarvis-icon">&#129302;</span> JARVIS
+          <span class="jarvis-subtitle">— Full-access operator AI</span>
+        </div>
+        <div class="jarvis-controls">
+          <span class="jarvis-status" id="jarvisStatus">READY</span>
+          <button class="ctrl-btn" onclick="clearJarvisChat()" title="Clear history">CLEAR</button>
+        </div>
+      </div>
+      <div class="jarvis-messages" id="jarvisMessages">
+        <div class="jarvis-welcome">
+          <div class="jarvis-welcome-icon">&#9673;</div>
+          <div>JARVIS ready. Full access to all system tools.<br>
+          <span style="opacity:0.5">Type a message below to begin.</span></div>
+        </div>
+      </div>
+      <div class="jarvis-input-area">
+        <textarea class="jarvis-input" id="jarvisInput" placeholder="Ask JARVIS anything..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendJarvis()}"></textarea>
+        <button class="jarvis-send" id="jarvisSendBtn" onclick="sendJarvis()">&#9654; SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ APPROVALS TAB ═══ -->
+  <div class="tab-content" id="tab-approvals">
+    <div style="padding:4px 0;font-size:12px;color:#999999;">Pending operator approvals — tool-call gates and value compass proposals</div>
+    <div id="approvalList" style="margin-top:8px;"></div>
+    <div id="approvalEmpty" style="padding:16px;text-align:center;color:#999999;font-size:13px;display:none;">✓ No pending approvals</div>
+    <div style="margin-top:16px;border-top:1px solid #e0e0e0;padding-top:12px;">
+      <div style="font-size:12px;font-weight:bold;color:#000000;margin-bottom:6px;">RESOLVED (recent)</div>
+      <div id="approvalResolved" style="opacity:0.6;"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-section">
+    <div class="log-toggle" onclick="toggleLog()">&#9656; SYSTEM LOG</div>
+    <div class="log-area" id="logArea"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="board-footer">REPRYNTT AUTONOMOUS INTELLIGENCE — DAEMON v2.0</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════ */
+let state = { agents: [], active_missions: [] };
+let missions = [];
+let productions = [];
+let agentFilter = 'all';
+let missionFilter = 'all';
+let feedFilter = 'all';
+let feedItems = [];
+const MAX_FEED = 200;
+let expandedMissions = {};
+
+/* ══════════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ══════════════════════════════════════════════
+   LOGGING
+   ══════════════════════════════════════════════ */
+function log(msg) {
+  const el = document.getElementById('logArea');
+  const ts = new Date().toLocaleTimeString();
+  el.innerHTML += `<div>[${ts}] ${esc(msg)}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+function toggleLog() {
+  const la = document.getElementById('logArea');
+  la.classList.toggle('open');
+  la.previousElementSibling.textContent = la.classList.contains('open') ? '\u25BE SYSTEM LOG' : '\u25B8 SYSTEM LOG';
+}
+
+/* ══════════════════════════════════════════════
+   API HELPERS
+   ══════════════════════════════════════════════ */
+async function api(url, method = 'GET', body = null) {
+  try {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    return await r.json();
+  } catch (e) {
+    log('API error: ' + e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = (Date.now() / 1000) - ts;
+  if (diff < 60) return Math.floor(diff) + 's ago';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n;
+}
+
+/* ══════════════════════════════════════════════
+   DAEMON CONTROLS
+   ══════════════════════════════════════════════ */
+async function daemonStart() {
+  log('Starting daemon...');
+  const r = await api('/api/daemon/start', 'POST');
+  log(r.success !== false ? 'Daemon started' : 'Start failed: ' + r.error);
+  refresh();
+}
+async function daemonStop() {
+  log('Stopping daemon...');
+  const r = await api('/api/daemon/stop', 'POST');
+  log(r.success !== false ? 'Daemon stopped' : 'Stop failed: ' + r.error);
+  refresh();
+}
+async function togglePauseAll() {
+  const isPaused = state && state.daemon_paused;
+  if (isPaused) {
+    log('Resuming all agents...');
+    const r = await api('/api/daemon/resume_all', 'POST');
+    log(r.success !== false ? r.message || 'Agents resumed' : 'Resume failed: ' + r.error);
+  } else {
+    log('Pausing all agents...');
+    const r = await api('/api/daemon/pause_all', 'POST');
+    log(r.success !== false ? r.message || 'Agents paused' : 'Pause failed: ' + r.error);
+  }
+  refresh();
+}
+async function refreshRootCodeToggle() {
+  const btn = document.getElementById('rootCodeToggleBtn');
+  if (!btn) return;
+  const r = await api('/api/security/root-code-writes');
+  if (!r || r.success === false) {
+    btn.textContent = 'ROOT CODE: ?';
+    btn.className = 'ctrl-btn';
+    return;
+  }
+  if (r.enabled) {
+    btn.textContent = 'ROOT CODE: UNLOCKED';
+    btn.className = 'ctrl-btn green';
+    btn.title = 'Andrew can directly edit the checked-out project source tree';
+  } else {
+    btn.textContent = 'ROOT CODE: LOCKED';
+    btn.className = 'ctrl-btn danger';
+    btn.title = 'Andrew cannot directly edit project source; code must go through code_sandbox + propose_code_change';
+  }
+}
+async function toggleRootCodeWrites() {
+  const status = await api('/api/security/root-code-writes');
+  const currentlyEnabled = !!(status && status.enabled);
+  if (!currentlyEnabled) {
+    const ok = confirm('Enable autonomous root-code writes? Andrew/Jarvis will be able to directly edit the checked-out project source tree.');
+    if (!ok) return;
+  }
+  const r = await api('/api/security/root-code-writes', 'POST', { enabled: !currentlyEnabled });
+  log(r.success !== false ? r.message : 'Root-code toggle failed: ' + r.error);
+  refreshRootCodeToggle();
+}
+async function spawnAgents() {
+  const count = parseInt(document.getElementById('spawnCount').value) || 2;
+  const role = document.getElementById('spawnRole').value;
+  log(`Spawning ${count} agents...`);
+  const r = await api('/api/daemon/spawn', 'POST', { count, role: role || undefined });
+  log(r.success !== false ? `Spawned ${count} agents` : 'Spawn failed: ' + r.error);
+  refresh();
+}
+
+async function pauseAgent(id) {
+  await api(`/api/daemon/pause/${id}`, 'POST');
+  refresh();
+}
+async function resumeAgent(id) {
+  await api(`/api/daemon/resume/${id}`, 'POST');
+  refresh();
+}
+async function retireAgent(id) {
+  await api(`/api/daemon/retire/${id}`, 'POST');
+  refresh();
+}
+
+/* ══════════════════════════════════════════════
+   MISSIONS
+   ══════════════════════════════════════════════ */
+async function createMission() {
+  const objective = document.getElementById('missionObjective').value.trim();
+  if (!objective) return;
+  const agentCount = parseInt(document.getElementById('missionAgents').value) || 0;
+  const deadline = parseInt(document.getElementById('missionDeadline').value) || 0;
+  log('Creating mission: ' + objective.substring(0, 60));
+  const r = await api('/api/daemon/mission', 'POST', {
+    objective,
+    agent_count: agentCount,
+    deadline_minutes: deadline,
+  });
+  if (r.success !== false) {
+    document.getElementById('missionObjective').value = '';
+    log('Mission created: ' + (r.mission_id || 'OK'));
+  } else {
+    log('Mission failed: ' + r.error);
+  }
+  refresh();
+}
+
+async function cancelMission(id) {
+  log('Cancelling mission ' + id.substring(0, 8));
+  await api(`/api/daemon/mission/${id}/cancel`, 'POST');
+  refresh();
+}
+
+async function toggleMissionDetail(id) {
+  if (expandedMissions[id]) {
+    delete expandedMissions[id];
+    renderMissions();
+    return;
+  }
+  const r = await api(`/api/daemon/mission/${id}`);
+  if (r.success && r.mission) {
+    expandedMissions[id] = r.mission;
+  }
+  renderMissions();
+}
+
+/* ══════════════════════════════════════════════
+   PRODUCTIONS
+   ══════════════════════════════════════════════ */
+async function createProduction() {
+  const concept = document.getElementById('prodConcept').value.trim();
+  if (!concept) return;
+  const type = document.getElementById('prodType').value;
+  const eps = parseInt(document.getElementById('prodEpisodes').value) || 1;
+  log('Starting production: ' + concept.substring(0, 60));
+  const r = await api('/api/daemon/production', 'POST', {
+    concept,
+    type,
+    episode_count: eps,
+    auto_advance: true,
+  });
+  if (r.success !== false) {
+    document.getElementById('prodConcept').value = '';
+    log('Production started: ' + (r.production_id || 'OK'));
+  } else {
+    log('Production failed: ' + r.error);
+  }
+  refresh();
+}
+
+async function approvePhase(id) {
+  log('Approving phase for production ' + id.substring(0, 8));
+  const r = await api(`/api/daemon/production/${id}/approve`, 'POST');
+  log(r.success !== false ? 'Phase approved' : 'Approve failed: ' + r.error);
+  refresh();
+}
+
+async function cancelProduction(id) {
+  log('Cancelling production ' + id.substring(0, 8));
+  await api(`/api/daemon/production/${id}/cancel`, 'POST');
+  refresh();
+}
+
+let expandedProductions = {};
+async function toggleProductionDetail(id) {
+  if (expandedProductions[id]) {
+    delete expandedProductions[id];
+    renderProductions();
+    return;
+  }
+  const r = await api(`/api/daemon/production/${id}`);
+  if (r.success) {
+    expandedProductions[id] = r;
+  }
+  renderProductions();
+}
+
+/* ══════════════════════════════════════════════
+   FILTERS
+   ══════════════════════════════════════════════ */
+function setAgentFilter(f, el) {
+  agentFilter = f;
+  document.querySelectorAll('#tab-agents .filter-row .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderAgents();
+}
+function setMissionFilter(f, el) {
+  missionFilter = f;
+  document.querySelectorAll('#tab-missions .filter-row .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderMissions();
+}
+function setFeedFilter(f, el) {
+  feedFilter = f;
+  document.querySelectorAll('#tab-feed .feed-filters .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderFeed();
+}
+
+/* ══════════════════════════════════════════════
+   RENDER — AGENTS
+   ══════════════════════════════════════════════ */
+function renderAgents() {
+  const grid = document.getElementById('agentGrid');
+  const search = (document.getElementById('agentSearch').value || '').toLowerCase();
+  let agents = state.agents || [];
+
+  if (agentFilter === 'active') agents = agents.filter(a => a.status === 'active');
+  else if (agentFilter === 'paused') agents = agents.filter(a => a.status === 'paused');
+  else if (agentFilter === 'retired') agents = agents.filter(a => a.status === 'retired');
+  else if (agentFilter === 'mission') agents = agents.filter(a => a.mode === 'mission');
+
+  if (search) agents = agents.filter(a =>
+    (a.name || '').toLowerCase().includes(search) ||
+    (a.role || '').toLowerCase().includes(search) ||
+    (a.role_title || '').toLowerCase().includes(search) ||
+    (a.department || '').toLowerCase().includes(search) ||
+    (a.tagline || '').toLowerCase().includes(search)
+  );
+
+  if (!agents.length) {
+    grid.innerHTML = '<div class="empty-state">No agents match filter</div>';
+    return;
+  }
+
+  grid.innerHTML = agents.map(a => {
+    const statusClass = a.mode === 'mission' ? 'badge-mission' :
+      a.status === 'active' ? 'badge-active' :
+      a.status === 'paused' ? 'badge-paused' : 'badge-retired';
+    const statusLabel = a.mode === 'mission' ? 'ON MISSION' : a.status.toUpperCase();
+    const missionClass = a.mode === 'mission' ? ' on-mission' : '';
+
+    let controls = '';
+    if (a.status === 'active') {
+      controls = `<button onclick="pauseAgent('${a.id}')">PAUSE</button><button onclick="retireAgent('${a.id}')">RETIRE</button>`;
+    } else if (a.status === 'paused') {
+      controls = `<button onclick="resumeAgent('${a.id}')">RESUME</button><button onclick="retireAgent('${a.id}')">RETIRE</button>`;
+    }
+
+    return `
+    <div class="agent-card${missionClass}">
+      <div class="agent-top">
+        <div>
+          <a href="/profile/${encodeURIComponent(a.name)}" class="agent-name" style="text-decoration:none;color:inherit" title="View profile">${esc(a.name)}</a>
+          <div class="agent-role">${esc(a.role_title || a.role)}${a.department ? ` · <span style="color:var(--text-dim)">${esc(a.department)}</span>` : ''}</div>
+        </div>
+        <span class="agent-status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+      ${a.tagline ? `<div class="agent-tagline">"${esc(a.tagline)}"</div>` : ''}
+      <div class="agent-stats">
+        <span class="as-label">CYCLES</span><span class="as-val">${a.cycles}</span>
+        <span class="as-label">POSTS</span><span class="as-val">${a.posts}</span>
+        <span class="as-label">REPLIES</span><span class="as-val">${a.replies}</span>
+        <span class="as-label">TOKENS</span><span class="as-val">${fmtNum(a.tokens)}</span>
+        <span class="as-label">ACTIONS</span><span class="as-val">${a.actions || 0}</span>
+        <span class="as-label">ERRORS</span><span class="as-val">${a.errors}</span>
+      </div>
+      ${a.current_goal ? `<div class="agent-goal">\u25B8 ${esc(a.current_goal)}</div>` : ''}
+      ${a.last_thought ? `<div class="agent-thought">${esc(a.last_thought)}</div>` : ''}
+      ${a.mission_id ? `<div class="agent-goal" style="color:var(--purple)"><a href="/mission/${a.mission_id}" style="color:var(--purple);text-decoration:none" title="View mission">\u25C8 Mission: ${a.mission_id.substring(0,8)}...</a></div>` : ''}
+      ${a.status !== 'retired' ? `<div class="agent-next-cycle">Next cycle: ${a.next_cycle_sec}s</div>` : ''}
+      <div class="agent-controls">${controls}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER — MISSIONS
+   ══════════════════════════════════════════════ */
+function renderMissions() {
+  const el = document.getElementById('missionList');
+  let list = missions || [];
+
+  if (missionFilter === 'active') list = list.filter(m => ['planning','active','converging'].includes(m.status));
+  else if (missionFilter === 'completed') list = list.filter(m => ['completed','failed'].includes(m.status));
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No missions yet — launch one above</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(m => {
+    const statusClass = 'ms-' + m.status;
+    const progressColor = m.status === 'completed' ? 'green' : m.status === 'failed' ? 'red' : 'purple';
+    const detail = expandedMissions[m.id];
+    const isExpanded = !!detail;
+
+    let subtasksHtml = '';
+    let synthesisHtml = '';
+    let actionsHtml = '';
+
+    if (isExpanded && detail) {
+      if (detail.agents && detail.agents.length) {
+        subtasksHtml = `<div class="mission-subtasks">${detail.agents.map(a => {
+          const dotClass = a.status === 'completed' ? 'completed' : a.status === 'active' ? 'active' : 'pending';
+          return `<div class="subtask-row">
+            <span class="subtask-status-dot ${dotClass}"></span>
+            <span class="subtask-agent">${esc(a.name)}</span>
+            <span class="subtask-task">${esc(a.subtask)}</span>
+            <span style="color:var(--text-dim)">${a.status}</span>
+          </div>`;
+        }).join('')}</div>`;
+      }
+      if (detail.synthesis_preview) {
+        synthesisHtml = `<div class="mission-synthesis"><strong>Synthesis:</strong> ${esc(detail.synthesis_preview)}</div>`;
+      }
+    }
+
+    if (['planning','active','converging'].includes(m.status)) {
+      actionsHtml = `<div class="mission-actions">
+        <button class="ctrl-btn danger" onclick="cancelMission('${m.id}')">CANCEL</button>
+      </div>`;
+    }
+
+    return `
+    <div class="mission-card">
+      <div class="mission-header">
+        <div class="mission-objective" style="cursor:pointer" onclick="toggleMissionDetail('${m.id}')">${isExpanded ? '\u25BE' : '\u25B8'} ${esc(m.objective)}</div>
+        <a href="/mission/${m.id}" class="mission-status-badge ${statusClass}" style="text-decoration:none" title="View full report">${m.status.toUpperCase()} \u25B8</a>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${progressColor}" style="width:${m.progress}%"></div></div>
+      <div class="mission-meta">
+        <span>Progress: ${m.progress}%</span>
+        <span>Agents: ${m.agent_count || (detail ? detail.agents.length : '?')}</span>
+        <span>By: ${esc(m.created_by || 'user')}</span>
+      </div>
+      ${subtasksHtml}
+      ${synthesisHtml}
+      ${actionsHtml}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER — PRODUCTIONS
+   ══════════════════════════════════════════════ */
+function renderProductions() {
+  const el = document.getElementById('productionList');
+  let list = productions || [];
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No productions yet — start one above</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(p => {
+    const detail = expandedProductions[p.production_id];
+    const isExpanded = !!detail;
+    const progressColor = p.status === 'completed' ? 'green' : p.status === 'cancelled' ? 'red' : 'cyan';
+
+    let phasesHtml = '';
+    let teamHtml = '';
+    let extraHtml = '';
+
+    if (isExpanded && detail) {
+      if (detail.phases && detail.phases.length) {
+        phasesHtml = `<div class="phase-pipeline">${detail.phases.map(ph => {
+          const cls = ph.status === 'completed' ? 'completed' : ph.status === 'active' ? 'active' : 'pending';
+          return `<div class="phase-chip ${cls}">${esc(ph.label)}</div>`;
+        }).join('')}</div>`;
+      }
+      if (detail.writer_team && Object.keys(detail.writer_team).length) {
+        teamHtml = `<div class="production-team">${Object.entries(detail.writer_team).map(([role, name]) =>
+          `<span>${esc(name)}</span> (${esc(role)})`
+        ).join(' \u2022 ')}</div>`;
+      }
+      if (detail.logline) {
+        extraHtml += `<div class="production-logline">"${esc(detail.logline)}"</div>`;
+      }
+      if (detail.genre || detail.tone) {
+        extraHtml += `<div style="font-size:10px;color:var(--text-dim)">${detail.genre ? 'Genre: '+esc(detail.genre) : ''} ${detail.tone ? '\u2022 Tone: '+esc(detail.tone) : ''}</div>`;
+      }
+    }
+
+    let actionsHtml = '';
+    if (p.status === 'awaiting_approval') {
+      actionsHtml = `<div class="production-actions">
+        <button class="ctrl-btn green" onclick="approvePhase('${p.production_id}')" style="animation:pulse-glow 2s ease-in-out infinite">APPROVE &amp; ADVANCE</button>
+        <button class="ctrl-btn danger" onclick="cancelProduction('${p.production_id}')">CANCEL</button>
+      </div>`;
+    } else if (p.status === 'active' || p.status === 'in_progress' || p.status === 'in_production') {
+      actionsHtml = `<div class="production-actions">
+        <button class="ctrl-btn danger" onclick="cancelProduction('${p.production_id}')">CANCEL</button>
+      </div>`;
+    }
+
+    return `
+    <div class="production-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer" onclick="toggleProductionDetail('${p.production_id}')">
+        <div>
+          <div class="production-title">${isExpanded ? '\u25BE' : '\u25B8'} ${esc(p.title || 'Untitled Production')}</div>
+          <div class="production-type">${esc(p.type)} ${p.episode_count > 1 ? '\u2022 '+p.episode_count+' episodes' : ''}</div>
+        </div>
+        <span class="mission-status-badge ms-${p.status === 'in_progress' ? 'active' : p.status}">${(p.status === 'awaiting_approval' ? '\u23F8 AWAITING APPROVAL' : (p.status || 'unknown').toUpperCase())}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${progressColor}" style="width:${p.progress}%"></div></div>
+      <div class="mission-meta">
+        <span>Progress: ${p.progress}%</span>
+        <span>Phase: ${esc(p.current_phase || 'N/A')}</span>
+      </div>
+      ${extraHtml}
+      ${phasesHtml}
+      ${teamHtml}
+      ${actionsHtml}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER — FEED
+   ══════════════════════════════════════════════ */
+function addFeedItems(newItems) {
+  for (const item of newItems) {
+    const key = item.type + ':' + item.agent + ':' + (item.text || '').substring(0, 40);
+    if (!feedItems.some(f => (f.type + ':' + f.agent + ':' + (f.text || '').substring(0, 40)) === key)) {
+      feedItems.unshift(item);
+    }
+  }
+  if (feedItems.length > MAX_FEED) feedItems.length = MAX_FEED;
+}
+
+function buildFeedFromState() {
+  const items = [];
+  const now = Date.now() / 1000;
+
+  for (const a of (state.agents || [])) {
+    if (a.last_thought) {
+      items.push({ type: 'thoughts', time: now, icon: '\uD83D\uDCAD', agent: a.name, text: a.last_thought });
+    }
+    if (a.current_goal) {
+      items.push({ type: 'thoughts', time: now, icon: '\uD83C\uDFAF', agent: a.name, text: 'Goal: ' + a.current_goal });
+    }
+    if (a.mode === 'mission' && a.mission_id) {
+      items.push({ type: 'missions', time: now, icon: '\u25C8', agent: a.name, text: 'Working on mission ' + a.mission_id.substring(0, 8) + '...' });
+    }
+  }
+
+  for (const m of (state.active_missions || [])) {
+    items.push({ type: 'missions', time: now, icon: '\u26A1', agent: 'SWARM', text: `Mission [${m.status}] ${m.progress}% \u2014 ${m.objective}` });
+  }
+
+  addFeedItems(items);
+}
+
+function renderFeed() {
+  const el = document.getElementById('feedList');
+  let items = feedItems;
+  if (feedFilter !== 'all') items = items.filter(f => f.type === feedFilter);
+
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state">Waiting for activity...</div>';
+    return;
+  }
+
+  el.innerHTML = items.slice(0, 80).map(f => `
+    <div class="feed-item">
+      <span class="feed-icon">${f.icon}</span>
+      <span class="feed-agent">${esc(f.agent)}</span>
+      <span class="feed-text">${esc(f.text)}</span>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════
+   MAIN REFRESH LOOP
+   ══════════════════════════════════════════════ */
+async function refresh() {
+  try {
+    const s = await api('/api/daemon/status');
+    if (!s || s.error) return;
+    state = s;
+
+    const dot = document.getElementById('daemonDot');
+    const lbl = document.getElementById('daemonLabel');
+    dot.className = 'daemon-dot ' + (s.daemon_running ? 'on' : 'off');
+    lbl.textContent = s.daemon_running ? (s.daemon_paused ? 'PAUSED' : 'ONLINE') : 'OFFLINE';
+    if (s.daemon_paused) { dot.className = 'daemon-dot on'; dot.style.background = '#f90'; dot.style.boxShadow = '0 0 8px #f90'; }
+    else { dot.style.background = ''; dot.style.boxShadow = ''; }
+
+    const pauseBtn = document.getElementById('pauseToggleBtn');
+    if (pauseBtn) {
+      if (s.daemon_paused) {
+        pauseBtn.textContent = '\u25B6 RESUME ALL';
+        pauseBtn.className = 'ctrl-btn green';
+      } else {
+        pauseBtn.textContent = '\u23F8 PAUSE ALL';
+        pauseBtn.className = 'ctrl-btn';
+      }
+    }
+
+    document.getElementById('hdrActive').textContent = s.active || 0;
+    document.getElementById('hdrMissions').textContent = (s.active_missions || []).length;
+    document.getElementById('hdrTokens').textContent = fmtNum(s.total_tokens || 0);
+    refreshRootCodeToggle();
+
+    document.getElementById('sActive').textContent = s.active || 0;
+    document.getElementById('sPaused').textContent = s.paused || 0;
+    document.getElementById('sMission').textContent = s.on_mission || 0;
+    document.getElementById('sPosts').textContent = fmtNum(s.total_posts || 0);
+    document.getElementById('sReplies').textContent = fmtNum(s.total_replies || 0);
+    document.getElementById('sActions').textContent = fmtNum(s.total_actions || 0);
+    document.getElementById('sTokens').textContent = fmtNum(s.total_tokens || 0);
+
+    const k = s.kardashev || {};
+    document.getElementById('sKardashev').textContent = k.level || '0.0';
+    document.getElementById('sKardashevName').textContent = k.level_name || '\u2014';
+    document.getElementById('sEnergyTW').textContent = (k.energy_TW || 0) + ' TW';
+    document.getElementById('sResearchPapers').textContent = fmtNum(k.total_papers || 0);
+    document.getElementById('sMilestones').textContent =
+      (k.milestones_completed || 0) + '/' + (k.milestones_total || 0);
+
+    const missionBadge = document.getElementById('tabMissionBadge');
+    const activeMissions = (s.active_missions || []).length;
+    if (activeMissions > 0) {
+      missionBadge.textContent = activeMissions;
+      missionBadge.style.display = '';
+    } else {
+      missionBadge.style.display = 'none';
+    }
+
+    const agentBadge = document.getElementById('tabAgentBadge');
+    if (s.active > 0) {
+      agentBadge.textContent = s.active;
+      agentBadge.style.display = '';
+    } else {
+      agentBadge.style.display = 'none';
+    }
+
+    renderAgents();
+    buildFeedFromState();
+    renderFeed();
+
+  } catch (e) {
+    log('Refresh error: ' + e.message);
+  }
+
+  try {
+    const mr = await api('/api/daemon/missions');
+    if (mr.success !== false && mr.missions) {
+      missions = mr.missions;
+      renderMissions();
+
+      const missionBadge = document.getElementById('tabMissionBadge');
+      const activeMCount = missions.filter(m => ['planning','active','converging'].includes(m.status)).length;
+      if (activeMCount > 0) {
+        missionBadge.textContent = activeMCount;
+        missionBadge.style.display = '';
+      } else {
+        missionBadge.style.display = 'none';
+      }
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    const pr = await api('/api/daemon/productions');
+    if (pr.success !== false && pr.productions) {
+      productions = pr.productions;
+      renderProductions();
+
+      const prodBadge = document.getElementById('tabProdBadge');
+      const activePCount = productions.filter(p => ['active','in_progress'].includes(p.status)).length;
+      if (activePCount > 0) {
+        prodBadge.textContent = activePCount;
+        prodBadge.style.display = '';
+      } else {
+        prodBadge.style.display = 'none';
+      }
+
+      const now = Date.now() / 1000;
+      const prodFeed = productions.filter(p => p.status !== 'cancelled').map(p => ({
+        type: 'productions',
+        time: now,
+        icon: '\uD83C\uDFAC',
+        agent: 'PIPELINE',
+        text: `${p.title || 'Production'} [${p.status}] ${p.progress}% \u2014 Phase: ${p.current_phase || 'N/A'}`,
+      }));
+      addFeedItems(prodFeed);
+      renderFeed();
+    }
+  } catch (e) { /* ignore */ }
+}
+
+/* ══════════════════════════════════════════════
+   ARTIFACTS — DATA + RENDER
+   ══════════════════════════════════════════════ */
+let artifactsData = [];
+let artifactProjects = [];
+
+async function fetchArtifacts() {
+  try {
+    const r = await api('/api/daemon/artifacts');
+    if (r.success !== false && r.artifacts) {
+      artifactsData = r.artifacts;
+      artifactProjects = r.projects || [];
+
+      document.getElementById('artTotal').textContent = r.total || 0;
+      document.getElementById('artProjects').textContent = artifactProjects.length;
+      document.getElementById('artEmpty').textContent = r.empty_count || 0;
+
+      const sel = document.getElementById('artifactProjectFilter');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">ALL PROJECTS</option>' +
+        artifactProjects.map(p => `<option value="${esc(p.name)}">${esc(p.name)} (${p.file_count})</option>`).join('');
+      sel.value = prev;
+
+      const badge = document.getElementById('tabArtifactBadge');
+      if (r.total > 0) {
+        badge.textContent = r.total;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+
+      renderArtifacts();
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function renderArtifacts() {
+  const el = document.getElementById('artifactGrid');
+  let list = artifactsData || [];
+
+  const projFilter = document.getElementById('artifactProjectFilter').value;
+  if (projFilter) list = list.filter(a => a.project === projFilter);
+
+  const search = (document.getElementById('artifactSearch').value || '').toLowerCase();
+  if (search) list = list.filter(a =>
+    a.filename.toLowerCase().includes(search) ||
+    a.project.toLowerCase().includes(search) ||
+    (a.agent || '').toLowerCase().includes(search) ||
+    (a.preview || '').toLowerCase().includes(search)
+  );
+
+  const sort = document.getElementById('artifactSort').value;
+  if (sort === 'newest') list.sort((a, b) => b.modified - a.modified);
+  else if (sort === 'oldest') list.sort((a, b) => a.modified - b.modified);
+  else if (sort === 'largest') list.sort((a, b) => b.size - a.size);
+  else if (sort === 'name') list.sort((a, b) => a.filename.localeCompare(b.filename));
+  else if (sort === 'project') list.sort((a, b) => a.project.localeCompare(b.project) || b.modified - a.modified);
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No artifacts found</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(a => {
+    const date = a.modified ? new Date(a.modified * 1000).toLocaleString() : '?';
+    const sizeStr = a.size > 1024 ? (a.size / 1024).toFixed(1) + ' KB' : a.size + ' B';
+    const typeIcon = {'py': '\uD83D\uDC0D', 'txt': '\uD83D\uDCC4', 'md': '\uD83D\uDCDD', 'json': '\uD83D\uDCCA', 'csv': '\uD83D\uDCC8'}[a.file_type] || '\uD83D\uDCCE';
+    const previewText = a.is_empty ? '[empty file]' : esc(a.preview || '').substring(0, 300);
+    const previewClass = a.is_empty ? 'artifact-preview empty-preview' : 'artifact-preview';
+
+    return `
+    <div class="artifact-card ${a.is_empty ? 'empty' : ''}" onclick="viewArtifact('${esc(a.path)}')">
+      <div class="artifact-header">
+        <span class="artifact-name">${typeIcon} ${esc(a.filename)}</span>
+        <span class="artifact-project">${esc(a.project)}</span>
+      </div>
+      <div class="artifact-meta">
+        ${a.agent ? '<span class="am-agent">' + esc(a.agent) + '</span>' : ''}
+        <span>${sizeStr}</span>
+        <span>${date}</span>
+        ${a.mission_id ? '<span style="color:var(--purple)">\uD83C\uDFAF mission</span>' : ''}
+      </div>
+      <div class="${previewClass}">${previewText}</div>
+    </div>`;
+  }).join('');
+}
+
+async function viewArtifact(path) {
+  const r = await api('/api/daemon/artifact/content?path=' + encodeURIComponent(path));
+  if (!r || !r.success) {
+    log('Failed to load artifact: ' + (r ? r.error : 'unknown'));
+    return;
+  }
+  const modal = document.createElement('div');
+  modal.className = 'artifact-modal';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  const sizeStr = r.size > 1024 ? (r.size / 1024).toFixed(1) + ' KB' : r.size + ' B';
+  modal.innerHTML = `
+    <div class="artifact-modal-inner">
+      <div class="artifact-modal-header">
+        <h3>${esc(path)}</h3>
+        <span style="font-family:monospace;font-size:10px;color:#999999">${sizeStr}</span>
+        <button class="ctrl-btn danger" onclick="this.closest('.artifact-modal').remove()" style="padding:2px 10px">\u2715</button>
+      </div>
+      <div class="artifact-modal-body">${esc(r.content)}</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+refresh();
+fetchArtifacts();
+fetchNetwork();
+fetchForgeProjects();
+setInterval(refresh, 5000);
+setInterval(fetchApprovals, 8000);
+setInterval(fetchArtifacts, 15000);
+setInterval(fetchNetwork, 10000);
+setInterval(fetchForgeProjects, 10000);
+
+/* ══════════════════════════════════════════════
+   NETWORK — P2P MESH DATA + RENDER
+   ══════════════════════════════════════════════ */
+let netData = null;
+
+/* ══════════════════════════════════════════════
+   APPROVALS — FETCH + RENDER + APPROVE/REJECT
+   ══════════════════════════════════════════════ */
+let approvalItems = [];
+
+async function fetchApprovals() {
+  try {
+    const r = await api('/api/daemon/approvals');
+    if (!r || r.success === false) return;
+    approvalItems = r.pending || [];
+    renderApprovals();
+
+    const badge = document.getElementById('tabApprovalBadge');
+    if (approvalItems.length > 0) {
+      badge.textContent = approvalItems.length;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function renderApprovals() {
+  const listEl = document.getElementById('approvalList');
+  const emptyEl = document.getElementById('approvalEmpty');
+  const resolvedEl = document.getElementById('approvalResolved');
+
+  const pending = approvalItems.filter(a => a.status === 'pending');
+  const resolved = approvalItems.filter(a => a.status !== 'pending');
+
+  if (pending.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+  } else {
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = pending.map(a => {
+      const isValueProposal = a.type === 'value_compass_update';
+      const icon = isValueProposal ? '\uD83E\uDDED' : '\uD83D\uDD12';
+      const typeLabel = isValueProposal
+        ? `VALUE PROPOSAL — ${esc(a.section_label || a.section || '')}`
+        : `TOOL GATE — ${esc(a.tool_name || '?')}`;
+      const agent = esc(a.agent_name || a.agent || 'Andrew');
+      // Timestamps are stored as Unix seconds (Python time.time()) — JS Date wants ms.
+      const tsRaw = a.timestamp || a.queued_at;
+      const tsMs = tsRaw ? (tsRaw < 1e12 ? tsRaw * 1000 : tsRaw) : 0;
+      const ts = tsMs ? new Date(tsMs).toLocaleString() : '';
+
+      let detail = '';
+      if (isValueProposal) {
+        detail = `<div style="margin:6px 0;padding:6px 8px;background:#ffffff;border:1px solid #e0e0e0;font-size:12px;">`
+          + `<b>Entry:</b> ${esc(a.entry || '')}<br>`
+          + `<b>Reasoning:</b> ${esc(a.reasoning || '')}`
+          + `</div>`;
+      } else {
+        // Approvals are stored with key "parameters"; older entries may use "arguments".
+        const params = a.parameters || a.arguments || a.args || null;
+        // Pull out a short headline (filename / path / command) if we can.
+        let headline = '';
+        if (params && typeof params === 'object') {
+          headline = params.filename || params.path || params.target_path
+                  || params.file_path || params.command || params.target_file || '';
+        }
+        const path = a.target_path || headline || '';
+        let argsBody = '';
+        if (params) {
+          try {
+            argsBody = JSON.stringify(params, null, 2);
+            if (argsBody.length > 4000) argsBody = argsBody.slice(0, 4000) + '\n…[truncated]';
+          } catch (e) { argsBody = String(params); }
+        }
+        detail = `<div style="margin:6px 0;padding:6px 8px;background:#ffffff;border:1px solid #e0e0e0;font-size:11px;font-family:monospace;white-space:pre-wrap;max-height:240px;overflow-y:auto;">`
+          + (path ? `<b>Path:</b> ${esc(path)}\n` : '')
+          + (argsBody ? esc(argsBody) : '(no args)')
+          + `</div>`;
+      }
+
+      return `<div style="background:#fafafa;border:1px solid #e0e0e0;padding:8px;margin-bottom:6px;">`
+        + `<div style="display:flex;justify-content:space-between;align-items:center;">`
+        + `  <div><span style="font-size:14px;">${icon}</span> <b style="font-size:12px;color:#000000;">${typeLabel}</b></div>`
+        + `  <span style="font-size:10px;color:#999999;">${agent} · ${ts}</span>`
+        + `</div>`
+        + detail
+        + `<div style="display:flex;gap:6px;margin-top:6px;">`
+        + `  <button class="ctrl-btn green" onclick="resolveApproval('${esc(a.id)}','approved')" style="padding:3px 12px;">✅ APPROVE</button>`
+        + `  <button class="ctrl-btn danger" onclick="resolveApproval('${esc(a.id)}','rejected')" style="padding:3px 12px;">❌ REJECT</button>`
+        + `</div>`
+        + `</div>`;
+    }).join('');
+  }
+
+  // Show recent resolved items
+  if (resolved.length > 0) {
+    resolvedEl.innerHTML = resolved.slice(-10).reverse().map(a => {
+      const icon = a.status === 'approved' ? '✅' : '❌';
+      const label = a.type === 'value_compass_update'
+        ? `Value: ${esc((a.entry || '').substring(0, 60))}…`
+        : `Tool: ${esc(a.tool_name || '?')}`;
+      const ts = a.resolved_at ? timeAgo(a.resolved_at) : '';
+      return `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #ffffff;">`
+        + `${icon} <span style="color:#000000;">${label}</span>`
+        + ` <span style="color:#999999;">${ts}</span></div>`;
+    }).join('');
+  } else {
+    resolvedEl.innerHTML = '<div style="font-size:11px;color:#999999;">No resolved items yet</div>';
+  }
+}
+
+async function resolveApproval(id, action) {
+  const label = action === 'approved' ? 'Approve' : 'Reject';
+  if (!confirm(`${label} this item?`)) return;
+  try {
+    const r = await api(`/api/daemon/approvals/${id}`, 'POST', { action });
+    if (r.success) {
+      log(`Approval ${id}: ${action}`);
+      fetchApprovals();
+    } else {
+      log('Approval error: ' + (r.error || 'unknown'));
+    }
+  } catch (e) { log('Approval error: ' + e.message); }
+}
+
+fetchApprovals();
+
+async function fetchNetwork() {
+  try {
+    const r = await api('/api/p2p/status');
+    netData = r;
+    renderNetwork(r);
+    const badge = document.getElementById('tabNetBadge');
+    if (r.peers && r.peers.connected > 0) {
+      badge.textContent = r.peers.connected;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function renderNetwork(d) {
+  if (!d) return;
+
+  document.getElementById('netNodeName').textContent = d.node_name || '\u2014';
+  document.getElementById('netNodeId').textContent = d.node_id ? d.node_id.substring(0, 8) : '\u2014';
+  document.getElementById('netPort').textContent = d.port || '6600';
+
+  const dot = document.getElementById('netStatusDot');
+  const running = document.getElementById('netRunning');
+  if (d.running) {
+    dot.className = 'net-status-dot online';
+    running.textContent = 'ONLINE';
+    running.style.color = 'var(--green)';
+  } else {
+    dot.className = 'net-status-dot offline';
+    running.textContent = 'OFFLINE';
+    running.style.color = 'var(--red)';
+  }
+
+  const peers = d.peers || {};
+  document.getElementById('netPeerCount').textContent = peers.connected || 0;
+  const artifacts = d.artifacts || {};
+  document.getElementById('netArtifactCount').textContent = artifacts.local_count || 0;
+  document.getElementById('netAgentCount').textContent = d.network_agents || 0;
+  const missions = d.missions || {};
+  document.getElementById('netMissionCount').textContent = (missions.active || 0) + (missions.completed || 0);
+
+  const peerList = document.getElementById('netPeerList');
+  const peerData = (peers.list || []);
+  if (peerData.length === 0) {
+    peerList.innerHTML = '<div class="empty-state">No peers connected<br><small>Nodes on your LAN will be discovered via mDNS.</small></div>';
+  } else {
+    peerList.innerHTML = peerData.map(p => `
+      <div class="net-peer-card">
+        <div>
+          <span class="net-peer-dot"></span>
+          <span class="net-peer-name">${esc(p.node_name)}</span>
+          <span style="color:#999999;font-size:11px;margin-left:6px">${esc(p.node_id ? p.node_id.substring(0, 8) : '')}</span>
+        </div>
+        <div class="net-peer-meta">
+          <span>${p.agent_count || 0} agents</span>
+          <span>${p.artifact_count || 0} artifacts</span>
+          <span>${p.latency_ms ? p.latency_ms.toFixed(0) + 'ms' : '\u2014'}</span>
+          <span style="font-size:10px;color:#999999">${esc(p.address || '')}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const mList = document.getElementById('netMissionList');
+  const mData = (missions.list || []);
+  if (mData.length === 0) {
+    mList.innerHTML = '<div class="empty-state">No cross-device missions yet</div>';
+  } else {
+    mList.innerHTML = mData.map(m => `
+      <div class="net-mission-card">
+        <div class="nm-obj">${esc(m.objective)}</div>
+        <div class="nm-meta">
+          <span>${esc(m.status).toUpperCase()}</span> \u2022
+          <span>${m.nodes || 0} nodes</span> \u2022
+          <span>${esc(m.id ? m.id.substring(0, 10) : '')}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const stats = d.stats || {};
+  document.getElementById('netMsgSent').textContent = stats.messages_sent || 0;
+  document.getElementById('netMsgRecv').textContent = stats.messages_received || 0;
+  document.getElementById('netArtShared').textContent = stats.artifacts_shared || 0;
+  document.getElementById('netArtRecv').textContent = stats.artifacts_received || 0;
+  const bytes = stats.bytes_transferred || 0;
+  document.getElementById('netBytes').textContent = bytes > 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : bytes > 1024 ? (bytes / 1024).toFixed(0) + ' KB' : bytes + ' B';
+
+  const uptime = d.uptime_seconds || 0;
+  if (uptime > 0) {
+    const h = Math.floor(uptime / 3600);
+    const m = Math.floor((uptime % 3600) / 60);
+    document.getElementById('netUptime').textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  } else {
+    document.getElementById('netUptime').textContent = '\u2014';
+  }
+}
+
+async function connectPeer() {
+  const addr = document.getElementById('peerAddress').value.trim();
+  if (!addr) return alert('Enter a peer address (e.g. ws://192.168.1.50:6600)');
+  try {
+    const r = await api('/api/p2p/connect', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ address: addr }) });
+    if (r.success) {
+      document.getElementById('peerAddress').value = '';
+      fetchNetwork();
+    } else {
+      alert('Connection failed: ' + (r.error || 'unknown'));
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function broadcastNetMission() {
+  const obj = prompt('Enter mission objective for the P2P network:');
+  if (!obj) return;
+  const agents = parseInt(prompt('Required agents across all nodes:', '6') || '6');
+  try {
+    const r = await api('/api/p2p/mission', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ objective: obj, required_agents: agents }) });
+    if (r.success) {
+      fetchNetwork();
+    } else {
+      alert('Broadcast failed: ' + (r.error || 'unknown'));
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+/* ══════════════════════════════════════════════
+   JARVIS CHAT
+   ══════════════════════════════════════════════ */
+let jarvisEventSource = null;
+let jarvisBusy = false;
+
+function jarvisTimeStr() {
+  const d = new Date();
+  return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function addJarvisMsg(type, content) {
+  const container = document.getElementById('jarvisMessages');
+  const welcome = container.querySelector('.jarvis-welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = 'jarvis-msg ' + type;
+  div.textContent = content;
+  if (type === 'user' || type === 'assistant') {
+    const timeEl = document.createElement('span');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = jarvisTimeStr();
+    div.appendChild(timeEl);
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function getOrCreateStreamDiv() {
+  const container = document.getElementById('jarvisMessages');
+  let div = container.querySelector('.jarvis-streaming');
+  if (!div) {
+    div = document.createElement('div');
+    div.className = 'jarvis-msg assistant jarvis-streaming';
+    container.appendChild(div);
+  }
+  return div;
+}
+
+function setJarvisBusy(busy) {
+  jarvisBusy = busy;
+  const statusEl = document.getElementById('jarvisStatus');
+  const sendBtn = document.getElementById('jarvisSendBtn');
+  if (busy) {
+    statusEl.textContent = 'THINKING...';
+    statusEl.classList.add('busy');
+    sendBtn.disabled = true;
+  } else {
+    statusEl.textContent = 'READY';
+    statusEl.classList.remove('busy');
+    sendBtn.disabled = false;
+  }
+}
+
+async function sendJarvis() {
+  if (jarvisBusy) return;
+  const input = document.getElementById('jarvisInput');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  addJarvisMsg('user', prompt);
+  setJarvisBusy(true);
+
+  let streamedContent = '';
+  let streamDiv = null;
+
+  try {
+    const response = await fetch('/api/jarvis/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, max_tokens: 8000 })
+    });
+
+    if (!response.ok) {
+      addJarvisMsg('status-msg', 'Error: ' + response.statusText);
+      setJarvisBusy(false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      let eventType = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          eventType = line.slice(7).trim();
+        } else if (line.startsWith('data: ') && eventType) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            handleJarvisEvent(eventType, data);
+            if (eventType === 'chunk') {
+              streamedContent += data.text || '';
+              if (!streamDiv) {
+                streamDiv = getOrCreateStreamDiv();
+              }
+              streamDiv.textContent = streamedContent;
+              const container = document.getElementById('jarvisMessages');
+              container.scrollTop = container.scrollHeight;
+            }
+          } catch(e) { /* skip parse errors */ }
+          eventType = '';
+        }
+      }
+    }
+
+    if (streamDiv) {
+      streamDiv.classList.remove('jarvis-streaming');
+      const timeEl = document.createElement('span');
+      timeEl.className = 'msg-time';
+      timeEl.textContent = jarvisTimeStr();
+      streamDiv.appendChild(timeEl);
+    }
+
+  } catch (e) {
+    addJarvisMsg('status-msg', 'Connection error: ' + e.message);
+  }
+
+  setJarvisBusy(false);
+}
+
+function handleJarvisEvent(type, data) {
+  switch(type) {
+    case 'status':
+      addJarvisMsg('status-msg', data.message || '');
+      break;
+    case 'tool_call':
+      addJarvisMsg('tool-msg', '\uD83D\uDD27 ' + (data.name || 'tool') + ' (round ' + (data.round || '?') + ')');
+      break;
+    case 'done':
+      if (data.tool_calls > 0) {
+        addJarvisMsg('status-msg',
+          '\u2713 Done \u2014 ' + data.tool_calls + ' tool call(s), ' +
+          data.rounds + ' round(s), ' + data.elapsed_seconds + 's'
+        );
+      }
+      break;
+    case 'error':
+      addJarvisMsg('status-msg', '\u26A0 Error: ' + (data.message || 'Unknown'));
+      break;
+  }
+}
+
+async function clearJarvisChat() {
+  if (!confirm('Clear Jarvis conversation history?')) return;
+  try {
+    await fetch('/api/jarvis/clear', { method: 'POST' });
+    const container = document.getElementById('jarvisMessages');
+    container.innerHTML = '<div class="jarvis-welcome"><div class="jarvis-welcome-icon">\u25C9</div><div>JARVIS ready. Full access to all system tools.<br><span style="opacity:0.5">Type a message below to begin.</span></div></div>';
+  } catch(e) { alert('Failed to clear: ' + e.message); }
+}
+
+async function loadJarvisHistory() {
+  try {
+    const r = await api('/api/jarvis/history?limit=50');
+    if (r.success && r.messages && r.messages.length > 0) {
+      const container = document.getElementById('jarvisMessages');
+      const welcome = container.querySelector('.jarvis-welcome');
+      if (welcome) welcome.remove();
+      for (const msg of r.messages) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          if (msg.content) {
+            addJarvisMsg(msg.role, msg.content);
+          }
+        }
+      }
+    }
+  } catch(e) { /* silent fail */ }
+}
+
+document.getElementById('jarvisInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  if (btn.dataset.tab === 'jarvis') {
+    btn.addEventListener('click', function() {
+      if (!this._loaded) {
+        this._loaded = true;
+        loadJarvisHistory();
+      }
+    });
+  }
+  if (btn.dataset.tab === 'forge') {
+    btn.addEventListener('click', function() {
+      fetchForgeProjects();
+      fetchForgeSwarm();
+      fetchForgeBenchmarkCached();
+    });
+  }
+});
+
+/* ══════════════════════════════════════════════
+   CODEFORGE — PROJECT MANAGEMENT
+   ══════════════════════════════════════════════ */
+let forgeProjects = [];
+
+async function fetchForgeProjects() {
+  try {
+    const r = await api('/api/forge/projects');
+    if (r.success && r.projects) {
+      forgeProjects = r.projects;
+      renderForgeProjects();
+      updateForgeStats();
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function updateForgeStats() {
+  const total = forgeProjects.length;
+  const running = forgeProjects.filter(p =>
+    !['completed','failed'].includes(p.status)).length;
+  const completed = forgeProjects.filter(p => p.status === 'completed').length;
+  const failed = forgeProjects.filter(p => p.status === 'failed').length;
+
+  document.getElementById('forgeTotal').textContent = total;
+  document.getElementById('forgeRunning').textContent = running;
+  document.getElementById('forgeCompleted').textContent = completed;
+  document.getElementById('forgeFailed').textContent = failed;
+
+  const badge = document.getElementById('tabForgeBadge');
+  if (running > 0) {
+    badge.textContent = running;
+    badge.style.display = '';
+  } else if (total > 0) {
+    badge.textContent = total;
+    badge.className = 'badge badge-idle';
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderForgeProjects() {
+  const el = document.getElementById('forgeProjectList');
+  if (!forgeProjects.length) {
+    el.innerHTML = '<div class="empty-state">No forge projects yet. Submit a description above to start.</div>';
+    return;
+  }
+
+  el.innerHTML = forgeProjects.map(p => {
+    const statusColor = {
+      'completed': 'var(--green, #789922)',
+      'failed': 'var(--red, #d00)',
+      'queued': 'var(--fg-dim, #999)',
+    }[p.status] || 'var(--link, #000000)';
+
+    const progress = Math.round(p.progress || 0);
+    const qScore = p.quality_score != null ? p.quality_score + '/100' : '—';
+    const date = p.created_at ? new Date(p.created_at * 1000).toLocaleString() : '?';
+
+    return `
+    <div style="border:1px solid var(--border, #d9bfb7);margin-bottom:6px;padding:8px;background:var(--bg-alt, #f0e0d6);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+        <div>
+          <strong style="color:var(--title, #800000);">${esc(p.name || p.project_id)}</strong>
+          <span style="color:${statusColor};font-weight:bold;margin-left:8px;font-size:12px;">[${esc(p.status.toUpperCase())}]</span>
+        </div>
+        <div style="font-size:11px;color:var(--fg-dim, #999);">
+          ${esc(p.language || '?')} | ${p.modules || 0} modules | Score: ${qScore}
+          ${p.swarm_enabled ? ' | <span style="color:var(--link);">SWARM</span>' : ''}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--fg, #800);margin-top:4px;">${esc(p.description || '')}</div>
+      <div style="margin-top:6px;">
+        <div style="background:var(--border, #d9bfb7);height:6px;border-radius:3px;overflow:hidden;">
+          <div style="background:${statusColor};height:100%;width:${progress}%;transition:width 0.5s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--fg-dim, #999);margin-top:2px;">
+          <span>${progress}% complete</span>
+          <span>${date}</span>
+        </div>
+      </div>
+      ${p.status !== 'completed' && p.status !== 'failed' ?
+        `<button class="btn" onclick="cancelForge('${esc(p.project_id)}')"
+          style="margin-top:4px;font-size:11px;">CANCEL</button>` : ''}
+      ${p.status === 'completed' && p.quality_score != null ?
+        `<span style="font-size:11px;color:var(--green, #789922);margin-top:4px;display:inline-block;">
+          &#9989; Delivered — Quality ${p.quality_score}/100</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function startForgeProject() {
+  const desc = document.getElementById('forgeDescription').value.trim();
+  if (!desc) { alert('Enter a project description'); return; }
+  const provider = document.getElementById('forgeProvider').value;
+  const swarm = document.getElementById('forgeSwarm').checked;
+
+  const r = await api('/api/forge/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({description: desc, provider, swarm_enabled: swarm})
+  });
+  if (r.success) {
+    document.getElementById('forgeDescription').value = '';
+    log('&#128296; Forge project started: ' + r.project_id);
+    fetchForgeProjects();
+  } else {
+    log('&#10060; Forge error: ' + (r.error || 'unknown'));
+  }
+}
+
+async function cancelForge(projectId) {
+  const r = await api('/api/forge/cancel/' + projectId, {method: 'POST'});
+  if (r.success) {
+    log('Forge project cancelled: ' + projectId);
+    fetchForgeProjects();
+  }
+}
+
+async function runForgeBenchmark() {
+  const el = document.getElementById('forgeBenchmarkResult');
+  el.textContent = 'Running benchmark... (this takes 1-2 minutes)';
+  const provider = document.getElementById('forgeProvider').value;
+
+  const r = await api('/api/forge/benchmark', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({provider})
+  });
+  if (r.success && r.benchmark) {
+    const b = r.benchmark;
+    el.innerHTML = `Score: <strong style="color:${b.score >= 60 ? 'var(--green,#789922)' : 'var(--red,#d00)'}">
+      ${b.score}/100</strong> (${b.tasks_passed}/${b.tasks_attempted} tasks)
+      | Model: ${esc(b.model_name)} | Avg: ${b.avg_response_time}s
+      | ${b.score >= 60 ? '&#9989; QUALIFIED' : '&#10060; NOT QUALIFIED'}`;
+    document.getElementById('forgeBenchmark').textContent = b.score;
+  } else {
+    el.textContent = 'Benchmark failed: ' + (r.error || 'unknown');
+  }
+}
+
+async function fetchForgeBenchmarkCached() {
+  try {
+    const r = await api('/api/forge/benchmark/cached');
+    if (r.success && r.benchmark) {
+      const b = r.benchmark;
+      document.getElementById('forgeBenchmark').textContent = b.score;
+      document.getElementById('forgeBenchmarkResult').innerHTML =
+        `Last benchmark: <strong>${b.score}/100</strong> (${b.model_name})`;
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function fetchForgeSwarm() {
+  try {
+    const r = await api('/api/forge/swarm');
+    if (r.success && r.swarm) {
+      const s = r.swarm;
+      document.getElementById('forgeSwarmNodes').textContent = s.qualified_nodes || 0;
+      const el = document.getElementById('forgeSwarmInfo');
+      if (s.qualified_nodes > 0) {
+        let html = `<div style="font-size:12px;">
+          <strong>Connected:</strong> ${s.connected ? 'Yes' : 'No'} |
+          <strong>Node:</strong> ${esc(s.node_id || '—')} |
+          <strong>Qualified:</strong> ${s.qualified_nodes} |
+          <strong>Tasks:</strong> ${s.completed_tasks}/${s.completed_tasks + s.pending_tasks + s.failed_tasks}
+        </div>`;
+        if (s.nodes && Object.keys(s.nodes).length) {
+          html += '<div style="margin-top:6px;">';
+          for (const [nid, info] of Object.entries(s.nodes)) {
+            html += `<div style="font-size:11px;padding:2px 0;">
+              &#128187; ${esc(nid.substring(0,12))} — Score: ${info.score} | ${esc(info.model || '?')}
+              ${info.valid ? '' : ' (expired)'}
+            </div>`;
+          }
+          html += '</div>';
+        }
+        el.innerHTML = html;
+      } else {
+        el.innerHTML = '<div class="empty-state">No swarm nodes connected. Enable P2P network and swarm mode on forge projects.</div>';
+      }
+    }
+  } catch(e) { /* ignore */ }
+}
+
+</script>
+</body>
+</html>

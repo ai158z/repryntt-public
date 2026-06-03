@@ -1,0 +1,75 @@
+{
+  "id": "diagnose",
+  "label": "Diagnose Failure",
+  "description": "Reproduce → isolate → explain → fix → verify a failing system.",
+  "match_keywords": ["broken", "failing", "bug", "diagnose", "debug", "crash", "error", "not working"],
+  "version": 1,
+  "lineage": [],
+  "tags": ["engineering", "recovery"],
+  "success_criteria": "Root cause identified, fix applied, reproduction case now passes.",
+  "author": "system",
+  "states": [
+    {
+      "name": "reproduce",
+      "label": "Reproduce",
+      "guidance": "Get the failure to happen on demand. Write working_state['repro_steps'] (>= 3 items) and working_state['observed_error'] (>= 40 chars).",
+      "tools": ["shell_exec", "read_file", "python_exec"],
+      "gate": {
+        "required_keys": ["repro_steps", "observed_error"],
+        "min_list_length": {"repro_steps": 3},
+        "min_length": {"observed_error": 40}
+      },
+      "max_heartbeats": 4
+    },
+    {
+      "name": "isolate",
+      "label": "Isolate",
+      "guidance": "Narrow the failure to one component / file / function. Write working_state['hypothesized_cause'] (>= 60 chars) and list working_state['suspect_files'] (>= 1 item).",
+      "tools": ["grep_search", "read_file", "think"],
+      "gate": {
+        "required_keys": ["hypothesized_cause", "suspect_files"],
+        "min_length": {"hypothesized_cause": 60},
+        "min_list_length": {"suspect_files": 1}
+      },
+      "max_heartbeats": 4,
+      "on_fail_state": "reproduce"
+    },
+    {
+      "name": "explain",
+      "label": "Explain",
+      "guidance": "Confirm the mechanism — trace the code path that produces the error. Write working_state['root_cause'] (>= 100 chars) describing exactly why it fails.",
+      "tools": ["read_file", "think"],
+      "gate": {
+        "required_keys": ["root_cause"],
+        "min_length": {"root_cause": 100}
+      },
+      "max_heartbeats": 3,
+      "on_fail_state": "isolate"
+    },
+    {
+      "name": "fix",
+      "label": "Fix",
+      "guidance": "Apply the minimal change that addresses the root cause. Record working_state['fix_summary'] (>= 60 chars) and working_state['files_changed'] (>= 1 item).",
+      "tools": ["edit_file", "create_file"],
+      "gate": {
+        "required_keys": ["fix_summary", "files_changed"],
+        "min_length": {"fix_summary": 60},
+        "min_list_length": {"files_changed": 1}
+      },
+      "max_heartbeats": 4,
+      "on_fail_state": "explain"
+    },
+    {
+      "name": "verify_fix",
+      "label": "Verify Fix",
+      "guidance": "Run the reproduction from state 1 again. Record working_state['post_fix_result'] (>= 40 chars). If still failing, go back to explain.",
+      "tools": ["shell_exec", "python_exec"],
+      "gate": {
+        "required_keys": ["post_fix_result"],
+        "min_length": {"post_fix_result": 40}
+      },
+      "max_heartbeats": 3,
+      "on_fail_state": "explain"
+    }
+  ]
+}

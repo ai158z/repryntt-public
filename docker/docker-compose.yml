@@ -1,0 +1,33 @@
+services:
+  repryntt:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: repryntt:latest
+    container_name: repryntt
+    init: true
+    environment:
+      REPRYNTT_DATA_DIR: /data
+      REPRYNTT_PROVIDER: ${REPRYNTT_PROVIDER:-local}
+      REPRYNTT_API_KEY: ${REPRYNTT_API_KEY:-}
+      REPRYNTT_AGENT_NAME: ${REPRYNTT_AGENT_NAME:-Andrew}
+      REPRYNTT_HEARTBEAT: ${REPRYNTT_HEARTBEAT:-69}
+      REPRYNTT_BLOCKCHAIN_ENABLED: ${REPRYNTT_BLOCKCHAIN_ENABLED:-0}
+      REPRYNTT_START_CHAIN: ${REPRYNTT_START_CHAIN:-0}
+      PYTHONUTF8: "1"
+    volumes:
+      - repryntt_data:/data
+      - repryntt_logs:/data/logs
+    ports:
+      - "8089:8089"
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  repryntt_data:
+  repryntt_logs:

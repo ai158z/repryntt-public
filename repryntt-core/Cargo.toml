@@ -1,0 +1,51 @@
+[package]
+name = "repryntt_core"
+version = "0.1.0"
+edition = "2024"
+description = "repryntt blockchain core — Proof of Power consensus"
+
+[dependencies]
+# Hashing — SHA3-256/512 (must match Python's hashlib.sha3_*)
+sha3 = "0.10"
+
+# Ed25519 signatures (must match Python's cryptography.hazmat Ed25519)
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+
+# Serialization — JSON (must produce identical output to Python's json.dumps(sort_keys=True))
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# SQLite storage
+rusqlite = { version = "0.33", features = ["bundled"] }
+
+# Async runtime (for future P2P networking)
+tokio = { version = "1", features = ["full"] }
+
+# Hex encoding
+hex = "0.4"
+
+# Random / VRF (0.8 — compatible with ed25519-dalek v2's rand_core 0.6)
+rand = "0.8"
+
+# Timestamps
+chrono = "0.4"
+
+# RSA blind signatures (entity verification oracle)
+rsa = "0.9"
+num-bigint = "0.4"
+num-traits = "0.2"
+num-integer = "0.1"
+
+# HTTP client (bootstrap peer discovery)
+ureq = "2"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+lto = true

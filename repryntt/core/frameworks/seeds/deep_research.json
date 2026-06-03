@@ -1,0 +1,81 @@
+{
+  "id": "deep_research",
+  "label": "Deep Research",
+  "description": "Question-first structured investigation with evidence, analysis, and synthesis.",
+  "match_keywords": ["research", "investigate", "study", "analyze", "explore why", "understand"],
+  "version": 1,
+  "lineage": [],
+  "tags": ["cognition", "knowledge"],
+  "success_criteria": "Produces a synthesized answer grounded in >= 3 pieces of evidence.",
+  "author": "system",
+  "states": [
+    {
+      "name": "question",
+      "label": "Frame the Question",
+      "guidance": "Write 3-5 sharp sub-questions that would decisively answer the goal. Save them under working_state['sub_questions'] as a list of strings.",
+      "tools": ["think", "remember"],
+      "gate": {
+        "required_keys": ["sub_questions"],
+        "min_list_length": {"sub_questions": 3}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "hypothesize",
+      "label": "Form a Hypothesis",
+      "guidance": "State a falsifiable hypothesis (>= 30 chars) under working_state['hypothesis'] that your sub_questions will test.",
+      "tools": ["think"],
+      "gate": {
+        "required_keys": ["hypothesis"],
+        "min_length": {"hypothesis": 30}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "gather",
+      "label": "Gather Evidence",
+      "guidance": "Collect >= 3 distinct pieces of evidence. Append each as an object {source, claim, strength} to working_state['evidence'].",
+      "tools": ["web_search", "remember", "grokipedia_search", "read_file"],
+      "gate": {
+        "required_keys": ["evidence"],
+        "min_list_length": {"evidence": 3}
+      },
+      "max_heartbeats": 4,
+      "on_fail_state": "hypothesize"
+    },
+    {
+      "name": "analyze",
+      "label": "Analyze",
+      "guidance": "Compare evidence against hypothesis. Write an analysis of >= 120 chars under working_state['analysis'] describing which sub-questions are answered and which remain open.",
+      "tools": ["think"],
+      "gate": {
+        "required_keys": ["analysis"],
+        "min_length": {"analysis": 120}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "synthesize",
+      "label": "Synthesize Answer",
+      "guidance": "Produce a final answer (>= 200 chars) under working_state['answer'] and a confidence score 1-5 under working_state['confidence'].",
+      "tools": ["think", "store_knowledge"],
+      "gate": {
+        "required_keys": ["answer", "confidence"],
+        "min_length": {"answer": 200},
+        "min_numeric": {"confidence": 1}
+      },
+      "max_heartbeats": 2
+    },
+    {
+      "name": "reflect",
+      "label": "Reflect + Store",
+      "guidance": "Write working_state['reflection'] (>= 80 chars) — what surprised you, what would you investigate next, and persist the answer to memory.",
+      "tools": ["store_knowledge", "remember"],
+      "gate": {
+        "required_keys": ["reflection"],
+        "min_length": {"reflection": 80}
+      },
+      "max_heartbeats": 2
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "$schema_version": 1,
+  "_comment": "Default bootstrap-file write policy. User overrides at ~/.repryntt/brain/bootstrap_policy.json (deep-merged). See docs/bootstrap-protection.md.",
+
+  "defaults": {
+    "max_bytes": 20000,
+    "min_bytes_for_shrinkage_check": 200,
+    "shrinkage_floor": 0.4,
+    "default_mode": "append",
+    "allow_replace": true,
+    "archive_keep": 10
+  },
+
+  "categories": {
+    "identity_config": {
+      "_comment": "Operator-only. Agent cannot edit at all.",
+      "allow_replace": false,
+      "allow_append": false,
+      "default_mode": "deny"
+    },
+    "reference": {
+      "_comment": "Operator-curated reference docs. Agent may append, may NOT wholesale-replace.",
+      "allow_replace": false,
+      "allow_append": true,
+      "default_mode": "append"
+    },
+    "living_journal": {
+      "_comment": "Agent's own evolving identity/profile. Replace allowed but tight shrinkage floor (must grow over time).",
+      "allow_replace": true,
+      "allow_append": true,
+      "default_mode": "append",
+      "shrinkage_floor": 0.6
+    },
+    "working_state": {
+      "_comment": "Curated state — short. Append rate-limited, replace allowed.",
+      "allow_replace": true,
+      "allow_append": true,
+      "default_mode": "append",
+      "max_bytes": 8000,
+      "append_per_day": 3
+    },
+    "log_curated": {
+      "_comment": "Curated log (RECALL.md). Auto-consolidates at size cap.",
+      "allow_replace": true,
+      "allow_append": true,
+      "default_mode": "append",
+      "auto_consolidate": true
+    },
+    "ephemeral": {
+      "_comment": "Short-lived completion markers. Free to replace with anything.",
+      "allow_replace": true,
+      "allow_append": true,
+      "default_mode": "replace",
+      "shrinkage_floor": 0.0,
+      "min_bytes_for_shrinkage_check": 0
+    }
+  },
+
+  "files": {
+    "IDENTITY.md":     {"category": "identity_config"},
+
+    "CAPABILITIES.md": {"category": "reference"},
+    "PROTOCOL.md":     {"category": "reference"},
+    "TOOLKIT.md":      {"category": "reference"},
+    "HEARTBEAT.md":    {"category": "reference"},
+    "OPERATOR.md":     {"category": "reference"},
+    "HOUSEHOLD.md":    {"category": "reference"},
+    "MY_FILES.md":     {"category": "reference"},
+    "VALUES.md":       {"category": "reference"},
+    "FRAMEWORKS.md":   {"category": "reference"},
+    "TRADING.md":      {"category": "reference"},
+    "LAUNCHING.md":    {"category": "reference"},
+    "INTERESTS.md":    {"category": "reference"},
+
+    "SPIRIT.md":  {"category": "living_journal"},
+    "PROFILE.md": {"category": "living_journal"},
+
+    "PULSE.md":   {"category": "working_state"},
+
+    "RECALL.md":  {"category": "log_curated"},
+
+    "GENESIS.md": {"category": "ephemeral"}
+  }
+}

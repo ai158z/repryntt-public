@@ -1,0 +1,34 @@
+{
+  "contract_data": {
+    "workloads": {},
+    "valid_keys": [],
+    "deployment_keys": {}
+  },
+  "balances": {
+    "DAO": 0,
+    "SYSTEM": 0,
+    "STAKE_POOL": 0,
+    "a1a4090aced69d411b6e62bf49944f295c85ed88": 95095000000
+  },
+  "faucet_used_wallets": [],
+  "nonce_tracker": {},
+  "entity_registry": {
+    "records": {},
+    "nullifiers": [],
+    "human_tree": {
+      "leaves": [],
+      "root": "9e6291970cb44dd94008c79bcaf9d86f18b4b49ba5b2a04781db7199ed3b9e4e"
+    },
+    "machine_tree": {
+      "leaves": [],
+      "root": "9e6291970cb44dd94008c79bcaf9d86f18b4b49ba5b2a04781db7199ed3b9e4e"
+    }
+  },
+  "device_registry": {
+    "devices": {},
+    "entity_nodes": {}
+  },
+  "total_supply": 95095000000,
+  "block_height": 96,
+  "last_updated": "2026-04-17T15:34:20.963616"
+}

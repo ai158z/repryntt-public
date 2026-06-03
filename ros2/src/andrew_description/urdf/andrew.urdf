@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+<!--
+  Andrew robot URDF — Jetson Orin Nano tracked platform
+  TB6612FNG H-bridge, 2× DC gear motors, differential drive.
+
+  Physical dimensions (measure and update these):
+    chassis: 28cm long × 18cm wide × 15cm tall
+    track separation (centre to centre): 18cm
+    wheel radius (effective): 3cm
+
+  Coordinate frame: x=forward, y=left, z=up  (ROS standard)
+-->
+<robot name="andrew">
+
+  <!-- ── base_footprint: ground projection (Nav2 uses this) ── -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child  link="base_link"/>
+    <origin xyz="0 0 0.04" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── base_link: main chassis ── -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.28 0.18 0.12"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.28 0.18 0.12"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <!-- ~1.5 kg chassis estimate -->
+      <mass value="1.5"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.010" ixy="0.0" ixz="0.0"
+               iyy="0.018" iyz="0.0"
+               izz="0.024"/>
+    </inertial>
+  </link>
+
+  <!-- ── Left track (visual only — no physics joints) ── -->
+  <link name="left_track">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.26 0.04 0.06"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.05 0.05 0.05 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.26 0.04 0.06"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.001" ixy="0" ixz="0"
+               iyy="0.001" iyz="0"
+               izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="left_track_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="left_track"/>
+    <origin xyz="0 0.11 -0.03" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Right track ── -->
+  <link name="right_track">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.26 0.04 0.06"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.05 0.05 0.05 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.26 0.04 0.06"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.001" ixy="0" ixz="0"
+               iyy="0.001" iyz="0"
+               izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="right_track_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="right_track"/>
+    <origin xyz="0 -0.11 -0.03" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Camera (realsense or webcam position) ── -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.025 0.090 0.025"/>
+      </geometry>
+      <material name="silver">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0"
+               iyy="0.0001" iyz="0"
+               izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="camera_link"/>
+    <origin xyz="0.12 0 0.07" rpy="0 0 0"/>
+  </joint>
+
+  <!-- optical frame: z forward, x right, y down — ROS camera convention -->
+  <link name="camera_optical_link"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child  link="camera_optical_link"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+</robot>

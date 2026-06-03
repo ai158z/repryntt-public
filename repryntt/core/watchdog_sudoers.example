@@ -1,0 +1,16 @@
+# repryntt watchdog — passwordless sudoers rule for non-destructive memory reclaim.
+#
+# Install:
+#   sudo visudo -f /etc/sudoers.d/repryntt-watchdog
+# Paste the one line below (replace "repryntt" if your user differs):
+#
+repryntt ALL=(root) NOPASSWD: /usr/sbin/sysctl -q vm.drop_caches=1, /home/repryntt/.repryntt/bin/drop_caches.sh
+#
+# Then verify:
+#   sudo -n sysctl -q vm.drop_caches=1 && echo OK
+#
+# Notes:
+#   * Only vm.drop_caches=1 is allowed (pagecache only — safe, never data loss).
+#   * The optional helper script at ~/.repryntt/bin/drop_caches.sh is whitelisted
+#     so you can later add more sophisticated logic (e.g. echo 1 then zone_reclaim).
+#   * Nothing else gains root privilege — the rule is intentionally narrow.
