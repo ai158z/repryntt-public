@@ -17,6 +17,26 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 const http = require('http');
+const https = require('https');
+
+// ── Auto-update + structured logging ───────────────────────────────────
+// electron-log routes console.log + autoUpdater logs to a file the user
+// can hand us when something goes wrong. electron-updater pulls signed
+// releases from GitHub Releases (configured via package.json `publish`).
+let autoUpdater = null;
+let updaterLog = null;
+try {
+  updaterLog = require('electron-log');
+  updaterLog.transports.file.level = 'info';
+  autoUpdater = require('electron-updater').autoUpdater;
+  autoUpdater.logger = updaterLog;
+  autoUpdater.autoDownload = true;          // download in background
+  autoUpdater.autoInstallOnAppQuit = true;  // apply on next quit
+} catch (e) {
+  // electron-updater isn't installed yet — `npm install` hasn't been
+  // run. The app still runs, just without auto-update.
+  console.warn('Auto-update unavailable (electron-updater not installed yet):', e.message);
+}
 
 // ── Config persistence ─────────────────────────────────────────────────
 const CONFIG_DIR = path.join(app.getPath('userData'));
@@ -28,6 +48,15 @@ const DEFAULT_CONFIG = {
   cloudUrl: 'https://www.repryntt.com/dashboard/nexus',
   remember: true,
   lastBackend: null,
+  // First-run state. `welcomed` flips to true once the user has
+  // completed the welcome flow (picked cloud or local + the chosen
+  // path was reachable). After that we skip welcome on subsequent
+  // launches and go straight to the dashboard.
+  welcomed: false,
+  // Cloud-only auth — only set when backend === 'cloud'. Stored in
+  // userData (not in ~/.repryntt/) so it travels with the desktop
+  // install, not the local daemon. Treated as a secret on disk.
+  cloudApiKey: '',
 };
 
 function loadConfig() {
@@ -322,6 +351,9 @@ function buildAppMenu() {
     {
       role: 'help',
       submenu: [
+        { label: 'Check for updates…', click: () => checkForUpdatesManual() },
+        { label: 'Run setup again', click: () => { config.welcomed = false; saveConfig(config); createWelcomeWindow(); if (mainWindow) mainWindow.close(); } },
+        { type: 'separator' },
         { label: 'Open repryntt.com', click: () => shell.openExternal('https://www.repryntt.com') },
         { label: 'View on GitHub', click: () => shell.openExternal('https://github.com/ai158z/repryntt-public') },
         { label: 'Report an issue', click: () => shell.openExternal('https://github.com/ai158z/repryntt-public/issues') },
@@ -367,14 +399,172 @@ async function reconnect() {
   if (mainWindow) await createWindow(target);
 }
 
+// ── Welcome window (first-run) ─────────────────────────────────────────
+
+let welcomeWindow = null;
+
+function createWelcomeWindow() {
+  welcomeWindow = new BrowserWindow({
+    width: 880,
+    height: 640,
+    minWidth: 700,
+    minHeight: 540,
+    title: 'Welcome to Repryntt',
+    backgroundColor: '#ffffff',
+    resizable: true,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+  welcomeWindow.once('ready-to-show', () => welcomeWindow.show());
+  welcomeWindow.on('closed', () => { welcomeWindow = null; });
+  welcomeWindow.loadFile(path.join(__dirname, 'welcome.html'));
+}
+
+// ── Auto-update plumbing ───────────────────────────────────────────────
+
+function setupAutoUpdate() {
+  if (!autoUpdater) return;
+
+  autoUpdater.on('checking-for-update', () => {
+    if (updaterLog) updaterLog.info('Checking for update…');
+  });
+
+  autoUpdater.on('update-available', info => {
+    if (updaterLog) updaterLog.info('Update available:', info?.version);
+    // Don't block — downloads silently in the background.
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    if (updaterLog) updaterLog.info('Up to date.');
+  });
+
+  autoUpdater.on('error', err => {
+    if (updaterLog) updaterLog.error('Auto-update error:', err?.message || err);
+  });
+
+  autoUpdater.on('download-progress', progress => {
+    if (updaterLog) {
+      updaterLog.info(
+        `Downloading update: ${progress?.percent?.toFixed(1)}% (${Math.round(progress?.bytesPerSecond / 1024)} KB/s)`
+      );
+    }
+  });
+
+  autoUpdater.on('update-downloaded', async info => {
+    if (updaterLog) updaterLog.info('Update downloaded:', info?.version);
+    const result = await dialog.showMessageBox(mainWindow || null, {
+      type: 'info',
+      title: 'Repryntt — update ready',
+      message: `A new version (${info?.version}) is ready to install.`,
+      detail: 'Install it now? Repryntt will quit, install the update, and reopen.',
+      buttons: ['Install and restart', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (result.response === 0) {
+      isQuitting = true;
+      autoUpdater.quitAndInstall();
+    }
+    // If they pick Later, the update applies on the next quit (because
+    // we set autoInstallOnAppQuit = true).
+  });
+
+  // Defer the first check ~10s after launch so we don't compete with
+  // the dashboard loading. Then re-check every 4 hours.
+  setTimeout(() => {
+    try { autoUpdater.checkForUpdates(); } catch (e) {
+      if (updaterLog) updaterLog.warn('Initial update check failed:', e?.message || e);
+    }
+  }, 10_000);
+  setInterval(() => {
+    try { autoUpdater.checkForUpdates(); } catch (_) {}
+  }, 4 * 60 * 60 * 1000);
+}
+
+async function checkForUpdatesManual() {
+  if (!autoUpdater) {
+    await dialog.showMessageBox(mainWindow || null, {
+      type: 'info',
+      title: 'Updates',
+      message: 'Auto-update isn\'t available in this build.',
+      detail: 'Download the latest installer from the GitHub releases page.',
+      buttons: ['Open releases page', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(r => {
+      if (r.response === 0) shell.openExternal('https://github.com/ai158z/repryntt-public/releases');
+    });
+    return;
+  }
+  try {
+    const r = await autoUpdater.checkForUpdates();
+    if (!r?.updateInfo || r.updateInfo.version === app.getVersion()) {
+      await dialog.showMessageBox(mainWindow || null, {
+        type: 'info',
+        title: 'Repryntt is up to date',
+        message: `You're running v${app.getVersion()} — the latest.`,
+        buttons: ['OK'],
+      });
+    }
+  } catch (e) {
+    await dialog.showErrorBox('Update check failed', String(e?.message || e));
+  }
+}
+
 // ── IPC for preload-script bridge ──────────────────────────────────────
 
 ipcMain.handle('repryntt:openSettings', () => openSettings());
 ipcMain.handle('repryntt:reconnect', () => reconnect());
 ipcMain.handle('repryntt:status', () => ({
   backend: currentBackend,
-  config,
+  config: { ...config, cloudApiKey: config.cloudApiKey ? '<redacted>' : '' },
 }));
+ipcMain.handle('repryntt:checkForUpdates', () => checkForUpdatesManual());
+ipcMain.handle('repryntt:openExternal', (_e, url) => shell.openExternal(url));
+
+// Probe an arbitrary URL (welcome screen Test button)
+ipcMain.handle('repryntt:probeBackend', async (_e, urlStr) => {
+  const ok = await probeUrl(urlStr);
+  return { ok };
+});
+
+// Save the welcome-flow result and switch into the dashboard
+ipcMain.handle('repryntt:completeWelcome', async (_e, payload) => {
+  try {
+    if (payload?.backend === 'cloud') {
+      config.backend = 'cloud';
+      config.cloudApiKey = payload.apiKey || '';
+      if (payload.cloudUrl) config.cloudUrl = payload.cloudUrl;
+    } else if (payload?.backend === 'local') {
+      config.backend = 'local';
+      if (payload.localUrl) config.localUrl = payload.localUrl;
+    } else {
+      return { ok: false, error: 'Unknown backend choice.' };
+    }
+    config.welcomed = true;
+    saveConfig(config);
+
+    // Close welcome and open the dashboard
+    const target = await resolveBackend(config);
+    currentBackend = target;
+    config.lastBackend = target;
+    saveConfig(config);
+    refreshTrayMenu();
+    if (welcomeWindow && !welcomeWindow.isDestroyed()) welcomeWindow.close();
+    await createWindow(target);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+});
 
 // ── Single-instance lock ───────────────────────────────────────────────
 
@@ -396,6 +586,17 @@ if (!gotTheLock) {
 app.whenReady().then(async () => {
   buildAppMenu();
   buildTray();
+  setupAutoUpdate();
+
+  // First-run experience: if we've never seen this user, show the
+  // welcome window before going to the dashboard. After they pick
+  // cloud or local, the completeWelcome IPC handler closes the
+  // welcome and opens the dashboard.
+  if (!config.welcomed) {
+    createWelcomeWindow();
+    return;
+  }
+
   const target = await resolveBackend(config);
   currentBackend = target;
   config.lastBackend = target;

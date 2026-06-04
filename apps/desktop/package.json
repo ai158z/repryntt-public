@@ -28,6 +28,10 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
   },
+  "dependencies": {
+    "electron-updater": "^6.3.0",
+    "electron-log": "^5.2.0"
+  },
   "build": {
     "appId": "com.repryntt.desktop",
     "productName": "Repryntt",
@@ -36,11 +40,27 @@
       "buildResources": "assets",
       "output": "dist"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ai158z",
+        "repo": "repryntt-public",
+        "releaseType": "release"
+      }
+    ],
     "files": [
       "electron/**/*",
       "assets/**/*",
       "package.json",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,*.flow,*.mk}"
+      "node_modules/electron-updater/**/*",
+      "node_modules/electron-log/**/*",
+      "node_modules/builder-util-runtime/**/*",
+      "node_modules/js-yaml/**/*",
+      "node_modules/lazy-val/**/*",
+      "node_modules/lru-cache/**/*",
+      "node_modules/sax/**/*",
+      "node_modules/semver/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,*.flow,*.mk,test/**/*}"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",

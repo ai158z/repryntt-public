@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to Repryntt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #0a0a0a;
+      --muted: #4b5563;
+      --border: #e5e7eb;
+      --accent: #0a0a0a;
+      --accent-hover: #1f2937;
+      --candy: #fbbf24;
+      --good: #10b981;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      overflow: hidden;
+      user-select: none;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 48px 56px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    h2 {
+      font-size: 14px;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      margin: 0 0 16px;
+    }
+    p { color: var(--muted); line-height: 1.55; margin: 0 0 12px; }
+    .header { margin-bottom: 32px; }
+    .header .tag {
+      font-family: ui-monospace, Menlo, monospace;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-height: 0; }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .card:hover {
+      border-color: var(--ink);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .card.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+    .card .label {
+      font-family: ui-monospace, monospace;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: var(--candy);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 700; }
+    .card .desc { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .card .bullets { margin-top: 16px; padding-left: 16px; font-size: 12px; color: var(--muted); }
+    .card .bullets li { margin: 4px 0; }
+    .card.recommended .label { color: var(--good); }
+    .card.recommended::after {
+      content: "RECOMMENDED";
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-family: ui-monospace, monospace;
+      letter-spacing: 1.5px;
+      font-size: 9px;
+      color: var(--good);
+      background: rgba(16, 185, 129, 0.08);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .card { position: relative; }
+    .step { display: none; }
+    .step.active { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-family: ui-monospace, monospace;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input[type=text], input[type=password], input[type=url] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: ui-monospace, monospace;
+      background: #fafafa;
+      color: var(--ink);
+      transition: border-color 0.15s;
+    }
+    input:focus { outline: none; border-color: var(--ink); background: #fff; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    button {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+      letter-spacing: 0.3px;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+    }
+    button.primary:hover { background: var(--accent-hover); }
+    button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover { border-color: var(--ink); }
+    .status {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.info { background: #f3f4f6; color: var(--muted); }
+    .status.error { background: rgba(239,68,68,0.08); color: var(--bad); }
+    .status.success { background: rgba(16,185,129,0.08); color: var(--good); }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-family: ui-monospace, monospace;
+    }
+    a {
+      color: var(--ink);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .footer {
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .check-icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--good);
+      color: #fff;
+      text-align: center;
+      line-height: 18px;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+    .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Step 1: Welcome / pick a path -->
+  <div class="step active" id="step-welcome">
+    <div class="header">
+      <div class="tag">REPRYNTT — first-time setup</div>
+      <h1>Welcome.</h1>
+      <p style="margin-top:8px;">Pick how you want to run Repryntt. You can switch later from Settings.</p>
+    </div>
+    <div class="cards">
+      <div class="card recommended" onclick="pick('cloud')">
+        <div class="label">Cloud — easiest</div>
+        <h3>Sign in with repryntt.com</h3>
+        <div class="desc">Use a hosted Repryntt account. Your agent runs on the cloud or on a paired machine you set up earlier. No Python, no terminal.</div>
+        <ul class="bullets">
+          <li>Works on any computer</li>
+          <li>Just need an API key from repryntt.com</li>
+          <li>~10 seconds to set up</li>
+        </ul>
+      </div>
+      <div class="card" onclick="pick('local')">
+        <div class="label">Local — for advanced users</div>
+        <h3>Connect to a local install</h3>
+        <div class="desc">You've already installed the Repryntt daemon on this computer (via <code>install.py</code>). The desktop app will connect to <code>localhost:8089</code>.</div>
+        <ul class="bullets">
+          <li>Fully offline-capable</li>
+          <li>Requires the daemon to be running</li>
+          <li>Bring your own LLM keys</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Cloud path -->
+  <div class="step" id="step-cloud">
+    <div class="header">
+      <div class="tag">CLOUD — sign in</div>
+      <h1>Sign in to repryntt.com</h1>
+      <p style="margin-top:8px;">Paste your API key from <a onclick="openExternal('https://www.repryntt.com/dashboard/api-keys')">repryntt.com/dashboard/api-keys</a>. It's a long string starting with <code>rkey_</code>.</p>
+    </div>
+    <div class="field">
+      <label>REPRYNTT API KEY</label>
+      <input type="password" id="cloud-key" placeholder="rkey_live_..." autocomplete="off">
+      <div class="hint">Stored locally on this machine only. Never sent anywhere except api.repryntt.com.</div>
+    </div>
+    <div id="cloud-status" class="status"></div>
+    <div class="nav">
+      <button class="secondary" onclick="goto('welcome')">← Back</button>
+      <button class="primary" id="cloud-next" onclick="submitCloud()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Local path -->
+  <div class="step" id="step-local">
+    <div class="header">
+      <div class="tag">LOCAL — connect</div>
+      <h1>Connect to your local daemon</h1>
+      <p style="margin-top:8px;">Repryntt Desktop will look for a daemon running at the address below.</p>
+    </div>
+    <div class="field">
+      <label>NEXUS URL</label>
+      <input type="url" id="local-url" value="http://localhost:8089">
+      <div class="hint">Default is <code>http://localhost:8089</code>. Change only if you moved the daemon.</div>
+    </div>
+    <div id="local-status" class="status"></div>
+    <div class="nav">
+      <button class="secondary" onclick="goto('welcome')">← Back</button>
+      <div class="row">
+        <button class="secondary" onclick="testLocal()">Test connection</button>
+        <button class="primary" id="local-next" onclick="submitLocal()" disabled>Continue →</button>
+      </div>
+    </div>
+    <p style="margin-top:32px;font-size:13px;color:var(--muted);">
+      <strong>Daemon not running?</strong> Open a terminal and run <code>repryntt start</code>,
+      then come back and click Test connection. The full install guide is at
+      <a onclick="openExternal('https://github.com/ai158z/repryntt-public#readme')">github.com/ai158z/repryntt-public</a>.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  // ── Renderer state ─────────────────────────────────────────────────
+  const $ = sel => document.querySelector(sel);
+  const steps = ['welcome', 'cloud', 'local'];
+  function goto(step) {
+    steps.forEach(s => $('#step-' + s).classList.toggle('active', s === step));
+  }
+  function openExternal(url) {
+    window.repryntt?.openExternal?.(url);
+  }
+  function pick(choice) {
+    goto(choice);
+    if (choice === 'cloud') $('#cloud-key').focus();
+    if (choice === 'local') $('#local-url').focus();
+  }
+
+  // ── Status helpers ────────────────────────────────────────────────
+  function showStatus(el, kind, text) {
+    el.className = 'status show ' + kind;
+    el.textContent = text;
+  }
+  function hideStatus(el) {
+    el.className = 'status';
+    el.textContent = '';
+  }
+
+  // ── Cloud submit ──────────────────────────────────────────────────
+  async function submitCloud() {
+    const key = $('#cloud-key').value.trim();
+    const status = $('#cloud-status');
+    if (!key.startsWith('rkey_') || key.length < 20) {
+      showStatus(status, 'error', 'That doesn\'t look like a valid rkey_ key. Get one from repryntt.com/dashboard/api-keys.');
+      return;
+    }
+    $('#cloud-next').disabled = true;
+    showStatus(status, 'info', 'Validating your key with api.repryntt.com…');
+    const result = await window.repryntt.completeWelcome({
+      backend: 'cloud',
+      cloudUrl: 'https://www.repryntt.com/dashboard/nexus',
+      apiKey: key,
+    });
+    if (result?.ok) {
+      showStatus(status, 'success', 'Connected — opening your dashboard.');
+    } else {
+      $('#cloud-next').disabled = false;
+      showStatus(status, 'error', result?.error || 'Could not connect. Double-check the key and try again.');
+    }
+  }
+
+  // ── Local test + submit ───────────────────────────────────────────
+  async function testLocal() {
+    const url = $('#local-url').value.trim();
+    const status = $('#local-status');
+    if (!url) { showStatus(status, 'error', 'Enter a URL first.'); return; }
+    showStatus(status, 'info', 'Probing ' + url + '…');
+    const result = await window.repryntt.probeBackend(url);
+    if (result?.ok) {
+      showStatus(status, 'success', 'Reached the daemon. You\'re ready to go.');
+      $('#local-next').disabled = false;
+    } else {
+      showStatus(status, 'error', 'Nothing answered at ' + url + '. Make sure `repryntt start` is running in a terminal.');
+      $('#local-next').disabled = true;
+    }
+  }
+  async function submitLocal() {
+    const url = $('#local-url').value.trim();
+    const result = await window.repryntt.completeWelcome({
+      backend: 'local',
+      localUrl: url,
+    });
+    if (!result?.ok) {
+      showStatus($('#local-status'), 'error', result?.error || 'Could not save settings.');
+    }
+  }
+
+  // ── Enter key shortcuts ───────────────────────────────────────────
+  $('#cloud-key').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCloud();
+  });
+  $('#local-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') testLocal();
+  });
+</script>
+</body>
+</html>

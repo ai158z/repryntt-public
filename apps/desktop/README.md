@@ -35,10 +35,43 @@ The agent daemon runs **separately** (start it with `repryntt start` in
 a terminal, or as a systemd service on Linux). Repryntt Desktop is just
 the polished native window for the dashboard.
 
-By default, the app **auto-detects** which backend to use: it first
-probes `localhost:8089`, and falls back to the cloud dashboard if you're
-not running the daemon locally. You can lock it to one or the other via
-the **Settings** menu (Cmd/Ctrl + `,`).
+## First-run experience
+
+On first launch, the app shows a **welcome window** that walks the user
+through two paths:
+
+1. **Cloud (recommended for non-technical users)** — paste an API key
+   from `repryntt.com/dashboard/api-keys`. The desktop app connects to
+   `repryntt.com/dashboard/nexus`. **Zero local install required.**
+   Works on any computer.
+
+2. **Local (advanced)** — point the desktop app at your local daemon
+   (default: `http://localhost:8089`). The welcome screen has a **Test
+   connection** button so the user can verify before continuing.
+
+After the user picks once, the choice is remembered. Re-run the welcome
+flow any time via **Help → Run setup again**.
+
+## Auto-update
+
+The app checks for updates ~10 seconds after launch and every 4 hours
+after that, using **electron-updater** wired to GitHub Releases.
+
+- Updates download silently in the background.
+- When ready, a dialog asks the user whether to install now or on next
+  quit (default: now).
+- Manual check available under **Help → Check for updates…**.
+- Update log lives at `~/Library/Logs/Repryntt/main.log` (mac),
+  `%APPDATA%\Repryntt\logs\main.log` (win), `~/.config/Repryntt/logs/main.log` (linux).
+
+For auto-update to work, releases need to be published to GitHub
+Releases (electron-builder does this when `GH_TOKEN` is set during
+`npm run dist`):
+
+```bash
+export GH_TOKEN=ghp_...        # token with `public_repo` scope
+npm run dist:all -- --publish always
+```
 
 ## Install (prebuilt)
 
