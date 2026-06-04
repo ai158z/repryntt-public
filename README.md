@@ -449,6 +449,45 @@ If you don't have hardware, all of this is dormant — `tank_move_*` and
 
 ---
 
+## ░░ REPRYNTT DESKTOP ░░
+
+A polished native window around the local Nexus dashboard, with a system
+tray, native menus, and cross-platform installers. Available for
+**macOS, Windows, and Linux**.
+
+```
+┌─────────────────────┐
+│  Repryntt Desktop   │  ← Electron window + menu + tray
+│     (Electron)      │
+└─────────┬───────────┘
+          │ loads
+          ▼
+  Local Nexus (localhost:8089)  OR  Cloud dashboard (repryntt.com)
+```
+
+The agent daemon runs separately; the desktop app is just the polished
+window. By default it **auto-detects** which backend to use (probes
+local first, falls back to cloud).
+
+**Build from source:**
+
+```bash
+cd apps/desktop
+npm install
+npm run dist        # build installer for your current platform
+```
+
+| Target | Command | Output |
+|---|---|---|
+| macOS (Apple Silicon + Intel) | `npm run dist:mac` | DMG + ZIP |
+| Windows 64-bit | `npm run dist:win` | NSIS installer + portable EXE |
+| Linux (x64 + arm64) | `npm run dist:linux` | AppImage + DEB + RPM |
+
+See [`apps/desktop/README.md`](apps/desktop/README.md) for the full
+build + config details.
+
+---
+
 ## ░░ PAIR WITH THE repryntt.com DASHBOARD ░░
 
 If you'd rather drive your agent from a browser anywhere (phone, work

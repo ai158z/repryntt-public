@@ -1,0 +1,8 @@
+node_modules/
+dist/
+out/
+.npm/
+.DS_Store
+*.log
+.electron-builder-cache/
+package-lock.json
