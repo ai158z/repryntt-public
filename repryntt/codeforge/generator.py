@@ -264,10 +264,22 @@ def _call_llm(messages: List[Dict], provider_info: Dict[str, str],
         "model": model,
         "messages": messages,
         "max_tokens": max_tokens,
-        "temperature": temperature,
     }
-    # frequency_penalty: supported by OpenAI, NVIDIA, etc. but NOT xAI/Grok
-    if provider not in ("xai",):
+    # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+) deprecated
+    # the `temperature` param — extended thinking is always on. Sending it
+    # returns 400 from the Anthropic OpenAI-compat endpoint. Skip for those
+    # models; include for everything else.
+    _m = (model or "").lower()
+    _temp_deprecated = (
+        "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+        or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+        or "claude-5-" in _m
+    )
+    if not _temp_deprecated:
+        body["temperature"] = temperature
+    # frequency_penalty: supported by OpenAI, NVIDIA, etc. but NOT xAI/Grok,
+    # and also rejected by the Anthropic compat shim on those flagships.
+    if provider not in ("xai",) and not _temp_deprecated:
         body["frequency_penalty"] = FREQUENCY_PENALTY
     # Some providers support repetition_penalty (NVIDIA NIM, vLLM, llama.cpp)
     # but not all OpenAI-compatible endpoints do. Include it — harmless if ignored.

@@ -70,12 +70,16 @@ def _llm_call(prompt: str, system: str = "", max_tokens: int = 1024) -> str:
     messages.append({"role": "user", "content": prompt})
 
     try:
-        resp = requests.post(endpoint, json={
-            "model": model,
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": 0.8,
-        }, headers={
+        _m = (model or "").lower()
+        _temp_deprecated = (
+            "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+            or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+            or "claude-5-" in _m
+        )
+        _body = {"model": model, "messages": messages, "max_tokens": max_tokens}
+        if not _temp_deprecated:
+            _body["temperature"] = 0.8
+        resp = requests.post(endpoint, json=_body, headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }, timeout=60)

@@ -141,9 +141,20 @@ def call_llm(messages: List[Dict[str, str]],
         "model": model,
         "messages": messages,
         "max_tokens": max_tokens,
-        "temperature": temperature,
     }
-    if frequency_penalty and provider not in ("xai",):
+    # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+) reject
+    # the `temperature` param — extended thinking is always on. Sending
+    # it returns 400. Skip for those models. Also skip `frequency_penalty`
+    # because Anthropic's compat shim rejects that for the same models.
+    _m = (model or "").lower()
+    _temp_deprecated = (
+        "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+        or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+        or "claude-5-" in _m
+    )
+    if not _temp_deprecated:
+        body["temperature"] = temperature
+    if frequency_penalty and provider not in ("xai",) and not _temp_deprecated:
         body["frequency_penalty"] = frequency_penalty
 
     for attempt in range(MAX_RETRIES + 1):

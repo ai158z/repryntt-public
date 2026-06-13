@@ -729,15 +729,38 @@ class JarvisLearning:
             except Exception:
                 pass
 
-        # First heartbeat of the day — generate initial plan
-        plan_md = self._generate_initial_plan()
+        # First heartbeat of the day — the agent self-prompts its own plan
+        # via the LLM. No template fallback: if the call fails, we return ""
+        # and the plan file is NOT written, so the next heartbeat retries.
+        # A short cooldown stamp prevents hammering the LLM every heartbeat
+        # while it's failing (e.g. provider outage) — retry at most once/5min.
+        cooldown_path = self.data_dir / "memory" / ".daily_plan_attempt"
+        try:
+            if cooldown_path.exists() and (time.time() - cooldown_path.stat().st_mtime) < 300:
+                return ""  # attempted recently, still cooling down — skip silently
+        except Exception:
+            pass
+        try:
+            cooldown_path.parent.mkdir(parents=True, exist_ok=True)
+            cooldown_path.write_text(str(time.time()))
+        except Exception:
+            pass
+
+        plan_md = self._generate_llm_plan()
         if not plan_md:
+            logger.warning("📅 LLM self-prompt produced no plan — will retry next heartbeat")
             return ""
 
         try:
             plan_path.parent.mkdir(parents=True, exist_ok=True)
             plan_path.write_text(plan_md, encoding='utf-8')
-            logger.info(f"📅 Created daily plan: {plan_path}")
+            logger.info(f"📅 Self-prompted daily plan written: {plan_path}")
+            # Clear the cooldown stamp on success so a fresh failure tomorrow
+            # isn't blocked by today's stamp.
+            try:
+                cooldown_path.unlink()
+            except Exception:
+                pass
         except Exception as e:
             logger.warning(f"Could not write daily plan: {e}")
 
@@ -852,8 +875,235 @@ class JarvisLearning:
 
         return ticked
 
+    # Artifact types the intake gate accepts (kept in sync with
+    # repryntt.agents.intake_gate.ALLOWED_ARTIFACT_TYPES). Surfaced to the
+    # model so it declares a valid `type:` on each task it invents.
+    _ALLOWED_TYPES_HINT = (
+        "code, smart_contract, research_md, analysis_md, plan_md, design_md, "
+        "legal_md, financial_model, tokenomics, patent_claim, curriculum_md, "
+        "marketing_copy, report, data_extract, robotics_doc, hr_doc, "
+        "real_estate_analysis"
+    )
+
+    def _load_recent_plan_tasks(self, today, days: int = 5) -> list:
+        """Return task titles from the last `days` daily plans so the model
+        can see what it ALREADY chose recently and deliberately pick fresh
+        directions instead of re-stamping the same work."""
+        import datetime as _dt
+        import re
+        seen: list = []
+        for d in range(1, days + 1):
+            day = today - _dt.timedelta(days=d)
+            p = self.data_dir / "memory" / f"daily_plan_{day.isoformat()}.md"
+            if not p.exists():
+                continue
+            try:
+                for line in p.read_text(encoding="utf-8").splitlines():
+                    s = line.strip()
+                    m = re.match(r'^[-*]\s*\[[ x]\]\s+(.+)$', s)
+                    if m:
+                        title = m.group(1).strip()
+                        # strip trailing tool hints in backticks for readability
+                        title = re.sub(r'\s*—?\s*`[^`]+`\s*$', '', title).strip()
+                        if title and title not in seen:
+                            seen.append(title)
+            except Exception:
+                continue
+        return seen[:40]
+
+    def _generate_llm_plan(self) -> str:
+        """The agent self-prompts its own daily plan via the LLM.
+
+        Loads identity, yesterday's results, active projects, interests,
+        world seeds, and the last few days of self-chosen tasks, then asks
+        the configured model to author TODAY's task list in its own voice —
+        choosing what IT wants to work on, not stamping a fixed template.
+
+        Returns the plan markdown, or "" if the LLM call fails or returns
+        nothing usable. There is no template fallback by design: a blank
+        return makes get_daily_plan retry on the next heartbeat.
+        """
+        import datetime as _dt
+        import re as _re
+        today = _dt.date.today()
+        today_iso = today.isoformat()
+
+        # Sync completed milestones so finished work shows as [x] and the
+        # model doesn't re-pick it.
+        try:
+            self._sync_completed_to_active_projects()
+        except Exception:
+            pass
+
+        # ── Gather the same dynamic context the template used ──
+        consciousness = self._load_consciousness()
+        yesterday_summary = self._load_yesterday_summary(today)
+        seeds = self._load_daily_seeds(today)
+        projects_context = self._load_active_projects()
+        recent_tasks = self._load_recent_plan_tasks(today)
+        interest_questions = self._load_interest_questions()
+
+        mood = consciousness.get("mood", "focused") if consciousness else "focused"
+        interests = consciousness.get("interests", {}) if consciousness else {}
+        top_interests = [
+            n.replace("_", " ")
+            for n, _ in sorted(
+                interests.items(),
+                key=lambda x: x[1] if isinstance(x[1], (int, float)) else 0,
+                reverse=True,
+            )[:6]
+        ]
+        active_goals = [
+            g.get("text", "")[:140]
+            for g in (consciousness.get("goals", []) if consciousness else [])
+            if g.get("status") == "active"
+        ][:4]
+
+        seed_lines = []
+        for s in (seeds or [])[:5]:
+            text = s.get("text", s.get("headline", ""))
+            dom = s.get("domain", "")
+            hl = self._extract_seed_headline(text) if text else ""
+            if hl:
+                seed_lines.append(f"[{dom}] {hl}")
+
+        # Pull a few concrete open questions from INTERESTS.md to prime —
+        # the model may use, refine, or ignore these.
+        seed_questions = []
+        for _k, _qs in (interest_questions or {}).items():
+            for _q in _qs[:2]:
+                seed_questions.append(_q)
+        seed_questions = seed_questions[:8]
+
+        # ── Build the self-prompt ──
+        system_prompt = (
+            "You are the autonomous agent waking up to plan your own day. "
+            "You are NOT filling in a template — you are deciding what YOU "
+            "genuinely want to accomplish today, as a curious, productive "
+            "mind with real continuity from yesterday. Choose work that "
+            "moves your projects forward, follows your live curiosity, and "
+            "produces concrete artifacts (code, written analysis, research "
+            "with sources) — not vague intentions.\n\n"
+            "Hard rules:\n"
+            "1. Output ONLY a markdown task list, nothing else.\n"
+            "2. Generate 5-8 tasks. Each MUST be genuinely different from "
+            "the 'recent tasks you already chose' list — do not rephrase "
+            "old work, pick new angles or new work entirely.\n"
+            "3. Always include exactly ONE inbox check and ONE end-of-day "
+            "reflection. The other 3-6 are YOUR choice.\n"
+            "4. For each task emit this EXACT shape:\n"
+            "- [ ] <task title, specific and actionable>\n"
+            "  - type: <one of the allowed types>\n"
+            "  - location: workspace/agents/operator/<subdir>/<slug>_" + today_iso + ".<ext>\n"
+            "  - consumer: <operator|developer|customer>\n"
+            "  - success: <one measurable test of done>\n\n"
+            f"Allowed `type` values: {self._ALLOWED_TYPES_HINT}\n"
+            "Pick `.py` for code, `.md` for written work, `.sol` for "
+            "smart_contract. The location subdir should match the work "
+            "(code/, research/, analysis/, plans/, reports/, inbox/)."
+        )
+
+        ctx_parts = [f"# Waking up — {today_iso}", f"Mood: {mood}"]
+        if top_interests:
+            ctx_parts.append("My core interests right now: " + ", ".join(top_interests))
+        if active_goals:
+            ctx_parts.append("My active goals:\n" + "\n".join(f"- {g}" for g in active_goals))
+        if yesterday_summary:
+            ctx_parts.append("What I did yesterday:\n" + yesterday_summary[:1200])
+        if projects_context and "no active projects" not in projects_context.lower():
+            ctx_parts.append("My active projects (open items I could push on):\n" + projects_context[:1500])
+        if recent_tasks:
+            ctx_parts.append(
+                "Tasks I ALREADY chose in the last few days (DO NOT repeat or "
+                "rephrase these — go somewhere new):\n"
+                + "\n".join(f"- {t}" for t in recent_tasks)
+            )
+        if seed_lines:
+            ctx_parts.append("Today's world context (news/science seeds):\n" + "\n".join(f"- {s}" for s in seed_lines))
+        if seed_questions:
+            ctx_parts.append(
+                "Open questions from my interests (optional inspiration — "
+                "refine or ignore):\n" + "\n".join(f"- {q}" for q in seed_questions)
+            )
+        ctx_parts.append(
+            "\nNow write my task list for today. Fresh, specific, mine. "
+            "Markdown only."
+        )
+        user_prompt = "\n\n".join(ctx_parts)
+
+        # ── Call the configured LLM ──
+        try:
+            from repryntt.llm import load_ai_config, resolve_provider, call_llm
+            cfg = load_ai_config()
+            provider_info = resolve_provider(cfg)
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+            raw = call_llm(messages, provider_info, max_tokens=2000, temperature=0.85)
+        except Exception as e:
+            logger.warning(f"📅 daily-plan LLM call failed: {e}")
+            return ""
+
+        if not raw or not raw.strip():
+            return ""
+
+        # ── Extract the task block + validate it actually has tasks ──
+        body = raw.strip()
+        # Strip code fences if the model wrapped the markdown
+        body = _re.sub(r'^```[a-zA-Z]*\s*\n?', '', body)
+        body = _re.sub(r'\n?```\s*$', '', body).strip()
+
+        checkbox_count = len(_re.findall(r'^[-*]\s*\[ \]\s+.+$', body, _re.MULTILINE))
+        if checkbox_count < 2:
+            logger.warning(
+                f"📅 LLM plan had only {checkbox_count} task(s) — rejecting, "
+                "will retry next heartbeat"
+            )
+            return ""
+
+        # ── Assemble the final plan file ──
+        # The seeder only reads checkbox items under a Tasks/Priorities
+        # heading, so wrap the model's list under "## Tasks".
+        header = [
+            f"# Daily Plan — {today_iso}",
+            "",
+            "_Self-authored by the agent at first heartbeat. The agent chose "
+            "this work; it can revise via `update_daily_plan`._",
+            "",
+            f"## Who I Am Today",
+            f"Mood: **{mood}**",
+        ]
+        if top_interests:
+            header.append("Core interests: " + ", ".join(top_interests))
+        header.append("")
+        header.append("## Tasks")
+
+        # If the model already emitted its own "## Tasks" or other headings,
+        # strip leading headings from its body so we don't double up — keep
+        # everything from the first checkbox onward.
+        first_cb = _re.search(r'^[-*]\s*\[ \]', body, _re.MULTILINE)
+        if first_cb:
+            body = body[first_cb.start():]
+
+        footer = [
+            "",
+            "## Reminders",
+            "- Produce artifacts, not summaries. Code > research notes.",
+            "- If blocked on something, skip it and work on something else.",
+            "- This was my own choice today — own it.",
+        ]
+
+        return "\n".join(header) + "\n" + body.strip() + "\n" + "\n".join(footer)
+
     def _generate_initial_plan(self) -> str:
-        """Generate the first daily plan from real dynamic state — identity, recent work, world context."""
+        """[LEGACY — no longer wired] Template-based daily plan generator.
+
+        Kept for reference / emergency fallback only. get_daily_plan now
+        calls _generate_llm_plan() which has the agent self-author its
+        plan via the LLM. This template stamper produced the same fixed
+        skeleton every day, which is exactly the behaviour we moved away
+        from. Do not re-wire without operator intent."""
         import datetime as _dt
         today = _dt.date.today()
         pillar_health = self._compute_pillar_health()

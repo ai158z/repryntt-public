@@ -109,21 +109,29 @@ async def analyze_with_llm(prompt):
         return None
     try:
         def _call():
+            _m = (model or "").lower()
+            _temp_deprecated = (
+                "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+                or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+                or "claude-5-" in _m
+            )
+            _body = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You are a crypto trend analyst. Reply with exactly one word: uptrend, downtrend, or crab."},
+                    {"role": "user", "content": prompt},
+                ],
+                "max_tokens": 50,
+            }
+            if not _temp_deprecated:
+                _body["temperature"] = 0.5
             resp = requests.post(
                 endpoint,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {api_key}",
                 },
-                json={
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": "You are a crypto trend analyst. Reply with exactly one word: uptrend, downtrend, or crab."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "max_tokens": 50,
-                    "temperature": 0.5,
-                },
+                json=_body,
                 timeout=15,
             )
             resp.raise_for_status()

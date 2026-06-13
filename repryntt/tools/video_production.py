@@ -2542,20 +2542,31 @@ def _call_gemini_creative(system_prompt: str, user_prompt: str,
 
     is_anthropic = "anthropic.com" in endpoint or model.lower().startswith("claude")
 
+    # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+) reject
+    # the `temperature` param on Anthropic — sending it returns 400.
+    _m = (model or "").lower()
+    _temp_deprecated = (
+        "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+        or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+        or "claude-5-" in _m
+    )
+
     def _do_request():
         if is_anthropic:
             ep = "https://api.anthropic.com/v1/messages"
+            _body = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "system": system_prompt,
+                "messages": [{"role": "user", "content": user_prompt}],
+            }
+            if not _temp_deprecated:
+                _body["temperature"] = temperature
             resp = _req.post(ep, headers={
                 "x-api-key": api_key,
                 "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json",
-            }, json={
-                "model": model,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "system": system_prompt,
-                "messages": [{"role": "user", "content": user_prompt}],
-            }, timeout=120)
+            }, json=_body, timeout=120)
             resp.raise_for_status()
             data = resp.json()
             return "".join(c.get("text", "") for c in data.get("content", []) if c.get("type") == "text").strip()

@@ -152,6 +152,15 @@ def _resolve_artifact_path(declared: str) -> str:
 _RECENT_WORKSPACE_LOOKBACK_SEC = 24 * 60 * 60  # 1 day
 
 
+# Words too generic to count as evidence the file matches the task —
+# nearly every agent deliverable filename contains some of these.
+_FUZZY_STOPWORDS = {
+    "agent", "agents", "task", "tasks", "deep", "dive", "what", "about",
+    "with", "from", "into", "this", "that", "step", "report", "daily",
+    "update", "draft", "file", "doc", "research", "analysis", "content",
+}
+
+
 def _fuzzy_resolve_artifact(declared: str,
                             task: Optional[Dict[str, Any]] = None) -> Optional[str]:
     """Search the operator workspace for a file that likely IS the
@@ -162,8 +171,15 @@ def _fuzzy_resolve_artifact(declared: str,
     Matching:
       • Same file extension (.py / .md / .json …) — extracted from declared
       • Recent mtime (within _RECENT_WORKSPACE_LOOKBACK_SEC)
-      • Title-keyword overlap (any word ≥4 chars from the task title
-        appears in the filename)
+      • Keyword score: distinctive words (≥4 chars, not stopwords) from
+        BOTH the task title AND the declared filename. A candidate needs
+        ≥2 keyword hits to qualify (≥1 if only one keyword exists). Best
+        score wins; mtime breaks ties.
+
+    The score floor exists because a single generic word ("agents") once
+    matched a completely unrelated document, and the critic reviewed the
+    wrong deliverable. Better to bounce the task back to the producer
+    with "artifact not found" than to silently review the wrong file.
     """
     ext = ""
     if "." in declared:
@@ -172,11 +188,25 @@ def _fuzzy_resolve_artifact(declared: str,
         return None  # no usable extension hint
 
     title = (task or {}).get("title", "") if task else ""
+    declared_stem = os.path.basename(declared).rsplit(".", 1)[0]
+    # Letters only ([A-Za-z]+): underscores must split words (otherwise a
+    # snake_case stem becomes one giant unmatchable "keyword") and pure
+    # digits (dates like 2026) would match every dated filename.
     keywords = {
         w.lower()
-        for w in re.findall(r"[A-Za-z0-9_]+", title)
-        if len(w) >= 4
+        for w in re.findall(r"[A-Za-z]+", f"{title} {declared_stem}")
+        if len(w) >= 4 and w.lower() not in _FUZZY_STOPWORDS
     }
+    if not keywords:
+        return None  # nothing distinctive to match on — don't guess
+    min_hits = 2 if len(keywords) >= 2 else 1
+
+    def _kw_score(fname_lc: str) -> int:
+        # Plural-tolerant: "swarms" matches "swarm_..." too.
+        return sum(
+            1 for k in keywords
+            if k in fname_lc or (k.endswith("s") and k[:-1] in fname_lc)
+        )
 
     # Walk the operator workspace's recent content + sandbox + brain dirs
     roots = [
@@ -185,7 +215,8 @@ def _fuzzy_resolve_artifact(declared: str,
         os.path.join(_HOME_REPRYNTT, "workspace", "agents", "operator", "plans"),
     ]
     cutoff = time.time() - _RECENT_WORKSPACE_LOOKBACK_SEC
-    candidates: List[Tuple[float, str]] = []   # (mtime, path)
+    # (score, mtime, path) — best keyword score wins, mtime tie-breaks
+    candidates: List[Tuple[int, float, str]] = []
     for root in roots:
         if not os.path.isdir(root):
             continue
@@ -201,24 +232,35 @@ def _fuzzy_resolve_artifact(declared: str,
                 if m < cutoff:
                     continue
                 fname_lc = fname.lower()
-                # Require at least one keyword match if we have keywords;
-                # otherwise just take the most recent matching-ext file
-                # (operator may not have given a usable title either).
-                if keywords:
-                    if not any(k in fname_lc for k in keywords):
-                        continue
-                candidates.append((m, full))
+                score = _kw_score(fname_lc)
+                if score < min_hits:
+                    continue
+                candidates.append((score, m, full))
     if not candidates:
         return None
     candidates.sort(reverse=True)
-    return candidates[0][1]
+    best_score, _, best_path = candidates[0]
+    logger.info(
+        f"critic_gate: fuzzy match {best_path!r} scored {best_score}/{len(keywords)} "
+        f"keywords for declared {declared!r}"
+    )
+    return best_path
 
 
 def _artifact_size_ok(artifact_path: str,
                       task: Optional[Dict[str, Any]] = None
-                      ) -> Tuple[bool, str, int]:
+                      ) -> Tuple[bool, str, int, str]:
+    """Returns (ok, reason, size_bytes, resolved_path).
+
+    resolved_path is the path that was actually checked — when fuzzy
+    resolution kicked in, this is the fuzzy match, NOT the declared path.
+    Callers MUST use this same path for the content read, otherwise the
+    size gate and the review can silently look at two different files
+    (which once let the critic review an empty string while the gate
+    believed a real artifact existed).
+    """
     if not artifact_path:
-        return False, "artifact path is empty", 0
+        return False, "artifact path is empty", 0, ""
     resolved = _resolve_artifact_path(artifact_path)
     if not os.path.exists(resolved):
         # Try the fuzzy fallback: search workspace for a file Andrew likely
@@ -230,17 +272,17 @@ def _artifact_size_ok(artifact_path: str,
                 return False, (
                     f"artifact found via fuzzy resolution ({fuzzy!r}) but "
                     f"size {size}B is below the {ARTIFACT_MIN_BYTES}B floor"
-                ), size
-            logger.info(
+                ), size, fuzzy
+            logger.warning(
                 f"critic_gate: fuzzy-resolved {artifact_path!r} → {fuzzy!r} "
-                f"(declared path didn't exist; matched by extension + title keywords)"
+                f"(declared path didn't exist; review will use the fuzzy match)"
             )
-            return True, "", size
-        return False, f"artifact not found (looked at {resolved!r})", 0
+            return True, "", size, fuzzy
+        return False, f"artifact not found (looked at {resolved!r})", 0, resolved
     size = os.path.getsize(resolved)
     if size < ARTIFACT_MIN_BYTES:
-        return False, f"artifact size {size}B is below the {ARTIFACT_MIN_BYTES}B floor", size
-    return True, "", size
+        return False, f"artifact size {size}B is below the {ARTIFACT_MIN_BYTES}B floor", size, resolved
+    return True, "", size, resolved
 
 
 def _location_ok(artifact_path: str) -> Tuple[bool, str]:
@@ -252,8 +294,131 @@ def _location_ok(artifact_path: str) -> Tuple[bool, str]:
     return False, f"artifact at {artifact_path!r} is not under an operator-visible prefix"
 
 
-def _read_artifact(artifact_path: str, limit_bytes: int = 200_000) -> str:
-    resolved = _resolve_artifact_path(artifact_path)
+# ── Anti-fabrication: verify files the artifact CLAIMS it produced ──
+#
+# 2026-06-12: Grok 4.3 got stuck unable to reach run_terminal_cmd, then
+# escaped the loop by FABRICATING a test run — it wrote "Results persisted
+# to aco_test_results.json … coverage=1.0" into its deliverable + memory,
+# but that file never existed and the script was never executed. The size
+# and blocklist gates all passed because the fabricated text looked real.
+#
+# This check finds explicit "I produced FILE" claims in the artifact and
+# verifies each referenced file actually exists on disk. A claimed output
+# that doesn't exist is treated as fabrication → hard fail. Conservative
+# by design: only PRODUCTION verbs count (persisted/saved/wrote/generated/
+# exported/created/produced/output), never "read/loaded/from/see".
+
+# Verb + path: "persisted to X", "results saved in `Y`", "output: Z.json"
+_CLAIM_PATTERNS = [
+    re.compile(
+        r'\b(?:persist(?:ed)?|sav(?:ed|e)|wr(?:ote|itten)|generat(?:ed|e)|'
+        r'export(?:ed)?|produc(?:ed|e)|output(?:ted)?|captured?\s+(?:to|in))\b'
+        r'[^\n`"\']{0,40}?[`"\']?'
+        r'([A-Za-z0-9_./\-]+\.[A-Za-z0-9]{1,6})',
+        re.IGNORECASE,
+    ),
+    # "results in `foo.json`" / "results to foo.csv"
+    re.compile(
+        r'\bresults?\b[^\n`"\']{0,20}?\b(?:to|in|at|into)\b[^\n`"\']{0,10}?[`"\']?'
+        r'([A-Za-z0-9_./\-]+\.[A-Za-z0-9]{1,6})',
+        re.IGNORECASE,
+    ),
+]
+
+# Extensions that denote a concrete produced artifact worth verifying.
+# (Skip things like "v1.5" or "node.js" that aren't real output files.)
+_VERIFIABLE_EXTS = {
+    ".json", ".csv", ".txt", ".md", ".log", ".xml", ".yaml", ".yml",
+    ".png", ".jpg", ".jpeg", ".pdf", ".html", ".py", ".sol", ".tsv",
+    ".sqlite", ".db", ".parquet", ".zip",
+}
+
+# Path fragments that are never real local output files — skip to avoid
+# false positives on URLs, package refs, version strings, system paths.
+_CLAIM_SKIP_FRAGMENTS = (
+    "http://", "https://", "example.", "node.js", "package.json",
+    "requirements.txt", "/etc/", "/usr/", "/var/", "readme", "license",
+    ".min.", "v1.", "v2.", "v3.", "config.json",
+)
+
+
+def _verify_claimed_outputs(artifact_text: str,
+                            artifact_resolved_path: str) -> List[str]:
+    """Return a list of file paths the artifact CLAIMS it produced but that
+    do not exist on disk. Empty list = no fabrication detected (or no
+    claims made)."""
+    if not artifact_text:
+        return []
+
+    claimed: List[str] = []
+    for pat in _CLAIM_PATTERNS:
+        for m in pat.finditer(artifact_text):
+            ref = (m.group(1) or "").strip().strip("`\"'.,")
+            if not ref:
+                continue
+            low = ref.lower()
+            ext = os.path.splitext(low)[1]
+            if ext not in _VERIFIABLE_EXTS:
+                continue
+            if any(frag in low for frag in _CLAIM_SKIP_FRAGMENTS):
+                continue
+            if ref not in claimed:
+                claimed.append(ref)
+
+    if not claimed:
+        return []
+
+    # Search roots where a produced file could plausibly live.
+    art_dir = os.path.dirname(artifact_resolved_path) if artifact_resolved_path else ""
+    roots = [
+        r for r in (
+            art_dir,
+            os.path.join(_HOME_REPRYNTT, "workspace", "agents", "operator"),
+            os.path.join(_HOME_REPRYNTT, "workspace", "code_sandbox"),
+            os.path.join(_HOME_REPRYNTT, "agent_workspaces", "jarvis", "code_sandbox"),
+            os.path.join(_HOME_REPRYNTT, "workspace"),
+            _HOME_REPRYNTT,
+        ) if r
+    ]
+
+    missing: List[str] = []
+    for ref in claimed:
+        basename = os.path.basename(ref)
+        found = False
+        # 1. absolute path as-claimed
+        if os.path.isabs(ref) and os.path.exists(ref):
+            found = True
+        # 2. relative-to-root, or basename anywhere under each root
+        if not found:
+            for root in roots:
+                if not os.path.isdir(root):
+                    continue
+                if os.path.exists(os.path.join(root, ref)):
+                    found = True
+                    break
+                # basename walk (shallow — cap dirs scanned for speed)
+                scanned = 0
+                for dirpath, _dirs, files in os.walk(root):
+                    scanned += 1
+                    if scanned > 400:
+                        break
+                    if basename in files:
+                        found = True
+                        break
+                if found:
+                    break
+        if not found:
+            missing.append(ref)
+    return missing
+
+
+def _read_artifact(artifact_path: str, limit_bytes: int = 200_000,
+                   resolved: Optional[str] = None) -> str:
+    """Read the artifact for review. When the caller already resolved the
+    path (including via fuzzy match), pass it in — re-resolving here can
+    land on a DIFFERENT file (or none) than the size gate checked."""
+    if not resolved:
+        resolved = _resolve_artifact_path(artifact_path)
     try:
         with open(resolved, "rb") as f:
             data = f.read(limit_bytes)
@@ -485,7 +650,8 @@ def critic_gate(daemon: Any, artifact_path: str, task: Dict[str, Any],
     }
 
     # ── Pre-checks ─────────────────────────────────────────────────────
-    size_ok, size_reason, size_b = _artifact_size_ok(artifact_path, task=task)
+    size_ok, size_reason, size_b, resolved_path = _artifact_size_ok(
+        artifact_path, task=task)
     if not size_ok:
         result_base["concerns"].append(size_reason)
         _log_decision({"task_id": task.get("id"), "stage": "pre_size",
@@ -499,7 +665,45 @@ def critic_gate(daemon: Any, artifact_path: str, task: Dict[str, Any],
                        "verdict": "fail", "reason": loc_reason, "round": round_n})
         return result_base
 
-    artifact_text = _read_artifact(artifact_path)
+    # Read the SAME file the size gate checked — never re-resolve.
+    artifact_text = _read_artifact(artifact_path, resolved=resolved_path)
+    if not artifact_text.strip():
+        # The size gate saw bytes but the read produced nothing — path
+        # mismatch or unreadable file. Reviewing an empty string would
+        # produce a garbage verdict, so fail loudly instead.
+        reason = (
+            f"artifact unreadable for review: size gate saw {size_b}B at "
+            f"{resolved_path!r} but the content read returned empty"
+        )
+        result_base["concerns"].append(reason)
+        _log_decision({"task_id": task.get("id"), "stage": "pre_read",
+                       "verdict": "fail", "reason": reason, "round": round_n})
+        return result_base
+
+    # ── Anti-fabrication: verify claimed output files actually exist ──
+    # If the deliverable says it "persisted results to X.json" / "wrote
+    # output to Y.csv", that file MUST exist. A claimed-but-missing output
+    # is fabrication (the model narrated a run it never performed).
+    try:
+        missing_outputs = _verify_claimed_outputs(artifact_text, resolved_path)
+    except Exception as _e:
+        logger.warning(f"critic_gate: claimed-output check errored (skipping): {_e}")
+        missing_outputs = []
+    if missing_outputs:
+        reason = (
+            "Fabrication check failed — the deliverable claims it produced "
+            f"file(s) that do not exist on disk: {', '.join(missing_outputs[:5])}. "
+            "Either the script/command was never actually executed, or the "
+            "results were invented. Run the work for real and write the "
+            "claimed output before declaring completion."
+        )
+        result_base["concerns"].append(reason)
+        result_base["fabrication"] = True
+        result_base["missing_outputs"] = missing_outputs
+        _log_decision({"task_id": task.get("id"), "stage": "pre_fabrication",
+                       "verdict": "fail", "reason": "claimed outputs missing",
+                       "missing_outputs": missing_outputs, "round": round_n})
+        return result_base
 
     # Operator-configured vocabulary blocklist saturation. Out of the box
     # the blocklist is empty, so this never fires unless the operator has

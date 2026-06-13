@@ -3504,8 +3504,17 @@ class AgentDaemon:
                 "model": model,
                 "messages": ant_messages,
                 "max_tokens": ant_max,
-                "temperature": 0.8,
             }
+            # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+)
+            # reject the `temperature` param — extended thinking is always on.
+            _m = (model or "").lower()
+            _temp_deprecated = (
+                "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+                or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+                or "claude-5-" in _m
+            )
+            if not _temp_deprecated:
+                body["temperature"] = 0.8
             if system_text:
                 body["system"] = self._anthropic_system_with_cache(system_text)
 
@@ -3576,12 +3585,22 @@ class AgentDaemon:
                                         "YOUR_OPENROUTER_API_KEY_HERE"):
             headers["Authorization"] = f"Bearer {api_key}"
 
+        # Adaptive-thinking flagships reject `temperature` even via the
+        # OpenAI-compat endpoint Anthropic exposes. Skip the field rather
+        # than send it and 400.
+        _m_compat = (model or "").lower()
+        _temp_deprecated_compat = (
+            "opus-4-7" in _m_compat or "opus-4-8" in _m_compat or "opus-5" in _m_compat
+            or "fable-5" in _m_compat or "fable-6" in _m_compat or "mythos-5" in _m_compat
+            or "claude-5-" in _m_compat
+        )
         body = {
             "model": model,
             "messages": messages,
-            "temperature": settings.get("temperature", 0.8),
             "stream": False
         }
+        if not _temp_deprecated_compat:
+            body["temperature"] = settings.get("temperature", 0.8)
         # uncap_tokens: omit max_tokens so model uses full capacity (reasoning models)
         if not uncap:
             body["max_tokens"] = max_tokens
@@ -3590,8 +3609,8 @@ class AgentDaemon:
 
         # Open Mind override — elevated sampling for expanded cognition sessions
         _om = self._open_mind_overrides.get(agent.agent_id)
-        if _om:
-            body["temperature"] = _om.get("temperature", body["temperature"])
+        if _om and not _temp_deprecated_compat:
+            body["temperature"] = _om.get("temperature", body.get("temperature", 0.8))
             if "top_p" in _om:
                 body["top_p"] = _om["top_p"]
             if "frequency_penalty" in _om:
@@ -9794,6 +9813,13 @@ class AgentDaemon:
         "search_tools_by_intent",
         # File I/O
         "read_file", "write_file", "list_dir", "grep_search",
+        # Code execution — MUST be in the starter set. The agent writes
+        # scripts with write_file and immediately needs to run them; gating
+        # run_terminal_cmd behind tool-discovery caused a fabrication loop
+        # (Grok 4.3, 2026-06-12: 6 heartbeats stuck planning to run a test,
+        # then invented fake results because it couldn't reach the tool).
+        "run_terminal_cmd", "search_replace", "get_sandbox_status",
+        "check_syntax", "run_code_tests",
         # Web research
         "google_web_search", "knowledge_search", "grokipedia_search",
         "web_search_results_only", "scrape_web_page",
@@ -11357,8 +11383,17 @@ class AgentDaemon:
                 "model": model,
                 "messages": ant_messages,
                 "max_tokens": ant_max,
-                "temperature": settings.get("temperature", 0.7),
             }
+            # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+)
+            # reject `temperature` — extended thinking is always on.
+            _m = (model or "").lower()
+            _temp_deprecated = (
+                "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+                or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+                or "claude-5-" in _m
+            )
+            if not _temp_deprecated:
+                body["temperature"] = settings.get("temperature", 0.7)
             if system_text:
                 body["system"] = self._anthropic_system_with_cache(system_text)
             if tools and len(tools) > 0:
@@ -11421,12 +11456,21 @@ class AgentDaemon:
                                         "YOUR_OPENROUTER_API_KEY_HERE"):
             headers["Authorization"] = f"Bearer {api_key}"
 
+        # Adaptive-thinking flagships reject `temperature` even on the
+        # OpenAI-compat path. Skip rather than send and 400.
+        _m2 = (model or "").lower()
+        _temp_deprecated2 = (
+            "opus-4-7" in _m2 or "opus-4-8" in _m2 or "opus-5" in _m2
+            or "fable-5" in _m2 or "fable-6" in _m2 or "mythos-5" in _m2
+            or "claude-5-" in _m2
+        )
         body = {
             "model": model,
             "messages": messages,
-            "temperature": settings.get("temperature", 0.7),
             "stream": False
         }
+        if not _temp_deprecated2:
+            body["temperature"] = settings.get("temperature", 0.7)
         # uncap_tokens: omit max_tokens so model uses full capacity (reasoning models)
         if not uncap:
             body["max_tokens"] = max_tokens

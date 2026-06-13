@@ -157,12 +157,24 @@ def _anthropic_complete(endpoint: str, api_key: str, model: str, system: str,
             msgs.append({"role": "assistant", "content": acc.rstrip()})
             msgs.append({"role": "user", "content":
                          "Continue exactly where you left off. Do not repeat any text already written."})
+        # Adaptive-thinking flagships (Opus 4.7+, Fable 5+, Mythos 5+)
+        # reject the `temperature` param on the native Messages API too.
+        _m = (model or "").lower()
+        _temp_deprecated = (
+            "opus-4-7" in _m or "opus-4-8" in _m or "opus-5" in _m
+            or "fable-5" in _m or "fable-6" in _m or "mythos-5" in _m
+            or "claude-5-" in _m
+        )
+        _payload = {"model": model,
+                    "max_tokens": min(budget - total_out, ceiling),
+                    "system": system, "messages": msgs}
+        if not _temp_deprecated:
+            _payload["temperature"] = temperature
         r = requests.post(
             ep,
             headers={"x-api-key": api_key, "anthropic-version": "2023-06-01",
                      "content-type": "application/json"},
-            json={"model": model, "max_tokens": min(budget - total_out, ceiling),
-                  "temperature": temperature, "system": system, "messages": msgs},
+            json=_payload,
             timeout=600,
         )
         r.raise_for_status()
