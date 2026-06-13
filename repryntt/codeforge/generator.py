@@ -56,6 +56,25 @@ def _load_ai_config() -> Dict[str, Any]:
         return {}
 
 
+# Frontier model markers — when the loaded `model` matches one of these,
+# it's strong enough to code on its own and we should NOT silently swap to
+# a separate `coding_model`. The operator deliberately loaded a frontier
+# model; honor it for coding too. Weak/free primaries (mistral-small,
+# gemini-flash, etc.) still fall through to a code-specialist coding_model.
+_FRONTIER_MODEL_MARKERS = (
+    "grok", "claude", "opus", "sonnet",
+    "gpt-4", "gpt-5", "o1", "o3", "o4",
+    "gemini-2.5-pro", "gemini-3", "deepseek",
+)
+
+
+def _is_frontier_model(name: str) -> bool:
+    """True if the model name looks like a frontier-class model that can
+    handle coding directly (so we don't override it with coding_model)."""
+    n = (name or "").lower()
+    return any(m in n for m in _FRONTIER_MODEL_MARKERS)
+
+
 def _resolve_provider(config: dict, provider: str = "",
                        model_override: str = "") -> Dict[str, str]:
     """Resolve endpoint, api_key, model from config for a given provider name.
@@ -96,9 +115,24 @@ def _resolve_provider(config: dict, provider: str = "",
     def _try_section(prov: str) -> Optional[Dict[str, str]]:
         section = config.get(prov, {})
         if isinstance(section, dict) and section.get("endpoint"):
-            model = section.get("coding_model") or section.get("model", "")
-            if section.get("coding_model"):
+            loaded = section.get("model", "")
+            coder = section.get("coding_model")
+            # Operator can force the coding_model even with a frontier
+            # primary via "force_coding_model": true (rare — e.g. a
+            # dedicated code-tuned variant they trust more).
+            force_coder = bool(section.get("force_coding_model", False))
+            if coder and (force_coder or not _is_frontier_model(loaded)):
+                # Weak/free primary (or forced) → use the code specialist.
+                model = coder
                 logger.info(f"CodeForge using coding model: {model}")
+            else:
+                # Frontier primary loaded → it does the coding itself.
+                model = loaded or coder or ""
+                if loaded and _is_frontier_model(loaded):
+                    logger.info(
+                        f"CodeForge using loaded frontier model for coding: {model} "
+                        f"(provider={prov})"
+                    )
             return {
                 "provider": prov,
                 "endpoint": section["endpoint"],

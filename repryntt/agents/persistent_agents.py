@@ -3221,12 +3221,64 @@ class AgentDaemon:
     # ── API Call ──
 
     # Provider fallback order — tried in sequence when primary fails
-    _PROVIDER_FALLBACK_ORDER = ["nvidia", "xai", "openrouter", "openai", "anthropic", "local"]
+    # Last-ditch default ONLY — used solely if the user has no "fallback_order"
+    # in ai_config AND no provider sections with endpoints could be found
+    # (i.e. a broken/empty config). The live path is config-driven via
+    # _fallback_order_from_config(); no provider is hardcoded into normal
+    # operation. Order here is alphabetical-ish, not a preference ranking.
+    _PROVIDER_FALLBACK_ORDER = ["anthropic", "google_gemini", "nvidia", "openai",
+                                "openrouter", "xai", "local"]
+
+    # Frontier model markers — a primary on one of these should NOT be
+    # silently downgraded to a weak/free model on a transient failure.
+    # This is generic model-family detection, NOT a provider allowlist —
+    # no provider (nvidia/xai/etc.) is special-cased by name anywhere.
+    _FRONTIER_MODEL_MARKERS = (
+        "grok", "claude", "opus", "sonnet",
+        "gpt-4", "gpt-5", "o1", "o3", "o4",
+        "gemini-2.5-pro", "gemini-3", "deepseek",
+    )
+
+    @classmethod
+    def _is_frontier_model(cls, name: str) -> bool:
+        n = (name or "").lower()
+        return any(m in n for m in cls._FRONTIER_MODEL_MARKERS)
+
+    def _fallback_order_from_config(self) -> List[str]:
+        """The user's own fallback provider order — config-driven, never a
+        baked-in provider list. Reads ai_config["fallback_order"] if present;
+        otherwise derives the order from whichever provider sections the user
+        has actually configured (any dict with an "endpoint"). No provider is
+        hardcoded — a user who runs all-OpenAI, all-local, or all-Anthropic
+        gets a sensible chain from their own config."""
+        order = self.ai_config.get("fallback_order")
+        if isinstance(order, list) and order:
+            return [p for p in order if isinstance(p, str)]
+        # Derive from configured provider sections (preserves dict order).
+        derived = [
+            k for k, v in self.ai_config.items()
+            if isinstance(v, dict) and v.get("endpoint")
+        ]
+        return derived or list(self._PROVIDER_FALLBACK_ORDER)
 
     def _get_fallback_providers(self, primary: str) -> List[str]:
-        """Return a list of fallback providers (excluding primary) that have valid config."""
-        fallbacks = []
-        for p in self._PROVIDER_FALLBACK_ORDER:
+        """Return fallback providers (excluding primary) with valid config.
+
+        Order comes from the USER'S config (fallback_order, or their
+        configured sections) — never a hardcoded provider list. When the
+        PRIMARY is a frontier model, frontier-class fallbacks are returned
+        first so a transient failure (rate limit, 5xx) re-routes to another
+        strong model instead of silently downgrading to a weak/free one.
+        Weak/free providers remain a genuine last resort. When the primary
+        is already a free model, the user's configured order is preserved.
+        """
+        order = self._fallback_order_from_config()
+        primary_is_frontier = self._is_frontier_model(
+            self.ai_config.get(primary, {}).get("model", "")
+        )
+        frontier: List[str] = []
+        other: List[str] = []
+        for p in order:
             if p == primary:
                 continue
             settings = self.ai_config.get(p, {})
@@ -3234,12 +3286,20 @@ class AgentDaemon:
             api_key = settings.get("api_key", "")
             if not endpoint:
                 continue
-            # Skip providers with placeholder keys
+            # Skip providers with placeholder / unset keys (local is exempt)
             if api_key in ("", "YOUR_GOOGLE_API_KEY_HERE", "YOUR_OPENAI_API_KEY_HERE",
-                           "YOUR_OPENROUTER_API_KEY_HERE") and p != "local":
+                           "YOUR_OPENROUTER_API_KEY_HERE", "YOUR_ANTHROPIC_API_KEY_HERE",
+                           "YOUR_XAI_API_KEY_HERE") and p != "local":
                 continue
-            fallbacks.append(p)
-        return fallbacks
+            if self._is_frontier_model(settings.get("model", "")):
+                frontier.append(p)
+            else:
+                other.append(p)
+        # Frontier primary → keep work on a strong model first; free/weak last.
+        if primary_is_frontier:
+            return frontier + other
+        # Free/weak primary → user chose it deliberately; keep their order.
+        return [p for p in order if p in frontier or p in other]
 
     @staticmethod
     def _sanitize_tool_name(name: str) -> str:
