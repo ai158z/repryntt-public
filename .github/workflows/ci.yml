@@ -69,3 +69,23 @@ jobs:
         run: |
           pip install ruff
           ruff check repryntt/ --select E9,F63,F7,F82 --target-version py310
+
+  license-audit:
+    # Fails the build if any dependency carries a license incompatible
+    # with AGPL-3.0 distribution or commercial use (GPL-2.0-only, SSPL,
+    # BUSL, Commons Clause, Elastic, CC-BY-NC). See scripts/license_audit.py.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install core dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[embeddings,gmail]"
+
+      - name: Audit dependency licenses
+        run: python scripts/license_audit.py

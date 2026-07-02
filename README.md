@@ -632,8 +632,10 @@ files in `~/.repryntt/brain/bootstrap/` directly. They're yours.
 **Want to build a framework?** YAML state graph + per-state prompts.
 See `frameworks/deep_research.yaml` for an example.
 
-PRs welcome. CI runs `pytest`, `ruff`, and a smoke-import of every
-module before merge.
+PRs welcome. CI runs `pytest`, `ruff`, a smoke-import of every module,
+and a **dependency license audit** (`scripts/license_audit.py`) that
+rejects licenses incompatible with AGPL-3.0 distribution or commercial
+use (GPL-2.0-only, SSPL, BUSL, Commons Clause, CC-BY-NC).
 
 ---
 

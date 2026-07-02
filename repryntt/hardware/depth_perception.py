@@ -39,9 +39,49 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration ─────────────────────────────────────────────────────
 
+# ⚠️ LICENSE CONSTRAINT — do not casually "upgrade" this model. The
+# Depth Anything V2 *Small* checkpoint is Apache-2.0 (commercial use OK).
+# The Base / Large / Giant variants are CC-BY-NC-4.0 — NON-COMMERCIAL
+# ONLY — and would make a commercial deployment infringing. The guard
+# below enforces this at load time.
 MODEL_ID = "depth-anything/Depth-Anything-V2-Small-hf"
 DEFAULT_INPUT_SIZE = (252, 448)  # half res for speed (~32ms)
 FULL_INPUT_SIZE = (518, 924)     # full res for quality (~91ms)
+
+# Depth model IDs verified to carry commercial-friendly licenses.
+# Add to this set ONLY after checking the model card's license yourself.
+_COMMERCIAL_SAFE_DEPTH_MODELS = {
+    "depth-anything/Depth-Anything-V2-Small-hf",  # Apache-2.0
+    "LiheYoung/depth-anything-small-hf",          # v1 Small — Apache-2.0
+}
+
+
+def _depth_model_license_guard(model_id: str) -> bool:
+    """Refuse to load depth models that aren't verified commercial-safe.
+
+    Depth Anything V2 Base/Large/Giant are CC-BY-NC-4.0 (non-commercial).
+    Returns True if the model is cleared to load. Personal, explicitly
+    non-commercial installs can override with REPRYNTT_ALLOW_NC_MODELS=1.
+    """
+    import os
+    if model_id in _COMMERCIAL_SAFE_DEPTH_MODELS:
+        return True
+    if os.environ.get("REPRYNTT_ALLOW_NC_MODELS") == "1":
+        logger.warning(
+            f"⚠️ Depth model {model_id!r} is not on the commercial-safe "
+            f"allowlist. Loading anyway (REPRYNTT_ALLOW_NC_MODELS=1). Do "
+            f"NOT ship this configuration commercially."
+        )
+        return True
+    logger.error(
+        f"🚫 Refusing to load depth model {model_id!r}: not on the "
+        f"commercial-safe allowlist (Depth Anything V2 Base/Large/Giant "
+        f"are CC-BY-NC-4.0, non-commercial only). Use the Small variant, "
+        f"or verify the license and add the ID to "
+        f"_COMMERCIAL_SAFE_DEPTH_MODELS, or set "
+        f"REPRYNTT_ALLOW_NC_MODELS=1 for a personal non-commercial install."
+    )
+    return False
 
 
 class DepthEstimator:
@@ -65,6 +105,9 @@ class DepthEstimator:
         if self._load_attempted:
             return self._available
         self._load_attempted = True
+
+        if not _depth_model_license_guard(MODEL_ID):
+            return False
 
         try:
             import torch
