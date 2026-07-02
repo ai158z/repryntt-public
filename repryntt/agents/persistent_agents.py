@@ -285,20 +285,22 @@ def _agent_workspace_dir(agent) -> str:
 
 
 # ── Cost-awareness helpers ────────────────────────────────────────────
-# Per-million-token USD pricing for each provider. Used to compute a
-# rough per-heartbeat burn that we inject into Andrew's prompt so the
+# Per-million-token USD pricing for each provider. Used to compute the
+# per-heartbeat burn that we inject into Andrew's prompt so the
 # model can see what it's spending and self-throttle. Numbers may drift
-# over time — operator can edit. The "cached" rate isn't applied here
-# because the daemon doesn't track per-call cache hits granularly; the
-# estimate is conservative (assumes worst-case no cache hit).
+# over time — operator can edit. "cached_in" is the discounted rate for
+# cache-hit input tokens (xai caches prefixes automatically; Anthropic
+# via explicit cache_control blocks). When per-call usage details are
+# available we price uncached input / cached input / output separately;
+# otherwise we fall back to the old worst-case average estimate.
 _PROVIDER_PRICING_USD_PER_M = {
-    "xai":       {"in": 1.25,  "out": 2.50},
-    "anthropic": {"in": 15.00, "out": 75.00},
-    "openai":    {"in": 2.50,  "out": 10.00},
-    "openrouter":{"in": 3.00,  "out": 15.00},   # varies by underlying model
-    "nvidia":    {"in": 0.00,  "out": 0.00},    # free tier
-    "local":     {"in": 0.00,  "out": 0.00},
-    "custom":    {"in": 0.00,  "out": 0.00},
+    "xai":       {"in": 1.25,  "out": 2.50,  "cached_in": 0.31},
+    "anthropic": {"in": 15.00, "out": 75.00, "cached_in": 1.50},
+    "openai":    {"in": 2.50,  "out": 10.00, "cached_in": 1.25},
+    "openrouter":{"in": 3.00,  "out": 15.00, "cached_in": 1.50},  # varies by underlying model
+    "nvidia":    {"in": 0.00,  "out": 0.00,  "cached_in": 0.00},  # free tier
+    "local":     {"in": 0.00,  "out": 0.00,  "cached_in": 0.00},
+    "custom":    {"in": 0.00,  "out": 0.00,  "cached_in": 0.00},
 }
 
 
@@ -311,6 +313,73 @@ def _estimate_token_cost_usd(provider: str, total_tokens: int) -> float:
         return 0.0
     avg = (p["in"] + p["out"]) / 2.0
     return round(total_tokens * avg / 1_000_000.0, 4)
+
+
+def _estimate_split_cost_usd(provider: str, in_uncached: int,
+                             in_cached: int, out: int) -> float:
+    """USD estimate from real usage buckets (cache-aware). Returns 0.0
+    for free tiers / unknown providers."""
+    p = _PROVIDER_PRICING_USD_PER_M.get(provider or "", None)
+    if not p:
+        return 0.0
+    cached_rate = p.get("cached_in", p["in"] * 0.25)
+    usd = (in_uncached * p["in"] + in_cached * cached_rate
+           + out * p["out"]) / 1_000_000.0
+    return round(usd, 4)
+
+
+def _record_llm_usage(agent, usage, fallback_tokens: int = 0) -> None:
+    """Accumulate real token buckets from an API usage object onto the agent.
+
+    Handles both shapes:
+      - Anthropic: input_tokens / output_tokens / cache_read_input_tokens /
+        cache_creation_input_tokens (input_tokens EXCLUDES cache activity)
+      - OpenAI-compat (xai, openai, openrouter, nvidia): prompt_tokens /
+        completion_tokens / prompt_tokens_details.cached_tokens
+
+    When the provider returned no usage, `fallback_tokens` is counted as
+    uncached input (keeps the old rough behavior). Also maintains the
+    legacy `total_tokens` counter so nothing downstream changes.
+    """
+    usage = usage or {}
+    try:
+        if "input_tokens" in usage or "output_tokens" in usage:
+            in_uncached = int(usage.get("input_tokens", 0) or 0)
+            cache_read = int(usage.get("cache_read_input_tokens", 0) or 0)
+            # Cache writes bill at a premium (~1.25x input); counting them
+            # as plain uncached input keeps the estimate slightly conservative.
+            cache_write = int(usage.get("cache_creation_input_tokens", 0) or 0)
+            out = int(usage.get("output_tokens", 0) or 0)
+            total = in_uncached + cache_read + cache_write + out
+            if total <= 0:
+                agent.input_tokens_uncached += fallback_tokens
+                agent.total_tokens += fallback_tokens
+                return
+            agent.input_tokens_uncached += in_uncached + cache_write
+            agent.input_tokens_cached += cache_read
+            agent.output_tokens_total += out
+            agent.total_tokens += total
+            return
+
+        prompt = int(usage.get("prompt_tokens", 0) or 0)
+        completion = int(usage.get("completion_tokens", 0) or 0)
+        total = int(usage.get("total_tokens", 0) or 0)
+        details = usage.get("prompt_tokens_details") or {}
+        cached = int(details.get("cached_tokens", 0) or 0) if isinstance(details, dict) else 0
+        if not (prompt or completion or total):
+            agent.input_tokens_uncached += fallback_tokens
+            agent.total_tokens += fallback_tokens
+            return
+        if not (prompt or completion):
+            prompt = total  # only total known — treat it all as input
+        cached = min(cached, prompt)
+        agent.input_tokens_uncached += prompt - cached
+        agent.input_tokens_cached += cached
+        agent.output_tokens_total += completion
+        agent.total_tokens += (prompt + completion) or total
+    except Exception:
+        # Never let accounting break an API call path
+        agent.total_tokens += fallback_tokens
 
 
 # ── Tool-result cache (per-heartbeat) ────────────────────────────────
@@ -890,6 +959,15 @@ class AutonomousAgentState:
     heartbeat_start_ts: float = 0.0
     last_heartbeat_burn_tokens: int = 0    # delta from prior heartbeat
     last_heartbeat_burn_usd: float = 0.0
+    # ── Cache-aware token buckets (cumulative, parallel to total_tokens).
+    # Filled from real API usage objects by _record_llm_usage so burn can
+    # be priced at actual cached/uncached rates instead of worst-case.
+    input_tokens_uncached: int = 0
+    input_tokens_cached: int = 0
+    output_tokens_total: int = 0
+    heartbeat_start_in_uncached: int = 0
+    heartbeat_start_in_cached: int = 0
+    heartbeat_start_output: int = 0
 
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -3590,9 +3668,8 @@ class AgentDaemon:
                         if b.get("type") == "text"
                     )
                     usage = data.get("usage", {})
-                    tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
                     self._log_anthropic_cache_stats(usage, agent.name)
-                    agent.total_tokens += tokens or len(text.split()) * 2
+                    _record_llm_usage(agent, usage, len(text.split()) * 2)
                     return text
                 elif resp.status_code == 429:
                     for attempt, delay in enumerate([15, 30, 60], 1):
@@ -3607,8 +3684,7 @@ class AgentDaemon:
                                 if b.get("type") == "text"
                             )
                             usage = data.get("usage", {})
-                            tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
-                            agent.total_tokens += tokens or len(text.split()) * 2
+                            _record_llm_usage(agent, usage, len(text.split()) * 2)
                             return text
                         if retry.status_code != 429:
                             break
@@ -3626,8 +3702,7 @@ class AgentDaemon:
                             if b.get("type") == "text"
                         )
                         usage = data.get("usage", {})
-                        tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
-                        agent.total_tokens += tokens or len(text.split()) * 2
+                        _record_llm_usage(agent, usage, len(text.split()) * 2)
                         return text
                     logger.error(f"[{agent.name}] Anthropic server error {resp.status_code} persisted after retry")
                     return None
@@ -3699,10 +3774,7 @@ class AgentDaemon:
                     self._last_raw_response = raw_content  # For think-block extraction
                     content = self._strip_think_blocks(raw_content)
                     usage = data.get("usage", {})
-                    tokens = usage.get("total_tokens", 0) or (
-                        usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-                    )
-                    agent.total_tokens += tokens or len(content.split()) * 2
+                    _record_llm_usage(agent, usage, len(content.split()) * 2)
                     return content
                 elif resp.status_code == 429:
                     # Log the response body once so we can tell TPM vs RPM
@@ -3747,10 +3819,7 @@ class AgentDaemon:
                                 data.get("choices", [{}])[0].get("message", {}).get("content", "")
                             )
                             usage = data.get("usage", {})
-                            tokens = usage.get("total_tokens", 0) or (
-                                usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-                            )
-                            agent.total_tokens += tokens or len(content.split()) * 2
+                            _record_llm_usage(agent, usage, len(content.split()) * 2)
                             return content
                         if retry.status_code != 429:
                             break
@@ -3800,10 +3869,7 @@ class AgentDaemon:
                             self._last_raw_response = raw_content
                             content = self._strip_think_blocks(raw_content)
                             usage = data.get("usage", {})
-                            tokens = usage.get("total_tokens", 0) or (
-                                usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-                            )
-                            agent.total_tokens += tokens or len(content.split()) * 2
+                            _record_llm_usage(agent, usage, len(content.split()) * 2)
                             logger.warning(
                                 f"[{agent.name}] ✓ fell back to {fb_model!r} "
                                 f"(original {model!r} unavailable)"
@@ -11469,9 +11535,8 @@ class AgentDaemon:
                     data = resp.json()
                     msg = self._anthropic_response_to_openai(data)
                     usage = data.get("usage", {})
-                    tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
                     self._log_anthropic_cache_stats(usage, agent.name)
-                    agent.total_tokens += tokens or 0
+                    _record_llm_usage(agent, usage)
                     return msg
                 elif resp.status_code == 429:
                     for attempt, delay in enumerate([15, 30, 60], 1):
@@ -11482,8 +11547,7 @@ class AgentDaemon:
                             self._stamp_rate_limit(provider)
                             data = retry.json()
                             usage = data.get("usage", {})
-                            tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
-                            agent.total_tokens += tokens or 0
+                            _record_llm_usage(agent, usage)
                             return self._anthropic_response_to_openai(data)
                         if retry.status_code != 429:
                             break
@@ -11497,8 +11561,7 @@ class AgentDaemon:
                         self._stamp_rate_limit(provider)
                         data = retry.json()
                         usage = data.get("usage", {})
-                        tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
-                        agent.total_tokens += tokens or 0
+                        _record_llm_usage(agent, usage)
                         return self._anthropic_response_to_openai(data)
                     logger.error(f"[{agent.name}] Anthropic server error {resp.status_code} persisted after retry")
                     return None
@@ -11572,10 +11635,7 @@ class AgentDaemon:
                     data = resp.json()
                     msg = data.get("choices", [{}])[0].get("message", {})
                     usage = data.get("usage", {})
-                    tokens = usage.get("total_tokens", 0) or (
-                        usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-                    )
-                    agent.total_tokens += tokens or 0
+                    _record_llm_usage(agent, usage)
                     return msg
                 elif resp.status_code == 429:
                     for attempt, delay in enumerate([15, 30, 60], 1):
@@ -11587,10 +11647,7 @@ class AgentDaemon:
                             data = retry.json()
                             msg = data.get("choices", [{}])[0].get("message", {})
                             usage = data.get("usage", {})
-                            tokens = usage.get("total_tokens", 0) or (
-                                usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-                            )
-                            agent.total_tokens += tokens or 0
+                            _record_llm_usage(agent, usage)
                             return msg
                         if retry.status_code != 429:
                             break
@@ -11761,8 +11818,9 @@ class AgentDaemon:
                 assembled_msg["tool_calls"] = tc_list
                 yield ("tool_calls", tc_list)
 
-            # Track tokens (approximate from content length)
-            agent.total_tokens += len(full_content) // 4
+            # Track tokens (approximate from content length — streaming
+            # path has no usage object; counted as uncached input)
+            _record_llm_usage(agent, None, len(full_content) // 4)
 
             yield ("done", assembled_msg)
 
@@ -14265,10 +14323,45 @@ class AgentDaemon:
             outcome["validated"] = True
             outcome["detail"] = f"{artifact_type} task completed with eval score {eval_score}/5"
 
+        # ── 1b. TWO-STRIKES: unvalidated work kills the chain ──
+        # Before this rule, a chain whose artifacts repeatedly failed
+        # validation would still run to its step cap, escalating spend on
+        # work that isn't real. Two consecutive validation failures now
+        # kill the chain and surface it, instead of continuing to step 15.
+        outcome["chain_killed"] = False
+        if chain_result is not None and chain_result.get("status") != "completed":
+            if outcome.get("validated"):
+                chain_result.pop("validation_strikes", None)
+                self._jarvis_save_reasoning_chain(chain_result)
+            else:
+                strikes = int(chain_result.get("validation_strikes", 0) or 0) + 1
+                chain_result["validation_strikes"] = strikes
+                if strikes >= 2:
+                    chain_result["status"] = "completed"
+                    chain_result["outcome"] = "validation_failed"
+                    chain_result["outcome_detail"] = (
+                        f"Killed after {strikes} consecutive artifact-validation "
+                        f"failures. Last: {outcome.get('detail', '')[:200]}"
+                    )
+                    outcome["chain_killed"] = True
+                    logger.warning(
+                        f"🚫 Chain killed (two-strikes validation): "
+                        f"{chain_result.get('topic', '?')[:60]} — "
+                        f"{outcome.get('detail', '')[:120]}"
+                    )
+                    self._jarvis_save_reasoning_chain(None)
+                else:
+                    logger.info(
+                        f"⚠️ Validation strike {strikes}/2 on chain: "
+                        f"{chain_result.get('topic', '?')[:60]}"
+                    )
+                    self._jarvis_save_reasoning_chain(chain_result)
+
         # ── 2. BRIDGE: Spawn follow-up chain from outcome ──
-        # Only spawn if: (a) chain just completed OR (b) no active chain
-        # This creates the Creation→CoT link: outcome becomes next chain's input
-        if chain_result is None and eval_score >= 2:
+        # Only spawn if: (a) chain just completed OR (b) no active chain.
+        # Bar raised from eval>=2 to eval>=4 AND validated — only verified
+        # good work earns a follow-up chain; mediocre work no longer breeds.
+        if chain_result is None and eval_score >= 4 and outcome.get("validated"):
             self._spawn_outcome_chain(artifact_type, outcome, plan, report)
 
         logger.info(
@@ -15020,6 +15113,15 @@ class AgentDaemon:
             jarvis_agent.heartbeat_start_tokens = int(
                 getattr(jarvis_agent, "total_tokens", 0) or 0
             )
+            jarvis_agent.heartbeat_start_in_uncached = int(
+                getattr(jarvis_agent, "input_tokens_uncached", 0) or 0
+            )
+            jarvis_agent.heartbeat_start_in_cached = int(
+                getattr(jarvis_agent, "input_tokens_cached", 0) or 0
+            )
+            jarvis_agent.heartbeat_start_output = int(
+                getattr(jarvis_agent, "output_tokens_total", 0) or 0
+            )
             jarvis_agent.heartbeat_start_ts = _hb_start
             # Carry the *previous* heartbeat's burn as the "last" stat so
             # the next prompt can show "last heartbeat: $X". We store this
@@ -15388,6 +15490,12 @@ class AgentDaemon:
                 "Prioritize items based on your current drives and what "
                 "actually needs attention right now. Skip items that don't "
                 "need action this cycle.\n\n"
+                "**OPERATOR GOALS** (HIGHEST PRIORITY):\n"
+                "- If PULSE.md contains an '## Operator Goals' section, those goals\n"
+                "  OUTRANK your own drives, pursuits, and curiosity. When choosing\n"
+                "  what to work on, pick work that advances an operator goal first;\n"
+                "  self-directed exploration only when operator goals are serviced.\n"
+                "- The Operator Goals section is owned by the operator — never edit it.\n\n"
                 "**PULSE.md WORKING STATE** (CRITICAL):\n"
                 "- The '## Working State' section at the bottom of PULSE.md is YOUR cross-heartbeat memory.\n"
                 "- READ it now — it tells you what you were doing and what's next.\n"
@@ -16876,7 +16984,8 @@ class AgentDaemon:
         # micro-heartbeats every ~2 min because chains always continued.
         # Chain context is preserved in memory — the next normal heartbeat
         # picks it up at the regular interval.
-        if evaluation.get("chain_continue") and chain_result is not None:
+        if (evaluation.get("chain_continue") and chain_result is not None
+                and not (outcome and outcome.get("chain_killed"))):
             logger.info(f"⚡ Chain flagged for continuation — will resume at next "
                         f"normal heartbeat (~{self.JARVIS_AUTO_CYCLE_INTERVAL}s)")
 
@@ -16924,13 +17033,40 @@ class AgentDaemon:
                 - getattr(jarvis_agent, "heartbeat_start_tokens", 0)
             ))
             self._last_jarvis_hb_tokens = _hb_delta
-            self._last_jarvis_hb_usd = _estimate_token_cost_usd(
-                jarvis_agent.provider, _hb_delta,
-            )
-            logger.info(
-                f"💸 Heartbeat burn: {_hb_delta:,} tokens "
-                f"≈ ${self._last_jarvis_hb_usd:.4f} on {jarvis_agent.provider}"
-            )
+            _in_unc = max(0, int(
+                getattr(jarvis_agent, "input_tokens_uncached", 0)
+                - getattr(jarvis_agent, "heartbeat_start_in_uncached", 0)
+            ))
+            _in_cache = max(0, int(
+                getattr(jarvis_agent, "input_tokens_cached", 0)
+                - getattr(jarvis_agent, "heartbeat_start_in_cached", 0)
+            ))
+            _out_toks = max(0, int(
+                getattr(jarvis_agent, "output_tokens_total", 0)
+                - getattr(jarvis_agent, "heartbeat_start_output", 0)
+            ))
+            if (_in_unc + _in_cache + _out_toks) > 0:
+                # Real usage buckets available — price cached input at the
+                # discounted rate instead of the worst-case average.
+                self._last_jarvis_hb_usd = _estimate_split_cost_usd(
+                    jarvis_agent.provider, _in_unc, _in_cache, _out_toks,
+                )
+                logger.info(
+                    f"💸 Heartbeat burn: {_hb_delta:,} tokens "
+                    f"(in={_in_unc:,} uncached + {_in_cache:,} cached, "
+                    f"out={_out_toks:,}) "
+                    f"≈ ${self._last_jarvis_hb_usd:.4f} on {jarvis_agent.provider}"
+                )
+            else:
+                # No usage details this heartbeat — old worst-case estimate
+                self._last_jarvis_hb_usd = _estimate_token_cost_usd(
+                    jarvis_agent.provider, _hb_delta,
+                )
+                logger.info(
+                    f"💸 Heartbeat burn: {_hb_delta:,} tokens "
+                    f"≈ ${self._last_jarvis_hb_usd:.4f} on {jarvis_agent.provider} "
+                    f"(worst-case: no usage details)"
+                )
         except Exception:
             logger.debug("heartbeat burn capture failed (non-fatal)", exc_info=True)
 
