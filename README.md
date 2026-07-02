@@ -13,7 +13,7 @@
 
 *Hormone-driven self-prompting · 307 native tools · BYOK · Local-first · Optional embodiment*
 
-[website](https://www.repryntt.com) · [docs](docs/SYSTEM_DEEP_DIVE.md) · [discussions](https://github.com/ai158z/repryntt-public/discussions) · [MIT license](LICENSE)
+[website](https://www.repryntt.com) · [docs](docs/SYSTEM_DEEP_DIVE.md) · [discussions](https://github.com/ai158z/repryntt-public/discussions) · [AGPL-3.0 license](LICENSE)
 
 `v0.1.0` · runs on Linux · macOS · Windows · Jetson · Raspberry Pi
 
@@ -52,7 +52,7 @@ specific being.
 | **Tools** | Function-call shim | 307 native + dynamic skill packs |
 | **Drives / motivation** | None | Simulated hormones (drives) |
 | **API keys** | Theirs | Yours (BYOK any provider) |
-| **Source** | Closed | MIT — fork it, ship it |
+| **Source** | Closed | AGPL-3.0 — fork it, self-host it |
 | **Embodiment** | No | Optional (Jetson + cameras + motors) |
 | **Lock-in** | Total | Zero |
 
@@ -647,8 +647,14 @@ module before merge.
 
 ## ░░ LICENSE ░░
 
-**MIT** — see [LICENSE](LICENSE). Use it, fork it, ship it. The only
-ask: don't claim it's yours from scratch.
+**AGPL-3.0** — see [LICENSE](LICENSE). Copyright (c) 2026 repryntt.
+
+Nothing changes for individuals and self-hosters: use it, fork it, run it
+anywhere, modify it freely. The one thing AGPL adds: if you offer repryntt
+to others as a network service, you must open-source your modifications.
+Build on it — don't strip-mine it.
+
+Releases up to and including the MIT-licensed versions remain MIT.
 
 ---
 

@@ -7,7 +7,7 @@ name = "repryntt"
 version = "0.6.0"
 description = "Autonomous AI framework — hormone-driven self-prompting with three-tier model routing and self-evolution"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "AGPL-3.0-only"}
 requires-python = ">=3.10"
 authors = [
     {name = "repryntt contributors", email = "hello@ai158z.com"},

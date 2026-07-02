@@ -13,7 +13,7 @@
     "name": "repryntt",
     "email": "hello@ai158z.com"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "private": true,
   "scripts": {
     "start": "electron .",
