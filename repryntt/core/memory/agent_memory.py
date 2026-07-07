@@ -469,6 +469,18 @@ class AgentMemoryManager:
                               daily_memory_dir: str = None) -> Dict[str, List]:
         if memory_types is None:
             memory_types = ["semantic", "episodic", "procedural"]
+        # "Deferred to first query" vector init — the deferral had no trigger:
+        # nothing on the query path ever called _initialize_vector_search(), so
+        # vector search stayed disabled forever. Try exactly once per process.
+        brain0 = self.brain
+        if (not getattr(brain0, "vector_search_enabled", False)
+                and not getattr(brain0, "_vector_init_attempted", False)
+                and hasattr(brain0, "_initialize_vector_search")):
+            brain0._vector_init_attempted = True
+            try:
+                brain0._initialize_vector_search()
+            except Exception:
+                logger.debug("vector init failed — keyword fallback", exc_info=True)
         try:
             limit = int(limit) if not isinstance(limit, int) else limit
         except (TypeError, ValueError):

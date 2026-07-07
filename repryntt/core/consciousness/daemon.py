@@ -2368,7 +2368,7 @@ class SAIGEConsciousnessDaemon:
         }
 
         try:
-            focus = focus_decision.get('optimal_focus', 'free_exploration')
+            focus = self._canonical_focus(focus_decision.get('optimal_focus', ''))
 
             # Get current subsystem statuses
             coordination_results['subsystem_statuses'] = self.subsystem_coordinator.get_all_statuses()
@@ -2393,8 +2393,27 @@ class SAIGEConsciousnessDaemon:
 
         return coordination_results
 
+    @staticmethod
+    def _canonical_focus(focus: str) -> str:
+        """Map the AI's free-text focus (e.g. 'goal of understanding the evolution
+        of consciousness…') onto a directive branch. The AI names its focus in
+        natural language; exact-matching it against 4 enum strings meant almost no
+        cycle ever produced a directive. Default = exploration, so a free-form goal
+        still moves subsystems instead of idling."""
+        fl = (focus or "").lower()
+        if any(w in fl for w in ("monitor", "system_health", "brain_system",
+                                 "maintenance", "hormone")):
+            return "system_monitoring"
+        if any(w in fl for w in ("chain", "thought", "reason")):
+            return "chain_processing"
+        if any(w in fl for w in ("conversation", "talk", "operator", "nate",
+                                 "speak", "chat")):
+            return "conversation"
+        return "exploration"
+
     def _create_focus_directives(self, focus: str, focus_decision: Dict[str, Any]) -> List[ConsciousnessDirective]:
         """Create directives for subsystems based on consciousness focus and brain context"""
+        focus = self._canonical_focus(focus)
         directives = []
         directive_id_base = f"consciousness_{int(time.time())}_{focus}"
 
@@ -3852,9 +3871,18 @@ class SAIGEConsciousnessDaemon:
 
                 # ===== VECTOR SEARCH CONTEXT ACQUISITION: QUERY BRAIN NETWORK =====
                 # Query the brain system for relevant knowledge and context before making decisions
+                # Ingest lived-consequence memories (single-writer handoff from the
+                # evolution loop's ConsequenceEngine) into semantic memory — the
+                # experience → memory → identity-drift arrow.
+                self._ingest_consequence_memories()
+
                 brain_context = self._query_brain_for_context(optimal_focus, system_state, attention_allocations)
 
                 # Integrate brain context into system state for informed decision making
+                # The focus was computed but NEVER placed into system_state, so
+                # coordinate_subsystems always saw the default 'free_exploration'
+                # (which has no directive branch) → 0 directives, every cycle.
+                system_state['optimal_focus'] = optimal_focus
                 system_state['brain_context'] = brain_context
                 system_state['knowledge_tree'] = brain_context.get('knowledge_tree', {})
                 system_state['relevant_memories'] = brain_context.get('relevant_memories', [])
@@ -4476,6 +4504,32 @@ class SAIGEConsciousnessDaemon:
             logger.error(f"Error evaluating decision outcome: {e}")
             return 'unknown'
 
+    def _ingest_consequence_memories(self) -> None:
+        """Move consolidated lived-consequence entries (consequence_memories.jsonl,
+        appended by the evolution loop's ConsequenceEngine) into semantic memory.
+        Single-reader here so two processes never race on the memory stores."""
+        try:
+            from pathlib import Path
+            hp = Path.home() / ".repryntt" / "brain" / "consequence_memories.jsonl"
+            if not hp.exists() or hp.stat().st_size == 0:
+                return
+            lines = hp.read_text(encoding="utf-8").splitlines()
+            hp.unlink()
+            saved = 0
+            for line in lines[-20:]:
+                try:
+                    e = json.loads(line)
+                    self.brain_network.brain_memory_save(
+                        topic=str(e.get("topic", "lived consequence"))[:120],
+                        content=str(e.get("content", ""))[:800])
+                    saved += 1
+                except Exception:
+                    continue
+            if saved:
+                logger.info(f"🧬 Consolidated {saved} lived-consequence memories into identity")
+        except Exception:
+            logger.debug("consequence ingestion failed", exc_info=True)
+
     def _query_brain_for_context(self, optimal_focus: str, system_state: Dict[str, Any],
                                 attention_allocations: Dict[str, float]) -> Dict[str, Any]:
         """
@@ -4605,6 +4659,24 @@ class SAIGEConsciousnessDaemon:
                         'source': 'semantic_memory'
                     }
                     relevant_memories.append(memory_data)
+
+            # Daily journal + memory-mesh associations — the buckets that stay
+            # POPULATED day-to-day (the old code only read semantic/episodic/
+            # procedural, so recall reported 0 even when the journal had entries).
+            for memory in search_results.get('daily_journal', []):
+                if isinstance(memory, dict):
+                    relevant_memories.append({
+                        'type': 'journal',
+                        'content': str(memory.get('content') or memory.get('entry') or memory)[:600],
+                        'relevance_score': self._calculate_memory_relevance(memory, optimal_focus),
+                        'source': 'daily_journal'})
+            for memory in search_results.get('mesh_associations', []):
+                if isinstance(memory, dict):
+                    relevant_memories.append({
+                        'type': 'association',
+                        'content': str(memory.get('content') or memory.get('association') or memory)[:400],
+                        'relevance_score': self._calculate_memory_relevance(memory, optimal_focus),
+                        'source': 'memory_mesh'})
 
             # Process episodic memories (conversations/experiences)
             for memory in search_results.get('episodic', []):

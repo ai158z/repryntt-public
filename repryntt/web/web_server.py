@@ -1266,7 +1266,8 @@ def brain_chat():
         # Get AI response — native tool calling happens inside _call_ai_service()
         # The model calls tools via structured API, receives results,
         # and returns a final text response with tool data incorporated.
-        ai_response = interface.brain._call_ai_service(user_message, include_tools=True)
+        ai_response = interface.brain._call_ai_service(user_message, include_tools=True,
+                                                       purpose="operator_conversation")
 
         return {
             "success": True,

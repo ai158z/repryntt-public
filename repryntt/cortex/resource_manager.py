@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -223,7 +224,18 @@ class ResourceManager:
             raise ValueError(f"Unknown backend: {backend}")
 
     def _load_llama_cpp(self, entry: ModelEntry, path: str) -> Any:
-        """Load a GGUF model via llama-cpp-python."""
+        """Load a GGUF model via llama-cpp-python — UNLESS the external llama-server
+        is already serving this exact model file, in which case we proxy to it
+        instead of loading a SECOND copy into unified memory. Kills both the ~700MB
+        duplication and the in-process GGML/CUDA crash class (llama-context.cpp
+        asserts abort the whole daemon; a server crash just restarts the server).
+        Opt out with REPRYNTT_CORTEX_VIA_SERVER=0."""
+        if os.environ.get("REPRYNTT_CORTEX_VIA_SERVER", "1") != "0":
+            shim = _try_server_handle(path)
+            if shim is not None:
+                logger.info("🔌 Cortex model '%s' → external llama-server "
+                            "(no duplicate in-process load)", entry.name)
+                return shim
         try:
             from llama_cpp import Llama
         except ImportError:
@@ -633,3 +645,52 @@ def get_resource_manager(*, force_refresh: bool = False) -> ResourceManager:
         if _instance is None or force_refresh:
             _instance = ResourceManager()
     return _instance
+
+class _LlamaServerHandle:
+    """Drop-in for llama_cpp.Llama, limited to create_chat_completion — proxies to
+    the external llama-server (OpenAI-compatible, same response shape incl. logprobs)."""
+
+    def __init__(self, endpoint: str):
+        self.endpoint = endpoint
+
+    def create_chat_completion(self, messages=None, max_tokens: int = 256,
+                               temperature: float = 0.7, stop=None,
+                               logprobs=None, top_logprobs=None, **kw):
+        import requests
+        body = {"messages": messages or [], "max_tokens": int(max_tokens),
+                "temperature": float(temperature)}
+        if stop:
+            body["stop"] = stop
+        if logprobs:
+            body["logprobs"] = True
+        if top_logprobs:
+            body["top_logprobs"] = int(top_logprobs)
+        for extra in ("grammar", "json_schema"):
+            if extra in kw and kw[extra]:
+                body[extra] = kw[extra]
+        r = requests.post(self.endpoint, json=body, timeout=180)
+        r.raise_for_status()
+        return r.json()
+
+
+def _try_server_handle(model_path: str):
+    """The proxy handle IF llama-server is up AND serving this same model file."""
+    try:
+        import requests
+        from repryntt.paths import local_llm_endpoint
+        ep = local_llm_endpoint()
+        base = ep.split("/v1/")[0]
+        r = requests.get(base + "/v1/models", timeout=3)
+        if r.status_code != 200:
+            return None
+        served = ""
+        data = (r.json() or {}).get("data") or []
+        if data:
+            served = str(data[0].get("id", ""))
+        import os as _os
+        if _os.path.basename(served) and                 _os.path.basename(served) == _os.path.basename(model_path):
+            return _LlamaServerHandle(ep)
+        return None
+    except Exception:
+        return None
+

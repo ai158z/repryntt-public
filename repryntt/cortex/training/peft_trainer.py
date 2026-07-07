@@ -35,7 +35,27 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 # Default HuggingFace model for conscious region
-DEFAULT_HF_MODEL = "HuggingFaceTB/SmolLM2-360M-Instruct"
+def recommended_student() -> str:
+    """Hardware-adaptive student model: the biggest brain this box can actually
+    train. Jetson dev kits (~5-7GB usable) get 360M; 9-15GB boxes 1.7B; bigger
+    hardware 3B. Override with REPRYNTT_CORTEX_STUDENT=<hf repo>."""
+    import os as _os
+    env = (_os.environ.get("REPRYNTT_CORTEX_STUDENT") or "").strip()
+    if env:
+        return env
+    try:
+        import psutil as _ps
+        total_gb = _ps.virtual_memory().total / (1024 ** 3)
+    except Exception:
+        total_gb = 8.0
+    if total_gb < 9:
+        return "HuggingFaceTB/SmolLM2-360M-Instruct"
+    if total_gb < 15:
+        return "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+    return "Qwen/Qwen2.5-3B-Instruct"
+
+
+DEFAULT_HF_MODEL = recommended_student()
 
 # GGUF conversion script from llama.cpp
 _LLAMA_CPP_DIR = Path(os.environ.get("LLAMA_CPP_DIR", str(Path.home() / "llama.cpp")))
@@ -160,6 +180,16 @@ class PeftTrainer:
         )
 
         try:
+            # Exclude the promotion gate's deterministic holdout — the gate's
+            # held-out loss is only honest if these were never trained on.
+            try:
+                from repryntt.cortex.training.promotion_gate import is_holdout
+                _n0 = len(valid)
+                valid = [e for e in valid if not is_holdout(e)]
+                logger.info("Holdout excluded from training: %d → %d examples",
+                            _n0, len(valid))
+            except Exception:
+                pass
             metrics = self._run_peft_training(valid)
         except Exception as e:
             logger.error("PEFT training failed: %s", e, exc_info=True)

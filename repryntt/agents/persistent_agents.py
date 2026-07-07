@@ -4637,10 +4637,27 @@ class AgentDaemon:
                     else:
                         max_nudges = 10  # no plan steps → 10 max (was 20)
 
+                    # FREE-RUN for frontier brains: the phase machinery (INITIATE/
+                    # EXECUTE/VERIFY nudges) exists to drag small models through the
+                    # motions. A frontier model that answered without tools twice has
+                    # DECIDED it's done — respect that instead of re-prompting it with
+                    # phase language until it hallucinates busywork.
+                    _frontier_run = False
+                    try:
+                        _prov0 = (getattr(self, "ai_provider_config", None) or {})
+                        _pn0 = _prov0.get("provider", "local")
+                        _md0 = str((_prov0.get(_pn0) or {}).get("model", "")).lower()
+                        _frontier_run = _pn0 == "anthropic" or any(
+                            m in _md0 for m in ("opus", "fable", "sonnet", "gpt-5", "grok-4"))
+                    except Exception:
+                        pass
                     if is_heartbeat and nudge_count < max_nudges and not model_says_done:
                         # If model returned text with no tools N+ times in a row, it's done
                         # Locked chains get more patience — they have real multi-step work
                         _empty_threshold = 5 if locked_chain else 2
+                        if _frontier_run:
+                            _empty_threshold = 1   # one honest "I'm done" is enough
+                            max_nudges = min(max_nudges, 4)
                         if consecutive_empty >= _empty_threshold:
                             loop_stopped = f"model_idle (no tools in {consecutive_empty + 1} consecutive nudges)"
                             break
@@ -4750,7 +4767,24 @@ class AgentDaemon:
                             # Force tool_choice="required" to prevent narration:
                             # - Always for INITIATE (0 tools, first 2 nudges)
                             # - For locked chains: also on EXECUTE nudges (push through text responses)
-                            if tool_call_count == 0 and nudge_count <= 2:
+                            # ADAPTIVE SCAFFOLD: forcing tool_choice="required" exists
+                            # to drag SMALL models through the motions — but forcing a
+                            # frontier model to emit a tool call when it has nothing to
+                            # do produces hallucinated tools (the search_replace spam).
+                            # Frontier brains free-run; small brains keep the rails.
+                            _frontier = False
+                            try:
+                                _prov = (getattr(self, "ai_provider_config", None) or {})
+                                _pname = _prov.get("provider", "local")
+                                _model = str((_prov.get(_pname) or {}).get("model", "")).lower()
+                                _frontier = _pname == "anthropic" or any(
+                                    m in _model for m in ("opus", "fable", "sonnet",
+                                                          "gpt-5", "grok-4"))
+                            except Exception:
+                                pass
+                            if _frontier:
+                                _tc = "auto"
+                            elif tool_call_count == 0 and nudge_count <= 2:
                                 _tc = "required"
                             elif locked_chain and consecutive_empty >= 2:
                                 _tc = "required"
@@ -17248,13 +17282,73 @@ class AgentDaemon:
 
                 from repryntt.cortex.training.region_trainer import RegionTrainer
                 _trainer = RegionTrainer("conscious")
-                if _trainer.should_train():
+                # SLEEP-TIME TRAINING: only train when the box can afford it —
+                # night hours (the entity's sleep) or plenty of free memory. A
+                # 53-day-old stale lock from a mid-day OOM'd attempt is exactly
+                # why: growth belongs in the quiet hours.
+                _can_train = False
+                try:
+                    import psutil as _ps
+                    from datetime import datetime as _dtt
+                    _avail = _ps.virtual_memory().available / (1024 ** 2)
+                    _hour = _dtt.now().hour
+                    _night = _hour >= 22 or _hour < 8
+                    _can_train = _avail >= 2500 or (_night and _avail >= 1800)
+                except Exception:
+                    _can_train = True   # no psutil → old behavior
+                # NIGHT SEQUENCE: teacher review FIRST (the frontier grades today's
+                # local decisions → corrections + DPO pairs), so tonight's training
+                # run learns from freshly-graded data. Review is one thread, cheap
+                # (1-2 batched frontier calls), once per day.
+                if _can_train:
+                    try:
+                        from repryntt.cortex.training import teacher_review as _tr
+                        if _tr.due():
+                            import threading as _thr2
+                            _thr2.Thread(target=_tr.run, daemon=True,
+                                         name="teacher-review").start()
+                            logger.info("🎓 Nightly teacher review started")
+                    except Exception:
+                        logger.debug("teacher review launch failed", exc_info=True)
+                if _can_train and _trainer.should_train():
                     def _train_and_activate():
-                        """Train, then activate the adapter if successful."""
+                        """Train, then activate ONLY if the promotion gate passes —
+                        growth must never make the entity worse overnight."""
                         result = _trainer.train()
                         if result.get("success"):
+                            from pathlib import Path as _P
+                            import json as _j
+                            from repryntt.paths import models_dir as _md
+                            _cand = str(result.get("adapter_path")
+                                        or (_md() / "lora_adapters" / "conscious" / "peft_latest"))
+                            _stp = _md() / "lora_adapters" / "conscious" / "promotion_state.json"
+                            _inc = None
+                            try:
+                                _inc = _j.loads(_stp.read_text()).get("active_peft")
+                            except Exception:
+                                pass
+                            from repryntt.cortex.training.promotion_gate import PromotionGate
+                            _v = PromotionGate("conscious").evaluate(_cand, _inc)
+                            logger.info(f"🚦 Promotion gate: {_v.get('reason')} — "
+                                        f"cand={_v.get('candidate')} inc={_v.get('incumbent')}")
+                            if not _v.get("promote"):
+                                logger.warning("🚦 Adapter REJECTED by promotion gate — "
+                                               "keeping the incumbent mind. Candidate stays "
+                                               "on disk for inspection.")
+                                if _ops:
+                                    _ops.log("JARVIS", "cortex_training_rejected", "REFLECT",
+                                             metadata={"region": "conscious", "verdict": _v})
+                                return
                             _trainer.activate_adapter()
-                            logger.info("🧠 Cortex training complete — adapter activated for 'conscious'")
+                            try:
+                                _stp.parent.mkdir(parents=True, exist_ok=True)
+                                _stp.write_text(_j.dumps(
+                                    {"active_peft": _cand, "promoted_at": time.time(),
+                                     "verdict": _v}, default=str))
+                            except Exception:
+                                pass
+                            logger.info("🧠 Cortex training complete — adapter PASSED the "
+                                        "gate and activated for 'conscious'")
                             if _ops:
                                 _ops.log("JARVIS", "cortex_training_complete", "REFLECT",
                                          metadata={"region": "conscious",
@@ -18535,10 +18629,16 @@ class AgentDaemon:
             # If this tool modifies system-protected paths, queue it for
             # operator approval instead of executing.
             if tool_name in self.OPERATOR_APPROVAL_TOOLS:
+                # Every arg name the gated tools actually use. search_replace's
+                # signature is file_path= — it was MISSING here, so its target read
+                # as '' → 'no path = suspicious' → every call (even to the agent's
+                # own exempt workspace) spammed the operator approval queue.
                 target_path = (parameters.get('target_file') or
+                               parameters.get('file_path') or
                                parameters.get('filepath') or
                                parameters.get('path') or
-                               parameters.get('file') or '')
+                               parameters.get('file') or
+                               parameters.get('filename') or '')
                 if self._requires_operator_approval(target_path):
                     queued = self._queue_for_approval(agent, tool_name, parameters, call_id)
                     results.append({
@@ -19209,6 +19309,20 @@ class AgentDaemon:
             file_set = self.PROMPT_MODE_FILES.get(mode, self.PROMPT_MODE_FILES["minimal"])
         per_limit, total_limit = self.PROMPT_MODE_LIMITS.get(mode, (5000, 20000))
 
+        # IDENTITY DIET (REPRYNTT_IDENTITY_DIET=0 to disable): "full" mode was
+        # re-reading ~110k chars (~28k tokens) of bootstrap prose EVERY heartbeat —
+        # drowning small brains and taxing frontier ones. Each file's head carries
+        # its essence; the rest is available on demand (read_file) and via vector
+        # auto-recall (now that recall actually works). ~3-4× smaller identity,
+        # same self, faster + cheaper every single cycle.
+        if (os.environ.get("REPRYNTT_IDENTITY_DIET", "1") != "0"
+                and mode in ("full", "foundation")):
+            per_limit, total_limit = 3000, 30000
+            if recall_mode != "tail":
+                # Recent memory matters most — take RECALL.md's tail, not its head.
+                recall_mode = "tail"
+                recall_tail_chars = min(recall_tail_chars or 3000, 3000)
+
         # RECALL.md special handling: tail mode loads only last N chars
         _recall_override = None
         if recall_mode == "tail" and "RECALL.md" in file_set:
@@ -19844,7 +19958,8 @@ class AgentDaemon:
             self._APPROVAL_QUEUE_PATH.write_text(json.dumps(queue, indent=2))
         except Exception as e:
             logger.warning(f"Failed to write approval queue: {e}")
-        target = parameters.get('target_file', parameters.get('filepath', parameters.get('path', '?')))
+        target = (parameters.get('target_file') or parameters.get('file_path')
+                  or parameters.get('filepath') or parameters.get('path') or '?')
         logger.info(f"🛡️ [{agent.display_name or agent.name}] {tool_name}({target}) → QUEUED for operator approval (id={entry['id']})")
         return (
             f"⚠️ OPERATOR APPROVAL REQUIRED: Your {tool_name} targeting '{target}' "

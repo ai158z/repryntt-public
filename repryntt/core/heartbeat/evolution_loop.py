@@ -1959,16 +1959,47 @@ Create a focused exploration question that naturally follows from the current st
                 # explorer camera pipeline + Gemini vision can consume
                 # most available RAM.  If we're below 2 GB free the
                 # llama.cpp CUDA pool will SIGABRT.  Sleep and retry.
+                low_memory_lite = False
                 try:
                     import psutil as _ps
                     _avail_mb = _ps.virtual_memory().available / (1024 ** 2)
                     if _avail_mb < 2048:
-                        logger.warning(
-                            f"⚠️ Low memory ({_avail_mb:.0f} MB available, need 2048 MB) "
-                            f"— skipping evolution cycle to avoid CUDA OOM"
-                        )
+                        # Try to RECLAIM before giving up — gc + CUDA cache release
+                        # often frees a few hundred MB on this box.
+                        try:
+                            import gc as _gc
+                            _gc.collect()
+                            import torch as _torch
+                            if _torch.cuda.is_available():
+                                _torch.cuda.empty_cache()
+                        except Exception:
+                            pass
+                        _avail_mb = _ps.virtual_memory().available / (1024 ** 2)
+                    if _avail_mb < 1200:
+                        # Genuinely starved — skip, but LOUDLY after a while. The old
+                        # guard silently starved evolution for HOURS (the entity never
+                        # grew) because the box hovers below the threshold all day.
+                        self._oom_skips = getattr(self, "_oom_skips", 0) + 1
+                        if self._oom_skips % 10 == 0:
+                            logger.error(
+                                f"🧠💤 Evolution starved: {self._oom_skips} consecutive "
+                                f"low-memory skips ({_avail_mb:.0f} MB). The entity is "
+                                f"not growing — free memory or reduce resident services.")
+                        else:
+                            logger.warning(
+                                f"⚠️ Low memory ({_avail_mb:.0f} MB) — skipping evolution cycle")
                         time.sleep(30)
                         continue
+                    if _avail_mb < 2048:
+                        # Enough for the CPU-side loop (hormones, stimulus, thoughts,
+                        # journaling) — run it, but hold off the CUDA-heavy training.
+                        # The old guard blocked EVERYTHING below 2GB, including work
+                        # that needs no GPU at all.
+                        low_memory_lite = True
+                        logger.info(
+                            f"🧠 Lite cycle: {_avail_mb:.0f} MB free — running CPU-side "
+                            f"evolution, deferring training until memory frees up")
+                    self._oom_skips = 0
                 except Exception:
                     pass  # psutil unavailable — proceed anyway
 
@@ -1980,7 +2011,7 @@ Create a focused exploration question that naturally follows from the current st
 
                 # Get current time for training window check
                 current_time = datetime.now(pytz.timezone('US/Eastern'))
-                is_training_window = self._is_training_window(current_time)
+                is_training_window = self._is_training_window(current_time) and not low_memory_lite
 
                 # Read stimulus from feeders
                 stimulus = self.read_aggregated_stimulus()
@@ -1988,6 +2019,22 @@ Create a focused exploration question that naturally follows from the current st
 
                 # Update hormones based on stimulus
                 self.update_hormones(stimulus)
+
+                # CONSEQUENCE LOOP — real outcomes (tasks done, operator contact,
+                # metabolism) → the hormone system's Schultz RPE → significant
+                # surprises consolidate into memory. This is what lets purpose
+                # EMERGE from lived consequence instead of being hardcoded.
+                try:
+                    if not hasattr(self, "consequence_engine"):
+                        from repryntt.core.heartbeat.consequence_engine import ConsequenceEngine
+                        self.consequence_engine = ConsequenceEngine(
+                            task_system=getattr(self, "task_system", None),
+                            hormone_system=getattr(self, "hormone_system", None))
+                    _cq = self.consequence_engine.tick()
+                    if _cq.get("events"):
+                        logger.info(f"🎯 CONSEQUENCE: {_cq}")
+                except Exception:
+                    logger.debug("consequence engine tick failed", exc_info=True)
 
                 # ===== BOOTSTRAP CONTEXT (persistent memory across restarts) =====
                 # Load IDENTITY + PRIORITIES + MEMORY_BRIEF + LEARNING CONTEXT

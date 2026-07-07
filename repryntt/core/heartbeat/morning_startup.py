@@ -210,7 +210,8 @@ def execute_morning_startup(brain_system):
         logger.info("🤖 Asking Commander (Phi-3) to generate today's task list...")
         
         # Call AI to get structured task list
-        response = brain_system._call_ai_service(
+        response = brain_system._call_ai_service(purpose="morning_startup",
+            
             prompt=startup_prompt,
             priority=0,
             timeout=120,

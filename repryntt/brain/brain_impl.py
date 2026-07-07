@@ -165,6 +165,15 @@ class ReprynttBrainSystem:
 
         # ── Module delegates ─────────────────────────────────────────
         self._memory = _make_memory_manager(self)
+        # Load the persisted memory stores into the caches. Without this call the
+        # entity boots AMNESIC — semantic/episodic/procedural caches stay empty no
+        # matter what's on disk (the "Brain Context Acquired: 0 memories" bug: the
+        # loader existed but nothing ever invoked it after the factory refactor).
+        if self._memory is not None:
+            try:
+                self._memory.load_memories()
+            except Exception:
+                logger.exception("memory load failed — continuing with empty caches")
         self._personality = _make_personality_manager(self)
         self._node2040 = _make_node2040_manager(self)
         self._cot = _make_cot_engine(self)
@@ -392,6 +401,17 @@ class ReprynttBrainSystem:
 
         try:
             import numpy as np  # noqa: F401
+            # Jetson torch builds ship WITHOUT distributed support, but
+            # sentence-transformers 5.x probes torch.distributed.is_initialized at
+            # import/encode time — shim the two probes it uses so the encoder loads.
+            try:
+                import torch
+                if not hasattr(torch.distributed, "is_initialized"):
+                    torch.distributed.is_initialized = lambda: False
+                if not hasattr(torch.distributed, "is_available"):
+                    torch.distributed.is_available = lambda: False
+            except Exception:
+                pass
             from sentence_transformers import SentenceTransformer
             import faiss
         except ImportError:
@@ -520,7 +540,8 @@ class ReprynttBrainSystem:
 
     def _call_ai_service(self, prompt: str, priority: int = 0,
                          timeout: int = 120,
-                         include_tools: bool = True) -> Optional[str]:
+                         include_tools: bool = True,
+                         purpose: str = "") -> Optional[str]:
         """Call AI service for self-autonomous components (consciousness, morning startup, CoT).
 
         Routes through whatever provider is configured in ai_provider_config
@@ -531,6 +552,15 @@ class ReprynttBrainSystem:
         import requests as _req
 
         config = self.ai_provider_config
+        # Executive tier: identity-shaping moments (operator conversation, morning
+        # startup, reflection) get the frontier mind, budget-capped per day.
+        try:
+            from repryntt.routing.provider_router import maybe_escalate_executive
+            config = maybe_escalate_executive(
+                config, purpose=purpose,
+                hormone_system=getattr(self, "hormone_system", None))
+        except Exception:
+            pass
         provider = config.get("provider", "local")
         settings = config.get(provider, config.get("local", {}))
 
@@ -579,8 +609,14 @@ class ReprynttBrainSystem:
         messages.append({"role": "user", "content": prompt})
 
         if provider == "anthropic":
-            return self._call_anthropic_service(
+            _resp = self._call_anthropic_service(
                 endpoint, model, api_key, prompt, max_tokens, ai_params, timeout)
+            try:
+                from repryntt.routing.provider_router import record_executive_distillation
+                record_executive_distillation(config, prompt, _resp)
+            except Exception:
+                pass
+            return _resp
 
         # OpenAI-compatible (local / openai / openrouter / nvidia / custom)
         body: Dict[str, Any] = {
@@ -599,7 +635,13 @@ class ReprynttBrainSystem:
             data = resp.json()
             choices = data.get("choices", [])
             if choices:
-                return choices[0].get("message", {}).get("content", "")
+                _resp2 = choices[0].get("message", {}).get("content", "")
+                try:
+                    from repryntt.routing.provider_router import record_executive_distillation
+                    record_executive_distillation(config, prompt, _resp2)
+                except Exception:
+                    pass
+                return _resp2
             return None
         except _req.exceptions.ConnectionError:
             logger.debug(f"AI provider ({provider}) not reachable at {endpoint[:60]}")

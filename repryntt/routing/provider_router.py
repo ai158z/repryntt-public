@@ -105,6 +105,112 @@ def reload_ai_config(config_dir: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
+# ── EXECUTIVE BRAIN TIER ────────────────────────────────────────────
+# The entity runs two speeds of mind: a REFLEX brain (the configured default —
+# local/free) for the moment-to-moment loop, and an EXECUTIVE brain (frontier,
+# budget-capped) for the moments that shape who it is: talking to its operator,
+# morning goal-setting, evening reflection, deep-work planning — or whenever
+# arousal (norepinephrine) says THIS MOMENT MATTERS. This is the tiering that
+# recovers frontier-grade judgment at ~$1-3/day instead of $9/half-hour.
+# Opt-in: set ai_provider.executive_provider + executive_model in ai_config.json.
+
+_EXEC_DEFAULT_PURPOSES = {
+    "operator_conversation", "morning_startup", "evening_reflection",
+    "goal_formation", "deep_work_plan",
+}
+
+
+def _exec_budget_path() -> Path:
+    return Path.home() / ".repryntt" / "brain" / "executive_budget.json"
+
+
+def maybe_escalate_executive(config: Dict[str, Any], purpose: str = "",
+                             hormone_system: Any = None) -> Dict[str, Any]:
+    """Return a (possibly) escalated copy of the provider config. No-ops unless
+    executive_provider/_model are configured AND the moment qualifies AND today's
+    call budget remains. Never raises."""
+    try:
+        exec_provider = (config.get("executive_provider") or "").strip()
+        exec_model = (config.get("executive_model") or "").strip()
+        if not exec_provider or not exec_model:
+            return config
+        settings = config.get(exec_provider) or {}
+        key = settings.get("api_key")
+        if not key or "YOUR_" in str(key):
+            return config
+        purposes = set(config.get("executive_purposes") or _EXEC_DEFAULT_PURPOSES)
+        qualifies = purpose in purposes
+        if not qualifies and hormone_system is not None:
+            # Arousal escalation: a spike of norepinephrine = a moment that matters.
+            try:
+                h = getattr(hormone_system, "hormones", None) or {}
+                ne = float(h.get("norepinephrine", 0.0)) if isinstance(h, dict) else 0.0
+                qualifies = ne >= float(config.get("executive_arousal_threshold", 0.75))
+                if qualifies:
+                    purpose = f"arousal_{ne:.2f}"
+            except Exception:
+                pass
+        if not qualifies:
+            return config
+        # Daily budget — the frontier mind is spent deliberately, not on every tick.
+        import datetime as _dt
+        limit = int(config.get("executive_daily_budget", 20))
+        bp = _exec_budget_path()
+        today = _dt.date.today().isoformat()
+        used = 0
+        try:
+            d = json.loads(bp.read_text())
+            if d.get("date") == today:
+                used = int(d.get("used", 0))
+        except Exception:
+            pass
+        if used >= limit:
+            logger.debug(f"executive budget exhausted ({used}/{limit}) — reflex brain")
+            return config
+        try:
+            bp.parent.mkdir(parents=True, exist_ok=True)
+            bp.write_text(json.dumps({"date": today, "used": used + 1}))
+        except Exception:
+            pass
+        out = dict(config)
+        out["provider"] = exec_provider
+        out[exec_provider] = {**settings, "model": exec_model}
+        out["_executive_purpose"] = purpose   # distillation tap reads this
+        logger.info(f"🧠⬆ EXECUTIVE mind engaged ({purpose}) → "
+                    f"{exec_provider}:{exec_model} [{used + 1}/{limit} today]")
+        return out
+    except Exception:
+        return config
+
+
+
+def record_executive_distillation(config: Dict[str, Any], prompt: str,
+                                  response: Any) -> None:
+    """THE FLYWHEEL TAP: every executive (frontier) call is a supervision pair for
+    the local cortex — (the entity's exact situation → what a frontier mind did).
+    Routed into the conscious region's training set; sleep-time LoRA then distills
+    the frontier's judgment into the local weights, specialized to THIS entity's
+    life. The API era literally trains the edge era. Never raises."""
+    try:
+        purpose = (config or {}).get("_executive_purpose")
+        if not purpose or not isinstance(response, str) or len(response) < 40:
+            return
+        if response.startswith("AI_SERVICE_ERROR"):
+            return
+        from repryntt.cortex.training.data_router import get_data_router
+        get_data_router().route({
+            "region": "conscious",
+            "type": "executive_distillation",
+            "prompt": str(prompt)[-6000:],
+            "response": response[:4000],
+            "quality": 5,   # numeric — router compares to MIN_QUALITY_SCORE
+            "purpose": purpose,
+            "timestamp": time.time(),
+        })
+        logger.info(f"🧪 Distillation pair captured ({purpose}) → conscious region")
+    except Exception:
+        logger.debug("distillation capture failed", exc_info=True)
+
 def route_ai_call(
     config: Dict[str, Any],
     prompt: str,
@@ -149,9 +255,13 @@ def route_ai_call(
     }
 
     # llama.cpp extended params (hormone-modulated)
+    # Constrained decoding (llama.cpp): a GBNF "grammar" or a "json_schema" makes
+    # malformed tool-call JSON IMPOSSIBLE for small local models — the single
+    # biggest reliability lever at the edge. Callers pass either via ai_params.
     for extra in (
         "top_k", "min_p", "typical_p", "presence_penalty",
         "repeat_penalty", "repeat_last_n", "dynatemp_range",
+        "grammar", "json_schema",
     ):
         if extra in ai_params:
             body[extra] = ai_params[extra]
@@ -184,7 +294,12 @@ def _call_anthropic(
             headers=headers,
             json={
                 "model": model,
-                "messages": [{"role": "user", "content": prompt}],
+                # Cache the big stable prefix (identity/GENESIS/PULSE) — the OSS
+                # re-sends ~28k tokens of identity every call; with cache_control
+                # Anthropic reads it at 1/10th price + much lower latency.
+                "messages": [{"role": "user", "content": [
+                    {"type": "text", "text": prompt,
+                     "cache_control": {"type": "ephemeral"}}]}],
                 "max_tokens": max_tokens,
                 "temperature": ai_params.get("temperature", 0.8),
                 "top_p": ai_params.get("top_p", 0.9),
@@ -831,6 +946,7 @@ def call_ai_service(
     priority: int = 0,
     timeout: int = 120,
     include_tools: bool = True,
+    purpose: str = "",
 ) -> str:
     """High-level AI call: build context, submit through queue, run tool loop.
 
@@ -838,6 +954,8 @@ def call_ai_service(
     All optional subsystems (hormones, consciousness, logger, blockchain,
     robot-economy credits) degrade gracefully when absent.
     """
+    config = maybe_escalate_executive(config, purpose=purpose,
+                                      hormone_system=hormone_system)
 
     # ─── Phase 2: Intelligent blockchain routing ──────────
     if should_route_ai_through_blockchain(
@@ -1068,6 +1186,7 @@ def call_ai_service(
         logger.info(
             f"AI Response ({len(ai_response)} chars): {ai_response[:100]}..."
         )
+        record_executive_distillation(config, prompt, ai_response)
         return ai_response
 
     except Exception as e:
