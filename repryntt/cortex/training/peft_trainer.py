@@ -277,6 +277,13 @@ class PeftTrainer:
         )
 
         model = get_peft_model(model, lora_config)
+        # REQUIRED with gradient_checkpointing=True: checkpointing recomputes
+        # segments whose inputs come from FROZEN embeddings — without forcing the
+        # inputs to require grad there is no grad path to the LoRA weights, and
+        # every backward dies with "element 0 of tensors does not require grad"
+        # (the bug that killed all five overnight training runs, Jul 8-11).
+        model.enable_input_require_grads()
+        model.config.use_cache = False   # incompatible with checkpointing
         trainable, total = model.get_nb_trainable_parameters()
         logger.info("Trainable params: %s / %s (%.2f%%)",
                      f"{trainable:,}", f"{total:,}", 100 * trainable / total)
