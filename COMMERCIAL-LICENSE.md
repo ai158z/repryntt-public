@@ -76,8 +76,10 @@ regarding commercial use of the Software and supersedes prior discussions.
 ## How to purchase
 
 - **Annual**: $1,990 / year · **Quarterly**: $590 / quarter
-- Purchase at https://repryntt.com/commercial — your Stripe receipt plus this
-  document constitute your license record.
+- Purchase at https://repryntt.com/commercial. Within 24 hours you receive a
+  **signed license key** (Ed25519, offline-verifiable — check it anytime with
+  `python3 license_check.py <key>` from this repo, no network needed). The
+  key + this document + your Stripe receipt constitute your license record.
 - OEM, multi-entity, or bespoke terms: hello@ai158z.com
 
 *(Licensor note: this document is a standard dual-license agreement; have

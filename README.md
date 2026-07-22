@@ -660,6 +660,8 @@ Build on it — don't strip-mine it.
 **Companies that can't meet AGPL obligations** (keep your modifications
 private, no source-availability notices) can purchase a commercial license —
 $1,990/yr or $590/quarter at [repryntt.com/commercial](https://repryntt.com/commercial).
+Licensees receive a signed, offline-verifiable key — verify with
+`python3 license_check.py <key>` (air-gap friendly).
 
 Provenance: the engine originated with hand-written founder code; all
 AI-assisted development since has been under the founder's direction, review,
