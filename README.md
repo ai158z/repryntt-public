@@ -649,12 +649,22 @@ use (GPL-2.0-only, SSPL, BUSL, Commons Clause, CC-BY-NC).
 
 ## ░░ LICENSE ░░
 
-**AGPL-3.0** — see [LICENSE](LICENSE). Copyright (c) 2026 repryntt.
+**Dual-licensed: AGPL-3.0 OR commercial.** See [LICENSE](LICENSE) and
+[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md). Copyright (c) 2026 repryntt.
 
 Nothing changes for individuals and self-hosters: use it, fork it, run it
 anywhere, modify it freely. The one thing AGPL adds: if you offer repryntt
 to others as a network service, you must open-source your modifications.
 Build on it — don't strip-mine it.
+
+**Companies that can't meet AGPL obligations** (keep your modifications
+private, no source-availability notices) can purchase a commercial license —
+$1,990/yr or $590/quarter at [repryntt.com/commercial](https://repryntt.com/commercial).
+
+Provenance: the engine originated with hand-written founder code; all
+AI-assisted development since has been under the founder's direction, review,
+and approval. Third-party contributions are accepted only under the
+[CLA](CLA.md), which is what makes this dual license possible.
 
 Releases up to and including the MIT-licensed versions remain MIT.
 
