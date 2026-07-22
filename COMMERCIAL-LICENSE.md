@@ -27,6 +27,11 @@ is NOT required to:
 
 ## 2. Scope
 
+- This Agreement covers the **publicly distributed Software in this
+  repository**. The repryntt Enterprise Edition (the Company OS platform:
+  workforce runtime, operating playbooks, cloud API) is a separate product,
+  licensed under its own agreement with private source access — contact
+  hello@ai158z.com.
 - The license covers **one legal entity** and its employees/contractors, for
   unlimited internal projects and services operated by that entity.
 - It does **not** permit redistributing the Software's source or binaries to
